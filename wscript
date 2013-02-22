@@ -16,7 +16,9 @@ def get_liblinear_accuracy(filename):
     '''
     l = open(filename).next()
     # Accuracy = 80.7413% (3224/3993) -> 80.7413
-    return float(l.split(' ')[2][:-1])
+    # TODO(beam2d): Use JSON
+    return '{"accuracy":%s}' % l.split(' ')[2][:-1]
+    # return float(l.split(' ')[2][:-1])
 
 def divide_by_row(data_lines, num_v):
     num_examples = len(data_lines)
@@ -30,7 +32,7 @@ def experiment(exp):
     print exp
     exp(features = 'train',
         task = 'supervised-learning',
-        traindata = '/home/ken/maf/graph/news20.small',
+        traindata = '/home/ken/maf/master/news20.small',
         model = 'news20',
         parameters = {
             'C': ['0.125', '0.25', '0.5'],
@@ -49,7 +51,7 @@ def experiment(exp):
 
     exp(features = 'cv',
         task = 'supervised-learning',
-        data = '/home/ken/maf/graph/news20.small',
+        data = '/home/ken/maf/master/news20.small',
         model = 'news20-cv',
         parameters = {
             'C': ['0.1', '1', '10'], 's': ['0', '1']
@@ -58,12 +60,14 @@ def experiment(exp):
         train = exp.sh('liblinear-train -s ${s} -c ${C} ${TRAINDATA} ${MODEL}'),
         test = exp.sh('liblinear-predict ${TESTDATA} ${MODEL} /dev/null > $@',
                       postprocess=get_liblinear_accuracy),
+        score = 'accuracy',
         divide_fun = divide_by_row)
 
     exp(features = 'draw',
         result = 'news20-result',
         figure = 'news20-figure',
         x_axis = {'name': 'C', 'scale': 'log'},
+        y_axis = {'name': 'accuracy'},
         legend = 's')
 
 

@@ -1,9 +1,14 @@
 #! /usr/bin/env python
 # encoding: utf-8
 
+from collections import defaultdict
+import json
+
 from waflib import TaskGen
 from maflib import Experiment
+
 import maflib.Utils as mUtils
+from matplotlib import pyplot
 
 def get_axis_name(axis):
     if type(axis) == str:
@@ -15,19 +20,11 @@ class DrawResult(Experiment.ExperimentalTask):
     def __init__(self, env, generator):
         super(DrawResult, self).__init__(env=env, generator=generator)
         self.x_axis = env['x_axis']
+        self.y_axis = env['y_axis']
         self.legend = env['legend']
         self.param_combs = env['param_combs']
 
     def run(self):
-        # 結果を読んで、パラメータリストに結果をくっつけて配列を作る。
-        from collections import defaultdict
-        results = defaultdict(list)
-        for result in self.inputs:
-            param = mUtils.decode_parameterized_nodename(result.abspath().split('/').pop())
-            param['__result__'] = float(result.read())
-            results[param[self.legend]].append(param)
-
-        from matplotlib import pyplot
         fig = pyplot.figure()
         axes = fig.add_subplot(111)
 
@@ -36,8 +33,17 @@ class DrawResult(Experiment.ExperimentalTask):
         if type(x_axis) != str and 'scale' in x_axis:
             axes.set_xscale(x_axis['scale'])
 
-        # TODO: 縦軸を変更可能にする？
-        y_name = '__result__'
+        y_axis = self.env['y_axis']
+        y_name = get_axis_name(y_axis)
+        if type(y_axis) != str and 'scale' in y_axis:
+            axes.set_yscale(y_axis['scale'])
+
+        # 結果を読んで、パラメータリストに結果をくっつけて配列を作る。
+        results = defaultdict(list)
+        for result in self.inputs:
+            param = mUtils.decode_parameterized_nodename(result.abspath().split('/').pop())
+            param[y_name] = json.loads(result.read())[y_name]
+            results[param[self.legend]].append(param)
 
         # TODO: マーカーを自動的に選ぶ仕組み整備
         markers = ['s', 'v', '^', '*', '+', 'D', 'h', 'H', 'o']
@@ -66,6 +72,7 @@ class DrawResult(Experiment.ExperimentalTask):
 @TaskGen.feature('draw')
 def feature_draw(self):
     self.env['x_axis'] = self.x_axis
+    self.env['y_axis'] = self.y_axis
     self.env['legend'] = self.legend
 
     param_combs = mUtils.load_params(self, self.result)
