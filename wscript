@@ -30,7 +30,7 @@ def experiment(exp):
     print exp
     exp(features = 'train',
         task = 'supervised-learning',
-        traindata = '/home/ken/maf/graph/news20.small',
+        traindata = '/home/ken/maf/master/news20.small',
         model = 'news20',
         parameters = {
             'C': ['0.125', '0.25', '0.5'],
@@ -49,7 +49,7 @@ def experiment(exp):
 
     exp(features = 'cv',
         task = 'supervised-learning',
-        data = '/home/ken/maf/graph/news20.small',
+        data = '/home/ken/maf/master/news20.small',
         model = 'news20-cv',
         parameters = {
             'C': ['0.1', '1', '10'], 's': ['0', '1']

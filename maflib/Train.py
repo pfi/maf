@@ -17,6 +17,8 @@ class SupervisedLearningTrain(Experiment.ExperimentalTask):
         parameters = self.parameters
         parameters['TRAINDATA'] = self.inputs[0].abspath()
         parameters['MODEL'] = self.outputs[0].abspath()
+        
+        parameters['LOGPREFIX'] = parameters['MODEL']
         return self.train(self, parameters)
 
         # from waflib.Utils import subst_vars

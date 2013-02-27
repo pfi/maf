@@ -17,6 +17,7 @@ class SupervisedLearningTest(Experiment.ExperimentalTask):
         parameters = self.parameters
         parameters['TESTDATA'] = self.inputs[0].abspath()
         parameters['MODEL'] = self.inputs[1].abspath()
+        parameters['LOGPREFIX'] = self.outputs[0].abspath()
         return self.test(self, parameters, self.outputs[0].abspath())
 
         # from waflib.Utils import subst_vars
