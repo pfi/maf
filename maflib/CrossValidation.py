@@ -30,9 +30,19 @@ def create_cv_train_test(divided_data, k):
     return train_path, test_path
 
 class CrossValidationCalcAverage(Experiment.ExperimentalTask):
+    def __init__(self, env, generator):
+        super(CrossValidationCalcAverage, self).__init__(env=env, generator=generator)
+        self.score = env['score']
+        print 'score name:', self.score
+
     def run(self):
         for param, result_nodes in self.env['param2results'].items():
-            ave = sum([float(node.read()) for node in result_nodes]) / len(result_nodes)
+            ave = 0
+            for node in result_nodes:
+                j = json.loads(node.read())
+                ave += j[self.score]
+            ave /= len(result_nodes)
+
             with open(self.env['param2target_nodes'][param].abspath(), 'w') as output:
                 output.write(str(ave))
 
@@ -58,6 +68,7 @@ def feature_calc_average(self):
             all_result_nodes.append(result_node)
     self.env['param2results'] = param2results
     self.env['param2target_nodes'] = param2target_nodes
+    self.env['score'] = self.score
     self.create_task('CrossValidationCalcAverage',
                      src = all_result_nodes)
 
@@ -85,4 +96,5 @@ def feature_cross_varidation(self):
                  test = self.test)
     self.bld(features = 'calc_average',
              model = self.model,
-             num_validation = self.num_validation)
+             num_validation = self.num_validation,
+             score = self.score)

@@ -8,17 +8,3 @@ from waflib.Task import Task
 class ExperimentalTask(Task):
     def run(self):
         pass
-        # Timer timer
-        # self.run_body()
-        
-        # hakaru
-        # logging
-
-    # def run_body(self):
-    #     pass
-
-    #     if self.CheckInputFormat() != 'OK':
-    #         from waflib.Errors import BuildError
-    #         raise BuildError([self])
-        
-        
