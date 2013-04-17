@@ -29,28 +29,7 @@ def divide_by_row(data_lines, num_v):
     return [data_lines[b:e] for b, e in range_idxs]
 
 def experiment(exp):
-    print exp
-    exp(features = 'train',
-        task = 'supervised-learning',
-        traindata = '/home/ken/maf/master/news20.small',
-        model = 'news20',
-        parameters = {
-            'C': ['0.125', '0.25', '0.5'],
-            's': ['0'],
-            'B': ['-1']
-            },
-        train = exp.sh('liblinear-train -s ${s} -c ${C} -B ${B} ${TRAINDATA} ${MODEL}'))
-
-    exp(features = 'test',
-        task = 'supervised-learning',
-        model = 'news20',
-        testdata = '/data/news20/news20.t',
-        result = 'news20-result',
-        test = exp.sh('liblinear-predict ${TESTDATA} ${MODEL} /dev/null > $@',
-                      postprocess=get_liblinear_accuracy))
-
-    exp(features = 'cv',
-        task = 'supervised-learning',
+    exp.cv(task = 'supervised-learning',
         data = '/home/ken/maf/master/news20.small',
         model = 'news20-cv',
         parameters = {
@@ -63,36 +42,75 @@ def experiment(exp):
         score = 'accuracy',
         divide_fun = divide_by_row)
 
-    exp(features = 'draw',
+#     exp(features = 'train',
+#         task = 'supervised-learning',
+#         model = 'news20',
+#         physical_model = '/user/jubatus/model/save',
+#         parameters = {
+#             'method': ['PA', 'NHERD'],
+#             'TRAINDATA': ['/user/jubatus/train'], # hdfs
+#             'CONFIG': ['/home/jubatus/jubatus-tutorial-python/config.json'], # local
+#             },
+#         train = exp.dfs(zookeepers = ["jubatus-handson:2181"],
+#                         jubaserver_map = {"10.0.2.15":"jubatus-handson"},
+#                         task = "java -cp /grid/usr/hadoop/bin/conf:hadoop-jubatus-archive2/src/ScaleTolerabilityVerification/target/scale-tolerability-verifier-1.0.0.jar \
+# -t Classifier -s ${MODEL} -i ${TRAINDATA} \
+# --cluster-name ${CLUSTER} --servers (cluster-name, server などは、走らせるときに動的に値が決定する項目なので、ここで決められない）
+# ",
+
+    exp(features = 'train',
+        task = 'supervised-learning',
+        # traindata = '/home/ken/maf/master/news20.small',
+        model = 'news20',
+        # physical_model = '/home/ken/maf/log/hdfs/path/news20',
+        parameters = {
+            'C': ['0.125', '0.25', '0.5'],
+            's': ['0', '1'],
+            'B': ['-1'],
+            'TRAINDATA': ['/home/ken/maf/master/news20.small'],
+            },
+        train = exp.sh('liblinear-train -s ${s} -c ${C} -B ${B} ${TRAINDATA} ${MODEL}')
+        #train = 'liblinear-train -s ${s} -c ${C} -B ${B} ${TRAINDATA} ${MODEL}'
+        )
+
+    # exp(features = 'train',
+    #     task = 'supervised-learning',
+    #     model = 'news20-hdfs',
+    #     physical_model = '',
+    #     parameters = {
+    #         'traindata': ['/hdfs/path/news20.small'],
+    #         'C': ['0.125', '0.25', '0.5'],
+    #         's': ['0'],
+    #         'B': ['-1']
+    #         },
+    #     train = exp.sh('liblinear-train -s ${s} -c ${C} -B ${B} ${TRAINDATA} ${MODEL}'))
+
+    exp(features = 'test',
+        task = 'supervised-learning',
+        model = 'news20',
+        testdata = '/data/news20/news20.t',
+        # testdata = '/home/ken/maf/master/news20.t.small',
         result = 'news20-result',
+        test = exp.sh('liblinear-predict ${TESTDATA} ${MODEL} /dev/null > $@',
+                      postprocess=get_liblinear_accuracy))
+
+    exp(features = 'draw',
+        result = 'news20-cv/ave-result',
         figure = 'news20-figure',
         x_axis = {'name': 'C', 'scale': 'log'},
         y_axis = {'name': 'accuracy'},
         legend = 's')
-
-
-# できた
-# train
-# test
-# hyper parameter を変えながらtrain/testする
-
-# できてない
-
-# 入力系
-# cross validation
-# データ分割
-
-# 出力系
-# グラフ描画
-# resultを辞書にする
-# 実行時間とか出力
-
-# その他
-# ドメイン増やす
+    
+    # from  maflib import Utils
+    # exp(features='draw',
+    #     result='news20/log',
+    #     figure='news20-train-figure',
+    #     x_axis={'name': 'C', 'scale': 'log'},
+    #     y_axis={'name': 'time', 'converter': Utils.convert_to_minutes},
+    #     legend='s')
 
 # 2月の目標
 # ユーザががんばれば次ができるレベル
-#   train/test
 #   cross validation / train/dev/test (train/devの自動分割)
 #   いろんな軸で結果をvisualize
 #   新しいドメインを追加できる、典型的なのはできるだけ実装済みにする

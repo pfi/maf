@@ -6,13 +6,10 @@ from maflib import Experiment, Train, Test
 import maflib.Utils as mUtils
 import json
 
-def create_cv_train_test(divided_data, k):
-    import string, random
-    alphabets = string.digits + string.letters
-    
-    prefix = ''.join(random.choice(alphabets) for i in range(5))
-    train_path = '/tmp/maf' + prefix + '.train'
-    test_path = '/tmp/maf' + prefix + '.test'
+def create_cv_train_test(divided_data, prefix, k):
+    train_path = prefix + str(k) + '.train'
+    test_path = prefix + str(k) + '.test'
+
     train_idxs = [i for i in range(len(divided_data)) if i != k]
 
     with open(train_path, 'w') as train_f:
@@ -33,7 +30,6 @@ class CrossValidationCalcAverage(Experiment.ExperimentalTask):
     def __init__(self, env, generator):
         super(CrossValidationCalcAverage, self).__init__(env=env, generator=generator)
         self.score = env['score']
-        print 'score name:', self.score
 
     def run(self):
         for param, result_nodes in self.env['param2results'].items():
@@ -54,8 +50,11 @@ def feature_calc_average(self):
     param2results = {}
     param2target_nodes = {}
     all_result_nodes = []
+    ave_dir = self.model + '/ave-result'
+    mUtils.save_params(self, ave_dir, param_combs)
+    
     for param in param_combs:
-        target_name = mUtils.generate_parameterized_nodename(self.model + '/ave-result', param)
+        target_name = mUtils.generate_parameterized_nodename(ave_dir, param)
         target_node = self.path.find_or_declare(target_name)
         param_j = json.dumps(param)
         param2results[param_j] = []
@@ -72,29 +71,41 @@ def feature_calc_average(self):
     self.create_task('CrossValidationCalcAverage',
                      src = all_result_nodes)
 
-@TaskGen.feature('cv')
-def feature_cross_varidation(self):
-    divided_data = self.divide_fun(
-        self.bld.root.find_resource(self.data).read().split('\n'), self.num_validation)
-    assert(len(divided_data) == self.num_validation)
-    model_prefix = self.model
-    for k in range(self.num_validation):
-        train_path, test_path = create_cv_train_test(divided_data, k)
+def generate_cv_taskgen(exp, **kw):
+    class LazyEncoder(json.JSONEncoder):
+        def default(self, o):
+            import types
+            try:
+                return json.JSONEncoder.default(self, o)
+            except TypeError:
+                return None
+                # return json.JSONEncoder.default(self, 'hoge')
+
+    encoded_self = str(json.dumps(kw, skipkeys=True, cls=LazyEncoder).encode('hex'))
+    l = len(encoded_self) / 20
+    tmp_prefix = '/tmp/' + "".join([encoded_self[i] for i in range(0, len(encoded_self), l)])
+
+    divided_data = kw['divide_fun'](
+        exp.root.find_resource(kw['data']).read().split('\n'), kw['num_validation'])
+    assert(len(divided_data) == kw['num_validation'])
+    model_prefix = kw['model']
+    for k in range(kw['num_validation']):
+        train_path, test_path = create_cv_train_test(divided_data, tmp_prefix, k)
         
         model = model_prefix + '/' + str(k)
-        self.bld(features = 'train',
-                 task = self.task,
-                 traindata = train_path,
-                 model = model,
-                 parameters = self.parameters,
-                 train = self.train)
-        self.bld(features = 'test',
-                 task = self.task,
-                 testdata = test_path,
-                 result = model + "-result",
-                 model = model,
-                 test = self.test)
-    self.bld(features = 'calc_average',
-             model = self.model,
-             num_validation = self.num_validation,
-             score = self.score)
+        exp(features = 'train',
+            task = kw['task'],
+            traindata = train_path,
+            model = model,
+            parameters = kw['parameters'],
+            train = kw['train'])
+        exp(features = 'test',
+            task = kw['task'],
+            testdata = test_path,
+            result = model + "-result",
+            model = model,
+            test = kw['test'])
+    exp(features = 'calc_average',
+        model = kw['model'],
+        num_validation = kw['num_validation'],
+        score = kw['score'])

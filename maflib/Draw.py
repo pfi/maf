@@ -30,13 +30,17 @@ class DrawResult(Experiment.ExperimentalTask):
 
         x_axis = self.env['x_axis']
         x_name = get_axis_name(x_axis)
-        if type(x_axis) != str and 'scale' in x_axis:
+        if type(x_axis) == dict and 'scale' in x_axis:
             axes.set_xscale(x_axis['scale'])
 
         y_axis = self.env['y_axis']
         y_name = get_axis_name(y_axis)
-        if type(y_axis) != str and 'scale' in y_axis:
-            axes.set_yscale(y_axis['scale'])
+        y_conv = None
+        if type(y_axis) == dict:
+            if 'scale' in y_axis:
+                axes.set_yscale(y_axis['scale'])
+            if 'converter' in y_axis:
+                y_conv = y_axis['converter']
 
         # 結果を読んで、パラメータリストに結果をくっつけて配列を作る。
         results = defaultdict(list)
@@ -58,6 +62,9 @@ class DrawResult(Experiment.ExperimentalTask):
             for param in params:
                 x_to_y[float(param[x_name])] = param[y_name]
             ys = [x_to_y[x] for x in xs]
+            if y_conv:
+                ys = map(y_conv, ys)
+                print ys
 
             legend = '%s=%s' % (self.legend, legend_value)
             axes.plot(xs, ys, label=legend, marker=markers[i])
