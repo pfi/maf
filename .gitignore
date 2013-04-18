@@ -1,0 +1,5 @@
+*~
+*.o
+*.pyc
+.waf*
+build/

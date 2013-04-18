@@ -42,22 +42,6 @@ def experiment(exp):
         score = 'accuracy',
         divide_fun = divide_by_row)
 
-#     exp(features = 'train',
-#         task = 'supervised-learning',
-#         model = 'news20',
-#         physical_model = '/user/jubatus/model/save',
-#         parameters = {
-#             'method': ['PA', 'NHERD'],
-#             'TRAINDATA': ['/user/jubatus/train'], # hdfs
-#             'CONFIG': ['/home/jubatus/jubatus-tutorial-python/config.json'], # local
-#             },
-#         train = exp.dfs(zookeepers = ["jubatus-handson:2181"],
-#                         jubaserver_map = {"10.0.2.15":"jubatus-handson"},
-#                         task = "java -cp /grid/usr/hadoop/bin/conf:hadoop-jubatus-archive2/src/ScaleTolerabilityVerification/target/scale-tolerability-verifier-1.0.0.jar \
-# -t Classifier -s ${MODEL} -i ${TRAINDATA} \
-# --cluster-name ${CLUSTER} --servers (cluster-name, server などは、走らせるときに動的に値が決定する項目なので、ここで決められない）
-# ",
-
     exp(features = 'train',
         task = 'supervised-learning',
         # traindata = '/home/ken/maf/master/news20.small',
@@ -95,7 +79,7 @@ def experiment(exp):
                       postprocess=get_liblinear_accuracy))
 
     exp(features = 'draw',
-        result = 'news20-cv/ave-result',
+        result = 'news20-cv/0-result',
         figure = 'news20-figure',
         x_axis = {'name': 'C', 'scale': 'log'},
         y_axis = {'name': 'accuracy'},

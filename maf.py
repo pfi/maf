@@ -16,10 +16,12 @@ def configure(conf):
     conf.load('Draw', tooldir=mafdir)
 
 import maflib.Experiment
+import json
 from waflib.Build import BuildContext
 from waflib import Context
 from waflib import Utils
 from maflib.CrossValidation import generate_cv_taskgen
+import maflib.Utils as mUtils
 
 class ExperimentContext(BuildContext):
     cmd = 'experiment'
@@ -82,7 +84,4 @@ class ExperimentContext(BuildContext):
                 return 0, cmd
 
         return callback
-
-    def dfs(self, zookeepers, jubaserver_map, task):
-        def callback():
-            pass
+            

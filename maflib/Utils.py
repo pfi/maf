@@ -98,3 +98,10 @@ def convert_to_minutes(s):
 def convert_to_seconds(s):
     d, h, m, s = parse_time_string(s)
     return ((d * 24 + h) * 60 + m) * 60 + s
+
+def create_config_json(default_config_path, params):
+    with open(default_config_path) as f: config = json.load(f)
+    for k, v in config.items():
+        if k in params:
+            config[k] = params[k]
+    return configf
