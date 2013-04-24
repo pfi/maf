@@ -44,23 +44,16 @@ def feature_train(self):
     if self.task == 'supervised-learning':
         self.env['train'] = self.train
 
-        from itertools import product
-
-        keys = sorted(self.parameters)
-        param_combs = [
-            dict(zip(keys, prod)) for prod in product(
-                *(self.parameters[key] for key in keys))
-            ]
         model_log = self.model + '/log'
-        mUtils.save_params(self, self.model, param_combs)
-        mUtils.save_params(self, model_log, param_combs)
+        mUtils.save_params(self, self.model, self.parameters)
+        mUtils.save_params(self, model_log, self.parameters)
         physical_model = getattr(self, 'physical_model', None)
 
         if hasattr(self, 'traindata'):
             src = self.bld.root.find_resource(self.traindata)
         else:
             src = None
-        for param in param_combs:
+        for param in self.parameters:
             self.env['parameters'] = param
             self.create_task(
                 'SupervisedLearningTrain',
