@@ -1,3 +1,5 @@
+import maflib.Utils
+
 top = '.'
 out = 'build'
 
@@ -32,9 +34,9 @@ def experiment(exp):
     exp.cv(task = 'supervised-learning',
         data = '/home/ken/maf/master/news20.small',
         model = 'news20-cv',
-        parameters = {
+        parameters = maflib.Utils.enumerate_parameters({
             'C': ['0.1', '1', '10'], 's': ['0', '1']
-            },
+            }),
         num_validation = 3,
         train = exp.sh('liblinear-train -s ${s} -c ${C} ${TRAINDATA} ${MODEL}'),
         test = exp.sh('liblinear-predict ${TESTDATA} ${MODEL} /dev/null > $@',
@@ -47,12 +49,12 @@ def experiment(exp):
         # traindata = '/home/ken/maf/master/news20.small',
         model = 'news20',
         # physical_model = '/home/ken/maf/log/hdfs/path/news20',
-        parameters = {
+        parameters = maflib.Utils.enumerate_parameters({
             'C': ['0.125', '0.25', '0.5'],
             's': ['0', '1'],
             'B': ['-1'],
             'TRAINDATA': ['/home/ken/maf/master/news20.small'],
-            },
+            }),
         train = exp.sh('liblinear-train -s ${s} -c ${C} -B ${B} ${TRAINDATA} ${MODEL}')
         #train = 'liblinear-train -s ${s} -c ${C} -B ${B} ${TRAINDATA} ${MODEL}'
         )

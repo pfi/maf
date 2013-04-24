@@ -1,7 +1,13 @@
 #! /usr/bin/env python
 # encoding: utf-8
 
+from itertools import product
 import json
+
+def enumerate_parameters(params):
+    keys = sorted(params)
+    return [dict(zip(keys, prod))
+            for prod in product(*(params[key] for key in keys))]
 
 def generate_parameterized_nodename(name, param):
     '''
