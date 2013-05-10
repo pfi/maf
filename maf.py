@@ -272,7 +272,6 @@ def plot_line(x, y, legend=None):
                 labels = legend['labels']
             legend_to_xys = defaultdict(list)
             for value in values:
-                print value
                 legend_to_xys[value[legend_key]].append((
                         value[x['key']], value[y['key']]))
 
