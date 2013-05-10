@@ -198,7 +198,7 @@ class ExperimentContext(BuildContext):
             node = os.path.join(
                 node, '-'.join([parameter_id, os.path.basename(node)]))
         if node[0] == '/':
-            return self.root.find_node(node)
+            return self.root.find_resource(node)
         return self.path.find_or_declare(node)
 
 # Maf utility library
