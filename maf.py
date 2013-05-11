@@ -250,10 +250,13 @@ def plot_line(x, y, legend=None):
     def callback(task):
         values = []
         for node, parameter in zip(task.inputs, task.env.source_parameter):
-            content = node.read()
-            j = json.loads(content)
-            j.update(parameter)
-            values.append(j)
+            content_str = node.read()
+            content = json.loads(content_str)
+            if not isinstance(content, list):
+                content = [content]
+            for element in content:
+                element.update(parameter)
+            values += content
 
         fig = pyplot.figure()
         axes = fig.add_subplot(111)
