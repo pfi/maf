@@ -278,9 +278,6 @@ def plot_line(x, y, legend=None):
                 legend_to_xys[value[legend_key]].append((
                         value[x['key']], value[y['key']]))
 
-            # TODO(beam2d): Remove this stub markers list
-            markers = ['s', 'v', '^', '*', '+', 'D', 'h', 'H', 'o']
-            i = 0
             for l in legend_to_xys:
                 xys = legend_to_xys[l]
                 xys.sort()
@@ -290,8 +287,8 @@ def plot_line(x, y, legend=None):
                     label = labels[l]
                 else:
                     label = '='.join([legend_key, str(l)])
-                axes.plot(xs, ys, label=label, marker=markers[i])
-                i = (i + 1) % len(markers)
+                # TODO(beam2d): Support marker.
+                axes.plot(xs, ys, label=label)
 
             place = getattr(legend, 'loc', 'lower right')
             axes.legend(loc='lower right')
