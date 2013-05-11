@@ -24,15 +24,15 @@ def experiment(exp):
     exp(source='news20.scale',
         target='model',
         parameters=maf.product({
-            's': range(8),
+            's': [0, 1, 2, 3, 4, 7],
             'C': [0.001, 0.01, 0.1, 1, 10, 100],
-            'B': [-1, 1]},
-        ),
-        rule='liblinear-train -s ${s} -c ${C} -B ${B} ${SRC} ${TGT}')
+            'B': [-1, 1]
+        }),
+        rule='liblinear-train -s ${s} -c ${C} -B ${B} ${SRC} ${TGT} > /dev/null')
 
     exp(source='news20.t.scale model',
         target='raw_result',
-        rule='liblinear-predict ${SRC[0].abspath()} ${SRC[1].abspath()} /dev/null > ${TGT}')
+        rule='liblinear-predict ${SRC} /dev/null > ${TGT}')
 
     exp(source='raw_result',
         target='result',
@@ -49,4 +49,4 @@ def experiment(exp):
         rule=maf.plot_line(
             x={'key': 'C', 'scale': 'log'},
             y='accuracy',
-            legend={'key': 's', 'labels': LIBLINEAR_METHODS, 'loc': 'lower right'}))
+            legend={'key': 's', 'labels': LIBLINEAR_METHODS}))
