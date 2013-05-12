@@ -79,6 +79,10 @@ class ExperimentContext(BuildContext):
             self._generate_aggregation_tasks(call_object)
             return
 
+        if not call_object.source:
+            for parameter in call_object.parameters:
+                self._generate_task(call_object, [], parameter)
+
         parameter_lists = []
 
         # Generate all valid list of parameters corresponding to source nodes.
