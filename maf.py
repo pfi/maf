@@ -155,7 +155,7 @@ class ExperimentContext(BuildContext):
         source_node = call_object.source[0]
         target_node = call_object.target[0]
 
-        source_parameters = self._nodes[call_object.source[0]]
+        source_parameters = self._nodes[source_node]
         # Mapping from target parameter to list of source parameter.
         target_to_source = defaultdict(set)
 
