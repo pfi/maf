@@ -21,6 +21,14 @@ LIBLINEAR_METHODS = {
 }
 
 def experiment(exp):
+    exp(target='news20.scale.bz2',
+        rule='wget http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/news20.scale.bz2 -O ${TGT}')
+    exp(source='news20.scale.bz2', target='news20.scale', rule='bunzip2 ${SRC} --keep')
+
+    exp(target='news20.t.scale.bz2',
+        rule='wget http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/news20.t.scale.bz2 -O ${TGT}')
+    exp(source='news20.t.scale.bz2', target='news20.t.scale', rule='bunzip2 ${SRC} --keep')
+
     exp(source='news20.scale',
         target='model',
         parameters=maf.product({
