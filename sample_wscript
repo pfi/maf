@@ -6,9 +6,6 @@ def options(opt):
 def configure(conf):
     conf.load('maf')
 
-def build(bld):
-    pass
-
 LIBLINEAR_METHODS = {
     0: 'L2R Logistic Regression (primal)',
     1: 'L2 SVM (dual)',
