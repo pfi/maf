@@ -102,7 +102,7 @@ class ExperimentContext(BuildContext):
             for node_param in node_params:
                 for parameter_list in parameter_lists:
                     if any(p.conflict_with(node_param) for p in parameter_list):
-                        break
+                        continue
                     new_list = list(parameter_list)
                     new_list.append(node_param)
                     new_lists.append(new_list)
