@@ -75,10 +75,11 @@ class ExperimentContext(BuildContext):
 
     def _process_call_object(self, call_object):
         if 'for_each' in call_object.__dict__:
-            # Aggregation task
             self._generate_aggregation_tasks(call_object)
-            return
+        else:
+            self._generate_tasks(call_object)
 
+    def _generate_tasks(self, call_object):
         if not call_object.source:
             for parameter in call_object.parameters:
                 self._generate_task(call_object, [], parameter)
