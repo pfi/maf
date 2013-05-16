@@ -74,6 +74,12 @@ class ExperimentContext(BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
+        if 'rule' in call_object.__dict__ and not isinstance(call_object.rule, str):
+            # Callable object other than function is not allowed as a rule in
+            # waf. Here we relax this restriction.
+            rule_impl = call_object.rule
+            call_object.rule = lambda task: rule_impl(task)
+
         if 'for_each' in call_object.__dict__:
             self._generate_aggregation_tasks(call_object)
         else:
