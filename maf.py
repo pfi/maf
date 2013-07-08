@@ -300,7 +300,8 @@ def plot_line(x, y, legend=None):
                 legend_to_xys[value[legend_key]].append((
                         value[x['key']], value[y['key']]))
 
-            for l in legend_to_xys:
+            keys = sorted(legend_to_xys.keys())
+            for l in keys:
                 xys = legend_to_xys[l]
                 xys.sort()
                 xs = [xy[0] for xy in xys]
