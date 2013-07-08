@@ -313,7 +313,7 @@ def plot_line(x, y, legend=None):
                 axes.plot(xs, ys, label=label)
 
             place = getattr(legend, 'loc', 'lower right')
-            axes.legend(loc='lower right')
+            axes.legend(loc=place)
         else:
             xs = [value[x['key']] for value in values]
             ys = [value[y['key']] for value in values]
