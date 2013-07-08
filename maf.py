@@ -312,7 +312,7 @@ def plot_line(x, y, legend=None):
                 # TODO(beam2d): Support marker.
                 axes.plot(xs, ys, label=label)
 
-            place = getattr(legend, 'loc', 'lower right')
+            place = legend.get('loc', 'lower right')
             axes.legend(loc=place)
         else:
             xs = [value[x['key']] for value in values]
