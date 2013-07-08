@@ -216,29 +216,50 @@ class ExperimentContext(BuildContext):
 
 # Aggregators
 
+def create_aggregator(callback_body):
+    """
+    Creates an aggregator using function f independent from waf.
+
+    Args:
+        callback_body: Function or callable object that takes two arguments, a
+        list of values to be aggregated and the absolute path to the output
+        node. If this function returns string value, the value is written to the
+        output node. If this function itself writes the result to the output
+        file, it must return None.
+    """
+    def callback(task):
+        values = []
+        for node, parameter in zip(task.inputs, task.env.source_parameter):
+            content = json.loads(node.read())
+            if not isinstance(content, list):
+                content = [content]
+            for element in content:
+                element.update(parameter)
+            values += content
+
+        abspath = task.outputs[0].abspath()
+        result = callback_body(values, abspath)
+
+        if result is not None:
+            task.outputs[0].write(result)
+
+    return callback
+
 def max(key):
     """
     Gets an aggregator to select max value of given key.
     """
-    def callback(task):
+    def body(values, outpath):
         max_value = None
         argmax = None
-        argmax_parameter = None
-        for node, parameter in zip(task.inputs, task.env.source_parameter):
-            content = node.read()
-            j = json.loads(content)
-            if max_value >= j[key]:
+        for value in values:
+            if max_value >= value[key]:
                 continue
-            max_value = j[key]
-            argmax = j
-            argmax_parameter = parameter
+            max_value = value[key]
+            argmax = value
+        return json.dumps(argmax)
 
-        result = dict(argmax_parameter)
-        result.update(argmax)
-        task.outputs[0].write(json.dumps(result))
-
-        return 0
-    return callback
+    return create_aggregator(body)
 
 # Plotters
 
@@ -258,17 +279,7 @@ def plot_line(x, y, legend=None):
     x = _get_normalized_axis_config(x)
     y = _get_normalized_axis_config(y)
 
-    def callback(task):
-        values = []
-        for node, parameter in zip(task.inputs, task.env.source_parameter):
-            content_str = node.read()
-            content = json.loads(content_str)
-            if not isinstance(content, list):
-                content = [content]
-            for element in content:
-                element.update(parameter)
-            values += content
-
+    def callback(values, outpath):
         fig = pyplot.figure()
         axes = fig.add_subplot(111)
 
@@ -309,10 +320,10 @@ def plot_line(x, y, legend=None):
             xs, ys = _synchronized_sort(xs, ys)
             axes.plot(xs, ys)
 
-        fig.savefig(task.outputs[0].abspath())
-        return 0
+        fig.savefig(outpath)
+        return None
 
-    return callback
+    return create_aggregator(callback)
 
 # Convenient rules
 
