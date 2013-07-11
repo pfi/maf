@@ -549,6 +549,39 @@ def product(parameter):
     values_product = itertools.product(*values)
     return [dict(zip(keys, vals)) for vals in values_product]
 
+def product_with_sampling(parameter, num_samples):
+    parameter_gens = {}
+    keys = sorted(parameter)
+
+    sampled = []
+    for key in keys:
+        if isinstance(parameter[key], tuple): # float case is specified by a begin/end in a tuple
+            begin,end = parameter[key]
+            if isinstance(begin, float) or isinstance(end, float):
+                begin = float(begin)
+                end = float(end)
+                # random_sample() generate a point from [0,1), so we scale and shift
+                gen = lambda: (end-begin) * np.random.random_sample() + begin
+                
+        elif isinstance(parameter[key], list): # discrete case is specified by a list
+            gen = lambda mult_ks=parameter[key]: mult_ks[np.random.randint(0,len(mult_ks))]
+
+        elif isinstance(parameter[key], types.FunctionType): # any random generating function
+            gen = parameter[key]
+            
+        else:
+            gen = lambda: parameter[key] # constant
+           
+        parameter_gens[key] = gen
+         
+    for i in range(num_samples):
+        instance = {}
+        for key in keys:
+            instance[key] = parameter_gens[key]()
+        sampled.append(instance)
+    print sampled
+    return sampled
+
 # Maf internal library
 
 class CyclicDependencyException(Exception):
