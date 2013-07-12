@@ -30,9 +30,7 @@ def configure(conf):
     pass
 
 class ExperimentContext(waflib.Build.BuildContext):
-    """
-    Context class of waf experiment (a.k.a. maf).
-    """
+    """Context class of waf experiment (a.k.a. maf)."""
 
     cmd = 'experiment'
     fun = 'experiment'
@@ -48,24 +46,19 @@ class ExperimentContext(waflib.Build.BuildContext):
             ExperimentContext._process_call_objects)
 
     def __call__(self, **kw):
-        """
-        Main method to generate tasks.
-
-        TODO(beam2d): Add more description.
-        """
+        """Main method to generate tasks."""
 
         call_object = CallObject(**kw)
         self._experiment_graph.add_call_object(call_object)
 
     @staticmethod
     def _process_call_objects(self):
-        """
-        Callback function called right after all wscripts are executed.
+        """Callback function called right after all wscripts are executed.
 
         This function virtually generates all task generators under
         ExperimentContext.
-        """
 
+        """
         # Run topological sort on dependency graph.
         call_objects = self._experiment_graph.get_sorted_call_objects()
 
@@ -81,7 +74,8 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
-        if 'rule' in call_object.__dict__ and not isinstance(call_object.rule, str):
+        if ('rule' in call_object.__dict__ and
+                not isinstance(call_object.rule, str)):
             # Callable object other than function is not allowed as a rule in
             # waf. Here we relax this restriction.
             rule_impl = call_object.rule
@@ -107,7 +101,6 @@ class ExperimentContext(waflib.Build.BuildContext):
                 node_params = {Parameter()}
 
             if not parameter_lists:
-                # First node
                 for node_param in node_params:
                     parameter_lists.append([node_param])
                 continue
@@ -224,8 +217,7 @@ class ExperimentContext(waflib.Build.BuildContext):
 # Aggregators
 
 def create_aggregator(callback_body):
-    """
-    Creates an aggregator using function f independent from waf.
+    """Creates an aggregator using function f independent from waf.
 
     Args:
         callback_body: Function or callable object that takes two arguments, a
@@ -233,6 +225,7 @@ def create_aggregator(callback_body):
         node. If this function returns string value, the value is written to the
         output node. If this function itself writes the result to the output
         file, it must return None.
+
     """
     def callback(task):
         values = []
@@ -252,10 +245,9 @@ def create_aggregator(callback_body):
 
     return callback
 
+
 def max(key):
-    """
-    Gets an aggregator to select max value of given key.
-    """
+    """Gets an aggregator to select max value of given key."""
     def body(values, outpath):
         max_value = None
         argmax = None
@@ -271,29 +263,27 @@ def max(key):
 # Plotting
 
 class PlotData:
-    """
-    Result of experimentation collected through a meta node to plot.
+    """Result of experimentation collected through a meta node to plot.
 
     Result of experiments is represented by a meta node consisted by a set of
     physical nodes each of which contains a dictionary or an array of
     dictionaries. This class is used to collect all dictionaries through the
     meta node and to extract point sequences to plot.
-    """
 
+    """
     def __init__(self, inputs):
-        """
-        Constructs a plot data from a list of values to be plotted.
+        """Constructs a plot data from a list of values to be plotted.
 
         Args:
             inputs: A list of values to be plotted. The first argument of
             callback body function passed to ``create_aggregator`` can be used
             for this ``inputs`` argument.
+
         """
         self._inputs = inputs
 
     def get_data_1d(self, x, key=None, sort=True):
-        """
-        Extracts a sequence of one-dimensional data points.
+        """Extracts a sequence of one-dimensional data points.
 
         This function extracts x coordinate of each result value and creates a
         list of them. If sort == True, then the list is sorted. User can extract
@@ -310,6 +300,7 @@ class PlotData:
             If ``key`` is None, then it returns a list of x values. Otherwise,
             it returns a dictionary from key(s) to a sequence of x values.
             Each sequence consists of values matched to the key(s).
+
         """
         if key is None:
             xs = [value[x] for value in self._inputs if x in value]
@@ -343,8 +334,7 @@ class PlotData:
         return data
 
     def get_data_2d(self, x, y, key=None, sort=True):
-        """
-        Extracts a sequence of two-dimensional data points.
+        """Extracts a sequence of two-dimensional data points.
 
         See get_data_1d for detail. Difference from get_data_2d is that the
         values are represented by pairs.
@@ -362,6 +352,7 @@ class PlotData:
             Otherwise, it returns a dictionary from key(s) to a sequence of
             (x, y) pairs. Each sequence consists of values matched to the
             key(s).
+
         """
         if key is None:
             vals = [(value[x], value[y])
@@ -397,8 +388,7 @@ class PlotData:
         return data
 
     def get_data_3d(self, x, y, z, key=None, sort=True):
-        """
-        Extracts a sequence of three-dimensional data points.
+        """Extracts a sequence of three-dimensional data points.
 
         See get_data_1d for detail. Difference from get_data_3d is that the
         values are represented by triples.
@@ -417,6 +407,7 @@ class PlotData:
             Otherwise, it returns a dictionary from key(s) to a sequence of
             (x, y, z) triples. Each sequence consists of values matched to the
             key(s).
+
         """
         if key is None:
             vals = [(value[x], value[y], value[z])
@@ -458,15 +449,16 @@ class PlotData:
 
         return data
 
+
 def plot_by(callback_body):
-    """
-    Creates an aggregator to plot data using matplotlib and PlotData.
+    """Creates an aggregator to plot data using matplotlib and PlotData.
 
     Args:
         callback_body: Callable object or function that plots data. It takes
             two parameters: matplotlib.figure.Figure object and PlotData object.
             User must define a callback function that plots given data to given
             figure.
+
     """
     def callback(values, abspath):
         figure = matplotlib.pyplot.figure()
@@ -477,12 +469,11 @@ def plot_by(callback_body):
 
     return create_aggregator(callback)
 
-def plot_line(x, y, legend=None):
-    """
-    Creates an aggregator that draw a line plot.
 
-    TODO(beam2d): Write a document.
-    """
+def plot_line(x, y, legend=None):
+    """Creates an aggregator that draw a line plot."""
+    # TODO(beam2d): Write a document.
+
     def get_normalized_axis_config(k):
         if isinstance(k, str):
             return {'key': k}
@@ -529,10 +520,7 @@ def plot_line(x, y, legend=None):
 # Convenient rules
 
 def convert_libsvm_accuracy(task):
-    """
-    Rule that converts message output by svm-predict into json file.
-    """
-
+    """Rule that converts message output by svm-predict into json file."""
     content = task.inputs[0].read()
     j = {'accuracy': float(content.split(' ')[2][:-1])}
     task.outputs[0].write(json.dumps(j))
@@ -541,24 +529,23 @@ def convert_libsvm_accuracy(task):
 # Parameter generation
 
 def product(parameter):
-    """
-    Generate direct product of given listed parameters. ::
+    """Generate direct product of given listed parameters. ::
 
         maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
               {'x': 1, 'y': 1}, {'x': 1, 'y': 3}, {'x': 1, 'y': 5},
               {'x': 2, 'y': 1}, {'x': 2, 'y': 3}, {'x': 2, 'y': 5}]
         # (the order of parameters may be different)
-    """
 
+    """
     keys = sorted(parameter)
     values = [parameter[key] for key in keys]
     values_product = itertools.product(*values)
     return [dict(zip(keys, vals)) for vals in values_product]
 
+
 def sample(num_samples, distribution):
-    """
-    Randomly samples parameters from given distributions.
+    """Randomly samples parameters from given distributions.
 
     This function samples parameter combinations each of which is a dictionary
     from key to value sampled from a distribution corresponding to the key.
@@ -578,6 +565,7 @@ def sample(num_samples, distribution):
             **Callbable object or function** ``f`` can be used for an arbitrary
                 generator of values. Multiple calls of ``f()`` should generate
                 random samples of user-defined distribution.
+
     """
     parameter_gens = {}
     keys = sorted(distribution)
@@ -619,58 +607,54 @@ def sample(num_samples, distribution):
 # Maf internal library
 
 class CyclicDependencyException(Exception):
-    """
-    Exception raised when experiment graph has a cycle.
-    """
+    """Exception raised when experiment graph has a cycle."""
     pass
+
 
 class InvalidMafArgumentException(Exception):
-    """
-    Exception raised when arguments of ExperimentContext.__call__ is wrong.
+    """Exception raised when arguments of ExperimentContext.__call__ is wrong.
+
     """
     pass
 
+
 class Parameter(dict):
-    """
-    Parameter of maf task.
+    """Parameter of maf task.
 
     This is a dict with hash(). Be careful to use it with set(); parameter has
     hash(), but is mutable.
-    """
 
+    """
     def __hash__(self):
         # TODO(beam2d): Should we cache this value?
         return hash(frozenset(self.iteritems()))
 
     def conflict_with(self, parameter):
-        """
-        Checks whether the parameter conflicts with given other parameter.
+        """Checks whether the parameter conflicts with given other parameter.
 
         Returns:
-           True if self conflicts with parameter, i.e. contains different values
-           corresponding to same key.
+            True if self conflicts with parameter, i.e. contains different
+            values corresponding to same key.
+
         """
         common_keys = set(self) & set(parameter)
         return any(self[key] != parameter[key] for key in common_keys)
 
     def to_str_valued_dict(self):
-        """
-        Gets dictionary with same key and value of type str.
-        """
+        """Gets dictionary with same key and value of type str."""
         return dict([(k, str(self[k])) for k in self])
 
+
 class CallObject(object):
-    """
-    Object representing one call of ExperimentContext.__call__()
-    """
+    """Object representing one call of ``ExperimentContext.__call__()``."""
 
     def __init__(self, **kw):
-        """
-        Initializes a call object. kw['source'] and kw['target'] are converted
-        into list of strings.
+        """Initializes a call object. kw['source'] and kw['target'] are
+        converted into list of strings.
 
         Args:
             **kw: Arguments of ``ExperimentContext.__call__``.
+
         """
         self.__dict__.update(kw)
 
@@ -683,20 +667,18 @@ class CallObject(object):
             self.parameters = [Parameter()]
 
 class ExperimentGraph(object):
-    """
-    Bipartite graph consisting of meta node and call object node.
-    """
+    """Bipartite graph consisting of meta node and call object node."""
 
     def __init__(self):
         self._edges = collections.defaultdict(set)
         self._call_objects = []
 
     def add_call_object(self, call_object):
-        """
-        Adds call object node, related meta nodes and edges.
+        """Adds call object node, related meta nodes and edges.
 
         Args:
             call_object: Call object to be added.
+
         """
         index = len(self._call_objects)
         self._call_objects.append(call_object)
@@ -708,9 +690,9 @@ class ExperimentGraph(object):
             self._edges[index].add(out_node)
 
     def get_sorted_call_objects(self):
-        """
-        Runs topological sort on the experiment graph and returns a sorted list
-        of call objects.
+        """Runs topological sort on the experiment graph and returns a sorted
+        list of call objects.
+
         """
 
         nodes = self._collect_independent_nodes()
@@ -750,8 +732,8 @@ class ExperimentGraph(object):
         return nodes
 
 class ParameterIdGenerator(object):
-    """
-    Maintainer of correspondences between parameters and physical node names.
+    """Maintainer of correspondences between parameters and physical node
+    names.
 
     Meta node has a path and its own parameters, each of which corresponds to
     one physical waf node named as 'path/N', where N is a unique name of the
@@ -765,14 +747,14 @@ class ParameterIdGenerator(object):
 
     Attributes:
         path: Path to file that the table is serialized at.
-    """
 
+    """
     def __init__(self, path):
-        """
-        Initializes the resolver.
+        """Initializes the resolver.
 
         Args:
             path: Path to persistent file of the table.
+
         """
         # TODO(beam2d): Isolate persistency support from resolver.
 
@@ -785,15 +767,12 @@ class ParameterIdGenerator(object):
             self._table = {}
 
     def save(self):
-        """
-        Serializes the table to the file at self.path.
-        """
+        """Serializes the table to the file at self.path."""
         with _create_file(self.path) as f:
             pickle.dump(self._table, f)
 
     def get_id(self, parameter):
-        """
-        Gets the id of given parameter.
+        """Gets the id of given parameter.
 
         Args:
             parameter: Parameter object.
@@ -801,8 +780,8 @@ class ParameterIdGenerator(object):
         Returns:
             Id of given parameter. The id may be generated in this method if
             necessary.
-        """
 
+        """
         if parameter in self._table:
             return self._table[parameter]
 
@@ -812,9 +791,9 @@ class ParameterIdGenerator(object):
         return new_id
 
 def _create_file(path):
-    """
-    Opens file in write mode. It also creates intermediate directories if
+    """Opens file in write mode. It also creates intermediate directories if
     necessary.
+
     """
     prefixes = []
     cur_dir = path
