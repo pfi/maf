@@ -589,8 +589,8 @@ def sample(num_samples, distribution):
 
         # Discrete case is specified by a list
         elif isinstance(distribution[key], list):
-            gen = lambda mult_ks=distribution[key]:
-                mult_ks[np.random.randint(0,len(mult_ks))]
+            gen = lambda mult_ks=distribution[key]: mult_ks[
+                np.random.randint(0,len(mult_ks))]
 
         # Any random generating function
         elif isinstance(distribution[key], types.FunctionType):
