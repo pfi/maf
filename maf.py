@@ -1,3 +1,10 @@
+"""
+maf - a waf extension for automation of parameterized computational experiments
+"""
+
+# TODO(beam2d): Add a simple documentation at the top.
+# TODO(beam2d): Decide which license to use and add its description.
+
 import collections
 import copy
 import itertools
@@ -535,7 +542,7 @@ def convert_libsvm_accuracy(task):
 
 def product(parameter):
     """
-    Generate direct product of given listed parameter. ::
+    Generate direct product of given listed parameters. ::
 
         maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
@@ -556,7 +563,7 @@ def sample(num_samples, distribution):
     This function samples parameter combinations each of which is a dictionary
     from key to value sampled from a distribution corresponding to the key.
     It is useful for hyper-parameter optimization compared to using ``product``,
-    since every instance is different on all dimensions for each other.
+    since every instance can be different on all dimensions for each other.
 
     Args:
         num_samples: Number of samples. Resulting meta node contains this number
