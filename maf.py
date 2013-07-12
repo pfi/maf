@@ -549,28 +549,55 @@ def product(parameter):
     values_product = itertools.product(*values)
     return [dict(zip(keys, vals)) for vals in values_product]
 
-def product_with_sampling(parameter, num_samples):
+def sample(num_samples, distribution):
+    """
+    Randomly samples parameters from given distributions.
+
+    This function samples parameter combinations each of which is a dictionary
+    from key to value sampled from a distribution corresponding to the key.
+    It is useful for hyper-parameter optimization compared to using ``product``,
+    since every instance is different on all dimensions for each other.
+
+    Args:
+        num_samples: Number of samples. Resulting meta node contains this number
+            of physical nodes for each input parameter set.
+        distribution: Dictionary from parameter names to values specifying
+            distributions to sample from. Acceptable values are following:
+
+            **Pair of numbers** ``(a, b)`` specifies a uniform distribution on
+                the continuous interval [a, b].
+            **List of values** specifies a uniform distribution on the descrete
+                set of values.
+            **Callbable object or function** ``f`` can be used for an arbitrary
+                generator of values. Multiple calls of ``f()`` should generate
+                random samples of user-defined distribution.
+    """
     parameter_gens = {}
-    keys = sorted(parameter)
+    keys = sorted(distribution)
 
     sampled = []
     for key in keys:
-        if isinstance(parameter[key], tuple): # float case is specified by a begin/end in a tuple
-            begin,end = parameter[key]
+        # float case is specified by begin/end in a tuple.
+        if isinstance(distribution[key], tuple):
+            begin,end = distribution[key]
             if isinstance(begin, float) or isinstance(end, float):
                 begin = float(begin)
                 end = float(end)
-                # random_sample() generate a point from [0,1), so we scale and shift
+                # random_sample() generate a point from [0,1), so we scale and
+                # shift it.
                 gen = lambda: (end-begin) * np.random.random_sample() + begin
-                
-        elif isinstance(parameter[key], list): # discrete case is specified by a list
-            gen = lambda mult_ks=parameter[key]: mult_ks[np.random.randint(0,len(mult_ks))]
 
-        elif isinstance(parameter[key], types.FunctionType): # any random generating function
-            gen = parameter[key]
+        # Discrete case is specified by a list
+        elif isinstance(distribution[key], list):
+            gen = lambda mult_ks=distribution[key]:
+                mult_ks[np.random.randint(0,len(mult_ks))]
+
+        # Any random generating function
+        elif isinstance(distribution[key], types.FunctionType):
+            gen = distribution[key]
             
         else:
-            gen = lambda: parameter[key] # constant
+            gen = lambda: distribution[key] # constant
            
         parameter_gens[key] = gen
          
@@ -579,7 +606,7 @@ def product_with_sampling(parameter, num_samples):
         for key in keys:
             instance[key] = parameter_gens[key]()
         sampled.append(instance)
-    print sampled
+
     return sampled
 
 # Maf internal library
