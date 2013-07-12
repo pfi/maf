@@ -26,8 +26,10 @@ import waflib.Utils
 def options(opt):
     pass
 
+
 def configure(conf):
     pass
+
 
 class ExperimentContext(waflib.Build.BuildContext):
     """Context class of waf experiment (a.k.a. maf)."""
@@ -666,6 +668,7 @@ class CallObject(object):
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
 
+
 class ExperimentGraph(object):
     """Bipartite graph consisting of meta node and call object node."""
 
@@ -731,6 +734,7 @@ class ExperimentGraph(object):
             nodes -= self._edges[node]
         return nodes
 
+
 class ParameterIdGenerator(object):
     """Maintainer of correspondences between parameters and physical node
     names.
@@ -790,6 +794,7 @@ class ParameterIdGenerator(object):
 
         return new_id
 
+
 def _create_file(path):
     """Opens file in write mode. It also creates intermediate directories if
     necessary.
@@ -808,10 +813,12 @@ def _create_file(path):
 
     return open(path, 'w')
 
+
 def _get_list_from_kw(kw, key):
     if key in kw:
         return waflib.Utils.to_list(kw[key])
     return []
+
 
 def _let_element_to_be_list(d, key):
     if key not in d:
