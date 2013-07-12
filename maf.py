@@ -1,4 +1,4 @@
-from collections import defaultdict
+import collections
 import copy
 import itertools
 import json
@@ -9,8 +9,8 @@ try:
 except ImportError:
     import pickle
 
-from matplotlib import pyplot
-from waflib.Build import BuildContext
+import matplotlib.pyplot
+import waflib.Build
 import waflib.Utils
 
 # TODO(beam2d): Add tests.
@@ -22,7 +22,7 @@ def options(opt):
 def configure(conf):
     pass
 
-class ExperimentContext(BuildContext):
+class ExperimentContext(waflib.Build.BuildContext):
     """
     Context class of waf experiment (a.k.a. maf).
     """
@@ -65,7 +65,7 @@ class ExperimentContext(BuildContext):
         # TODO(beam2d): Remove this stub file name.
         self._parameter_id_generator = ParameterIdGenerator(
             'build/experiment/.maf_id_table')
-        self._nodes = defaultdict(set)
+        self._nodes = collections.defaultdict(set)
 
         try:
             for call_object in call_objects:
@@ -164,7 +164,7 @@ class ExperimentContext(BuildContext):
 
         source_parameters = self._nodes[source_node]
         # Mapping from target parameter to list of source parameter.
-        target_to_source = defaultdict(set)
+        target_to_source = collections.defaultdict(set)
 
         for source_parameter in source_parameters:
             target_parameter = Parameter(
@@ -462,7 +462,7 @@ def plot_by(callback_body):
             figure.
     """
     def callback(values, abspath):
-        figure = pyplot.figure()
+        figure = matplotlib.pyplot.figure()
         plot_data = PlotData(values)
         callback_body(figure, plot_data)
         figure.savefig(abspath)
@@ -681,7 +681,7 @@ class ExperimentGraph(object):
     """
 
     def __init__(self):
-        self._edges = defaultdict(set)
+        self._edges = collections.defaultdict(set)
         self._call_objects = []
 
     def add_call_object(self, call_object):
@@ -709,7 +709,7 @@ class ExperimentGraph(object):
         nodes = self._collect_independent_nodes()
         edges = copy.deepcopy(self._edges)
 
-        reverse_edges = defaultdict(set)
+        reverse_edges = collections.defaultdict(set)
         for node in edges:
             edge = edges[node]
             for tgt in edge:
