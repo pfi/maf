@@ -832,7 +832,3 @@ def _let_element_to_be_list(d, key):
         d[key] = []
     if isinstance(d[key], str):
         d[key] = waflib.Utils.to_list(d[key])
-
-def _synchronized_sort(l1, l2):
-    pairs = sorted(zip(l1, l2))
-    return ([p[0] for p in pairs], [p[1] for p in pairs])
