@@ -86,7 +86,9 @@ class ExperimentContext(waflib.Build.BuildContext):
             call_object.rule = lambda task: rule_impl(task)
 
         if 'for_each' in call_object.__dict__:
-            self._generate_aggregation_tasks(call_object)
+            self._generate_aggregation_tasks(call_object, 'for_each')
+        elif 'aggregate_by' in call_object.__dict__:
+            self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
 
@@ -152,10 +154,11 @@ class ExperimentContext(waflib.Build.BuildContext):
         self._call_super(
             physical_call_object, source_parameter, target_parameter)
 
-    def _generate_aggregation_tasks(self, call_object):
+    def _generate_aggregation_tasks(self, call_object, key_type):
         # In aggregation tasks, source and target must be only one (meta) node.
         # Source node must be meta node. Whether target node is meta or not is
-        # automatically decided by source parameters and for_each keys.
+        # automatically decided by source parameters and for_each/aggregate_by
+        # keys.
         if not call_object.source or len(call_object.source) > 1:
             raise InvalidMafArgumentException(
                 "'source' in aggregation must include only one meta node")
@@ -171,8 +174,14 @@ class ExperimentContext(waflib.Build.BuildContext):
         target_to_source = collections.defaultdict(set)
 
         for source_parameter in source_parameters:
-            target_parameter = Parameter(
-                [(key, source_parameter[key]) for key in call_object.for_each])
+            target_parameter = Parameter()
+            if key_type == 'for_each':
+                for key in call_object.for_each:
+                    target_parameter[key] = source_parameter[key]
+            elif key_type == 'aggregate_by':
+                for key in source_parameter:
+                    if key not in call_object.aggregate_by:
+                        target_parameter[key] = source_parameter[key]
             target_to_source[target_parameter].add(source_parameter)
 
         for target_parameter in target_to_source:
@@ -187,7 +196,10 @@ class ExperimentContext(waflib.Build.BuildContext):
             physical_call_object = copy.deepcopy(call_object)
             physical_call_object.source = source
             physical_call_object.target = target
-            del physical_call_object.for_each
+            if key_type == 'for_each':
+                del physical_call_object.for_each
+            else:
+                del physical_call_object.aggregate_by
 
             self._call_super(
                 physical_call_object, source_parameter, target_parameter)
@@ -352,10 +364,10 @@ class PlotData:
             sort: Flag for sorting the sequence(s).
 
         Returns:
-            If ``key`` is None, then it returns a list of (x, y) pairs.
-            Otherwise, it returns a dictionary from key(s) to a sequence of
-            (x, y) pairs. Each sequence consists of values matched to the
-            key(s).
+            If ``key`` is None, then it returns a pair of x value sequence and
+            y value sequence. Otherwise, it returns a dictionary from a key to
+            a pair of x value sequence and y value sequence. Each sequence
+            consists of values matched to the key(s).
 
         """
         if key is None:
@@ -407,10 +419,11 @@ class PlotData:
             sort: Flag for sorting the sequence(s).
 
         Returns:
-            If ``key`` is None, then it returns a list of (x, y, z) triples.
-            Otherwise, it returns a dictionary from key(s) to a sequence of
-            (x, y, z) triples. Each sequence consists of values matched to the
-            key(s).
+            If ``key`` is None, then it returns a triple of x value sequence,
+            y value sequence and z value sequence. Otherwise, it returns a
+            dictionary from a key to a triple of x value sequence, y value
+            sequence and z value sequence. Each sequence consists of values
+            matched to the key(s).
 
         """
         if key is None:
@@ -601,7 +614,7 @@ def sample(num_samples, distribution):
     for key in keys:
         # float case is specified by begin/end in a tuple.
         if isinstance(distribution[key], tuple):
-            begin,end = distribution[key]
+            begin, end = distribution[key]
             if isinstance(begin, float) or isinstance(end, float):
                 begin = float(begin)
                 end = float(end)
@@ -617,12 +630,12 @@ def sample(num_samples, distribution):
         # Any random generating function
         elif isinstance(distribution[key], types.FunctionType):
             gen = distribution[key]
-            
+
         else:
             gen = lambda: distribution[key] # constant
-           
+
         parameter_gens[key] = gen
-         
+
     for i in range(num_samples):
         instance = {}
         for key in keys:

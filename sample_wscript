@@ -46,6 +46,7 @@ def experiment(exp):
     exp(source='result',
         target='max_accuracy',
         for_each=['s', 'C'],
+        # aggregate_by=['B'],
         rule=maf.max('accuracy'))
 
     exp(source='max_accuracy',
