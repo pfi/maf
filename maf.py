@@ -11,6 +11,8 @@ import itertools
 import json
 import os
 import os.path
+import types
+import numpy as np
 try:
     import cPickle as pickle
 except ImportError:
@@ -527,6 +529,29 @@ def convert_libsvm_accuracy(task):
     j = {'accuracy': float(content.split(' ')[2][:-1])}
     task.outputs[0].write(json.dumps(j))
     return 0
+
+def segment_by_line(num_folds):
+    def body(task):
+        source = open(task.inputs[0].abspath())
+        num_lines = 0
+        for line in source: num_lines += 1
+        source.seek(0)
+
+        base = num_lines/num_folds
+        n = int(task.env.n)
+        test_begin, test_end = base*n, base*(n+1)
+        
+        with open(task.outputs[0].abspath(), 'w') as train, open(task.outputs[1].abspath(), 'w') as test:
+            i = 0
+            for line in source:
+                if i < test_begin or i >= test_end:
+                    # in train
+                    train.write(line)
+                else:
+                    test.write(line)
+                i += 1
+        source.close()
+    return body
 
 # Parameter generation
 
