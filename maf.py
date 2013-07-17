@@ -350,10 +350,10 @@ class PlotData:
             sort: Flag for sorting the sequence(s).
 
         Returns:
-            If ``key`` is None, then it returns a list of (x, y) pairs.
-            Otherwise, it returns a dictionary from key(s) to a sequence of
-            (x, y) pairs. Each sequence consists of values matched to the
-            key(s).
+            If ``key`` is None, then it returns a pair of x value sequence and
+            y value sequence. Otherwise, it returns a dictionary from a key to
+            a pair of x value sequence and y value sequence. Each sequence
+            consists of values matched to the key(s).
 
         """
         if key is None:
@@ -405,10 +405,11 @@ class PlotData:
             sort: Flag for sorting the sequence(s).
 
         Returns:
-            If ``key`` is None, then it returns a list of (x, y, z) triples.
-            Otherwise, it returns a dictionary from key(s) to a sequence of
-            (x, y, z) triples. Each sequence consists of values matched to the
-            key(s).
+            If ``key`` is None, then it returns a triple of x value sequence,
+            y value sequence and z value sequence. Otherwise, it returns a
+            dictionary from a key to a triple of x value sequence, y value
+            sequence and z value sequence. Each sequence consists of values
+            matched to the key(s).
 
         """
         if key is None:
