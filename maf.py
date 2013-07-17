@@ -576,7 +576,7 @@ def sample(num_samples, distribution):
     for key in keys:
         # float case is specified by begin/end in a tuple.
         if isinstance(distribution[key], tuple):
-            begin,end = distribution[key]
+            begin, end = distribution[key]
             if isinstance(begin, float) or isinstance(end, float):
                 begin = float(begin)
                 end = float(end)
@@ -592,12 +592,12 @@ def sample(num_samples, distribution):
         # Any random generating function
         elif isinstance(distribution[key], types.FunctionType):
             gen = distribution[key]
-            
+
         else:
             gen = lambda: distribution[key] # constant
-           
+
         parameter_gens[key] = gen
-         
+
     for i in range(num_samples):
         instance = {}
         for key in keys:
