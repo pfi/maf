@@ -276,6 +276,20 @@ def max(key):
 
     return create_aggregator(body)
 
+
+def average():
+    """
+    Calculate average values for all keys.
+    This may be problematic when there are value types other than number e.g., string.
+    """
+    def body(values, output):
+        scheme = copy.deepcopy(values[0])
+        for key in scheme:
+            scheme[key] = sum([v[key] for v in values]) / float(len(values))
+        return json.dumps(scheme)
+    return create_aggregator(body)
+
+
 # Plotting
 
 class PlotData:
