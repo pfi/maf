@@ -546,7 +546,7 @@ def plot_line(x, y, legend=None):
                 # TODO(beam2d): Support marker.
                 axes.plot(xs, ys, label=label)
 
-            place = legend.get('loc', 'lower right')
+            place = legend.get('loc', 'best')
             axes.legend(loc=place)
         else:
             xs, ys = data.get_data_2d(x['key'], y['key'])
