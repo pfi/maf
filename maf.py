@@ -588,6 +588,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
             ratio of validation set size compared to the input dataset size.
             As noted above, the fold parameter must be less than num_folds.
         parameter_name: name of the parameter indicating the number of folds.
+
     """
     def body(task):
         source = open(task.inputs[0].abspath())
