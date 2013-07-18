@@ -79,7 +79,7 @@ def experiment(exp):
     # cv
     exp(source='news20.scale',
         target='cv_train cv_test',
-        parameters=maf.product({'n':range(5)}), # 5-fold cross validation
+        parameters=maf.product({'fold':range(5)}), # 5-fold cross validation
         rule=maf.segment_by_line(5)) # assume that a line corresponds to a example
 
     exp(source='cv_train cv_test',

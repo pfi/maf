@@ -278,15 +278,21 @@ def max(key):
 
 
 def average():
-    """
-    Calculate average values for all keys.
-    This may be problematic when there are value types other than number e.g., string.
+    """Calculates average values for all keys.
+
+    If some value corresponding to the key cannot be passed to float(), it
+    omits the key.
     """
     def body(values, output):
         scheme = copy.deepcopy(values[0])
         for key in scheme:
-            scheme[key] = sum([v[key] for v in values]) / float(len(values))
+            try:
+                scheme[key] = sum(
+                    float(v[key]) for v in values) / float(len(values))
+            except:
+                pass
         return json.dumps(scheme)
+
     return create_aggregator(body)
 
 
@@ -557,18 +563,45 @@ def convert_libsvm_accuracy(task):
     task.outputs[0].write(json.dumps(j))
     return 0
 
-def segment_by_line(num_folds):
+
+def segment_by_line(num_folds, parameter_name='fold'):
+    """Splits a line-by-line dataset to k-th fold train and validation subsets
+    for n-fold cross validation.
+
+    Assume the input dataset is a text file where each sample is written in a
+    distinct line. This task splits this dataset to given number of folds,
+    extracts the n-th fold as a validation set (where n is specified by the
+    parameter of given key), the others as a training set, and then writes
+    these subsets to output nodes. This is a usual workflow of cross validation
+    in machine learning.
+
+    Note that this task does not shuffle the input dataset. If the order causes
+    imbalancy of each fold, then user should add a task for shuffling the
+    dataset before this task.
+
+    This task requires a parameter indicating an index of the fold. The
+    parameter name is specified by ``parameter_name``. The index must be a
+    non-negative integer less than ``num_folds``.
+
+    Args:
+        num_folds: number of folds for splitting. Inverse of this value is the
+            ratio of validation set size compared to the input dataset size.
+            As noted above, the fold parameter must be less than num_folds.
+        parameter_name: name of the parameter indicating the number of folds.
+    """
     def body(task):
         source = open(task.inputs[0].abspath())
         num_lines = 0
         for line in source: num_lines += 1
         source.seek(0)
 
-        base = num_lines/num_folds
-        n = int(task.env.n)
-        test_begin, test_end = base*n, base*(n+1)
+        base = num_lines / num_folds
+        n = int(task.env[parameter_name])
+        test_begin = bese * n
+        test_end = base * (n + 1)
         
-        with open(task.outputs[0].abspath(), 'w') as train, open(task.outputs[1].abspath(), 'w') as test:
+        with open(task.outputs[0].abspath(), 'w') as train, \
+             open(task.outputs[1].abspath(), 'w') as test:
             i = 0
             for line in source:
                 if i < test_begin or i >= test_end:
