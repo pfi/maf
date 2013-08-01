@@ -18,6 +18,10 @@ try:
 except ImportError:
     import pickle
 
+# These two lines are necessary for desktop-enabled environment.
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot
 import waflib.Build
 import waflib.Utils
