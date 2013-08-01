@@ -27,7 +27,7 @@ import matplotlib.pyplot
 # Allow importing maf from user's script other than waf.
 try:
     import waflib
-except ImportError, e:
+except ImportError:
     import glob
     import sys
     sys.path.append(glob.glob('.waf*')[0])
