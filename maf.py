@@ -594,7 +594,7 @@ def calculate_stats_multilabel_classification(task):
     indicates predict label, while "c" indicates the correct label. If you use
     libsvm, ``create_label_result_libsvm`` converts the results to this format.
 
-    The output measures is summalized as follows, most of which are cited from (*):
+    The output measures is summarized as follows, most of which are cited from (*):
 
     - Accuracy
     - AverageAccuracy
