@@ -23,6 +23,16 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot
+
+# Allow importing maf from user's script other than waf.
+try:
+    import waflib
+except ImportError, e:
+    import glob
+    import sys
+    sys.path.append(glob.glob('.waf*')[0])
+    import waflib
+
 import waflib.Build
 import waflib.Utils
 
