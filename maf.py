@@ -567,6 +567,7 @@ def convert_libsvm_accuracy(task):
     task.outputs[0].write(json.dumps(j))
     return 0
 
+
 def create_label_result_libsvm(task):
     """TODO(noji) write document."""
     predict_f = task.inputs[0].abspath()
@@ -584,43 +585,51 @@ is not consistent with the one of test file (%s)." % (predict_f, test_f))
     task.outputs[0].write(json.dumps(instances))
     return 0
 
+
 def calculate_stats_multilabel_classification(task):
-    """Calculate various performance measure for multi-label classification.
-    The "source" of this task is assumed to a json of a list, in which
-    each item is a dictionary of the form {"p": 3, "c": 5} where "p" indicates
-    predict label, while "c" indicates the correct label.
-    If you use libsvm, create_label_result_libsvm converts the results to this format.
+    """Calculates various performance measure for multi-label classification.
+
+    The "source" of this task is assumed to a json of a list, in which each
+    item is a dictionary of the form ``{"p": 3, "c": 5}`` where ``"p"``
+    indicates predict label, while "c" indicates the correct label. If you use
+    libsvm, ``create_label_result_libsvm`` converts the results to this format.
 
     The output measures is summalized as follows, most of which are cited from (*):
-     - Accuracy
-     - AverageAccuracy
-     - ErrorRate
-     - Precision for each label
-     - Recall for each label
-     - F1 for each label
-     - Specifity for each label
-     - AUC for each label
+
+    - Accuracy
+    - AverageAccuracy
+    - ErrorRate
+    - Precision for each label
+    - Recall for each label
+    - F1 for each label
+    - Specifity for each label
+    - AUC for each label
 
     The output of this task is one json file, like
-      {"accuracy": 0.7,
-       "average_accuracy": 0.8,
-       "error_rate": 0.12,
-       "1-precision": 0.5,
-       "1-recall": 0.8,
-       "1-F1": 0.6,
-       "1-specifity": 0.6,
-       "1-AUC": 0.7,
-       ...
-       "2-precision": 0.6,
-       "2-recall": 0.7,
-       ...
+
+    ..
+
+      {
+        "accuracy": 0.7,
+        "average_accuracy": 0.8,
+        "error_rate": 0.12,
+        "1-precision": 0.5,
+        "1-recall": 0.8,
+        "1-F1": 0.6,
+        "1-specifity": 0.6,
+        "1-AUC": 0.7,
+        ...
+        "2-precision": 0.6,
+        "2-recall": 0.7,
+        ...
       }
-    where accuracy, average_accuracy and error_rate corresponds to
-    Accuracy, AverageAccuracy and ErrorRate respectively. Average is macro average, which
-    is consistent with the output of e.g., svm-predict.
-    Other results (e.g. 1-precision) are calculated for each label
-    and represented as a pair of "label" and "result name" combined with a hyphen.
-    For example, 1-precision is precision for the label 1, while 3-F1 is F1 for the label 3.
+
+    where accuracy, average_accuracy and error_rate corresponds to Accuracy,
+    AverageAccuracy and ErrorRate respectively. Average is macro average, which
+    is consistent with the output of e.g., svm-predict. Other results (e.g.
+    1-precision) are calculated for each label and represented as a pair of
+    "label" and "result name" combined with a hyphen. For example, 1-precision
+    is precision for the label 1, while 3-F1 is F1 for the label 3.
 
     (*) Marina Sokolova, Guy Lapalme
     A systematic analysis of performance measures for classification tasks
@@ -701,8 +710,8 @@ def calculate_stats_multilabel_classification(task):
     task.outputs[0].write(json.dumps(results))
 
 def segment_by_line(num_folds, parameter_name='fold'):
-    """Splits a line-by-line dataset to k-th fold train and validation subsets
-    for n-fold cross validation.
+    """Splits a line-by-line dataset to the k-th fold train and validation
+    subsets for n-fold cross validation.
 
     Assume the input dataset is a text file where each sample is written in a
     distinct line. This task splits this dataset to given number of folds,
@@ -753,7 +762,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
 # Parameter generation
 
 def product(parameter):
-    """Generate direct product of given listed parameters. ::
+    """Generates direct product of given listed parameters. ::
 
         maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
