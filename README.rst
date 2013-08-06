@@ -13,7 +13,7 @@ Copy ``waf`` and ``maf.py`` in it.
 Write ``wscript`` that describes procedure of experiments in this directory.
 Then run following commands:
 
-..
+::
 
   $ ./waf configure
   $ ./waf experiment
