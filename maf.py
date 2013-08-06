@@ -11,12 +11,28 @@ import itertools
 import json
 import os
 import os.path
+import types
+import numpy as np
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
+# These two lines are necessary for desktop-enabled environment.
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot
+
+# Allow importing maf from user's script other than waf.
+try:
+    import waflib
+except ImportError:
+    import glob
+    import sys
+    sys.path.append(glob.glob('.waf*')[0])
+    import waflib
+
 import waflib.Build
 import waflib.Utils
 
@@ -84,7 +100,9 @@ class ExperimentContext(waflib.Build.BuildContext):
             call_object.rule = lambda task: rule_impl(task)
 
         if 'for_each' in call_object.__dict__:
-            self._generate_aggregation_tasks(call_object)
+            self._generate_aggregation_tasks(call_object, 'for_each')
+        elif 'aggregate_by' in call_object.__dict__:
+            self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
 
@@ -150,10 +168,11 @@ class ExperimentContext(waflib.Build.BuildContext):
         self._call_super(
             physical_call_object, source_parameter, target_parameter)
 
-    def _generate_aggregation_tasks(self, call_object):
+    def _generate_aggregation_tasks(self, call_object, key_type):
         # In aggregation tasks, source and target must be only one (meta) node.
         # Source node must be meta node. Whether target node is meta or not is
-        # automatically decided by source parameters and for_each keys.
+        # automatically decided by source parameters and for_each/aggregate_by
+        # keys.
         if not call_object.source or len(call_object.source) > 1:
             raise InvalidMafArgumentException(
                 "'source' in aggregation must include only one meta node")
@@ -169,8 +188,14 @@ class ExperimentContext(waflib.Build.BuildContext):
         target_to_source = collections.defaultdict(set)
 
         for source_parameter in source_parameters:
-            target_parameter = Parameter(
-                [(key, source_parameter[key]) for key in call_object.for_each])
+            target_parameter = Parameter()
+            if key_type == 'for_each':
+                for key in call_object.for_each:
+                    target_parameter[key] = source_parameter[key]
+            elif key_type == 'aggregate_by':
+                for key in source_parameter:
+                    if key not in call_object.aggregate_by:
+                        target_parameter[key] = source_parameter[key]
             target_to_source[target_parameter].add(source_parameter)
 
         for target_parameter in target_to_source:
@@ -185,7 +210,10 @@ class ExperimentContext(waflib.Build.BuildContext):
             physical_call_object = copy.deepcopy(call_object)
             physical_call_object.source = source
             physical_call_object.target = target
-            del physical_call_object.for_each
+            if key_type == 'for_each':
+                del physical_call_object.for_each
+            else:
+                del physical_call_object.aggregate_by
 
             self._call_super(
                 physical_call_object, source_parameter, target_parameter)
@@ -261,6 +289,26 @@ def max(key):
         return json.dumps(argmax)
 
     return create_aggregator(body)
+
+
+def average():
+    """Calculates average values for all keys.
+
+    If some value corresponding to the key cannot be passed to float(), it
+    omits the key.
+    """
+    def body(values, output):
+        scheme = copy.deepcopy(values[0])
+        for key in scheme:
+            try:
+                scheme[key] = sum(
+                    float(v[key]) for v in values) / float(len(values))
+            except:
+                pass
+        return json.dumps(scheme)
+
+    return create_aggregator(body)
+
 
 # Plotting
 
@@ -350,10 +398,10 @@ class PlotData:
             sort: Flag for sorting the sequence(s).
 
         Returns:
-            If ``key`` is None, then it returns a list of (x, y) pairs.
-            Otherwise, it returns a dictionary from key(s) to a sequence of
-            (x, y) pairs. Each sequence consists of values matched to the
-            key(s).
+            If ``key`` is None, then it returns a pair of x value sequence and
+            y value sequence. Otherwise, it returns a dictionary from a key to
+            a pair of x value sequence and y value sequence. Each sequence
+            consists of values matched to the key(s).
 
         """
         if key is None:
@@ -405,10 +453,11 @@ class PlotData:
             sort: Flag for sorting the sequence(s).
 
         Returns:
-            If ``key`` is None, then it returns a list of (x, y, z) triples.
-            Otherwise, it returns a dictionary from key(s) to a sequence of
-            (x, y, z) triples. Each sequence consists of values matched to the
-            key(s).
+            If ``key`` is None, then it returns a triple of x value sequence,
+            y value sequence and z value sequence. Otherwise, it returns a
+            dictionary from a key to a triple of x value sequence, y value
+            sequence and z value sequence. Each sequence consists of values
+            matched to the key(s).
 
         """
         if key is None:
@@ -511,7 +560,7 @@ def plot_line(x, y, legend=None):
                 # TODO(beam2d): Support marker.
                 axes.plot(xs, ys, label=label)
 
-            place = legend.get('loc', 'lower right')
+            place = legend.get('loc', 'best')
             axes.legend(loc=place)
         else:
             xs, ys = data.get_data_2d(x['key'], y['key'])
@@ -528,10 +577,202 @@ def convert_libsvm_accuracy(task):
     task.outputs[0].write(json.dumps(j))
     return 0
 
+
+def create_label_result_libsvm(task):
+    """TODO(noji) write document."""
+    predict_f = task.inputs[0].abspath()
+    test_f = task.inputs[1].abspath()
+    labels = {}
+    predict = [int(line.strip()) for line in open(predict_f)]
+    correct = [int(line.strip().split(' ')[0]) for line in open(test_f)]
+    if len(predict) != len(correct):
+        raise InvalidMafArgumentException(
+            "the number of lines of output file (%s) \
+is not consistent with the one of test file (%s)." % (predict_f, test_f))
+    instances = []
+    for i in range(len(predict)):
+        instances.append({"p": predict[i], "c": correct[i]})
+    task.outputs[0].write(json.dumps(instances))
+    return 0
+
+
+def calculate_stats_multilabel_classification(task):
+    """Calculates various performance measure for multi-label classification.
+
+    The "source" of this task is assumed to a json of a list, in which each
+    item is a dictionary of the form ``{"p": 3, "c": 5}`` where ``"p"``
+    indicates predict label, while "c" indicates the correct label. If you use
+    libsvm, ``create_label_result_libsvm`` converts the results to this format.
+
+    The output measures is summarized as follows, most of which are cited from (*):
+
+    - Accuracy
+    - AverageAccuracy
+    - ErrorRate
+    - Precision for each label
+    - Recall for each label
+    - F1 for each label
+    - Specifity for each label
+    - AUC for each label
+
+    The output of this task is one json file, like
+
+    ..
+
+      {
+        "accuracy": 0.7,
+        "average_accuracy": 0.8,
+        "error_rate": 0.12,
+        "1-precision": 0.5,
+        "1-recall": 0.8,
+        "1-F1": 0.6,
+        "1-specifity": 0.6,
+        "1-AUC": 0.7,
+        ...
+        "2-precision": 0.6,
+        "2-recall": 0.7,
+        ...
+      }
+
+    where accuracy, average_accuracy and error_rate corresponds to Accuracy,
+    AverageAccuracy and ErrorRate respectively. Average is macro average, which
+    is consistent with the output of e.g., svm-predict. Other results (e.g.
+    1-precision) are calculated for each label and represented as a pair of
+    "label" and "result name" combined with a hyphen. For example, 1-precision
+    is precision for the label 1, while 3-F1 is F1 for the label 3.
+
+    (*) Marina Sokolova, Guy Lapalme
+    A systematic analysis of performance measures for classification tasks
+    Information Processing and Management 45 (2009) 427-437
+    
+    """
+    def accuracy(labelstats):
+        correct = 0
+        for stat in labelstats.values():
+            correct += stat["tp"]
+        head_key = labelstats.keys()[0]
+        n = sum(labelstats[head_key].values())
+        return float(correct) / n
+            
+    def average_accuracy(labelstats):
+        ret = 0
+        for stat in labelstats.values():
+            ret += float(stat["tp"] + stat["tn"]) \
+                / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
+        return ret / float(len(labelstats))
+    
+    def error_rate(labelstats):
+        ret = 0
+        for stat in labelstats.values():
+            ret += float(stat["fp"] + stat["fn"]) \
+                / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
+        return ret / float(len(labelstats))
+    
+    def label_precision(stat):
+        return float(stat["tp"]) / (stat["tp"] + stat["fp"])
+    def label_recall(stat):
+        return float(stat["tp"]) / (stat["tp"] + stat["fn"])
+    def label_F1(stat):
+        return float(2 * stat["tp"]) / (2 * stat["tp"] + stat["fn"] + stat["fp"])
+    def label_specifity(stat):
+        return float(stat["tn"]) / (stat["fp"] + stat["tn"])
+    def label_AUC(stat):
+        return 0.5 * (float(stat["tp"]) / (stat["tp"] + stat["fn"]) + \
+                      float(stat["tn"]) / (stat["tn"] + stat["fp"]))
+    
+    predict_correct_labels = json.loads(task.inputs[0].read())
+    labelstats = {}
+    labelset = set()
+    for e in predict_correct_labels:
+        labelset.add(e["p"])
+        labelset.add(e["c"])
+    for label in labelset:
+        labelstats[label] = {"tp": 0, # true positive
+                             "tn": 0, # true negative
+                             "fp": 0, # false positive
+                             "fn": 0} # false negative
+    for e in predict_correct_labels:
+        p = e["p"]
+        c = e["c"]
+        for label, stat in labelstats.items():
+            label_p = p == label
+            label_c = c == label
+            if label_p and label_c:
+                stat["tp"] += 1
+            elif label_p and not label_c:
+                stat["fp"] += 1
+            elif not label_p and label_c:
+                stat["fn"] += 1
+            else:
+                stat["tn"] += 1
+    
+    results = {}
+    results["accuracy"] = accuracy(labelstats)
+    results["average_accuracy"] = average_accuracy(labelstats)
+    results["error_rate"] = error_rate(labelstats)
+    for label in labelset:
+        results["%s-precision" % label] = label_precision(labelstats[label])
+        results["%s-recall" % label] = label_recall(labelstats[label])
+        results["%s-F1" % label] = label_F1(labelstats[label])
+        results["%s-specifity" % label] = label_specifity(labelstats[label])
+        results["%s-AUC" % label] = label_AUC(labelstats[label])
+        
+    task.outputs[0].write(json.dumps(results))
+
+def segment_by_line(num_folds, parameter_name='fold'):
+    """Splits a line-by-line dataset to the k-th fold train and validation
+    subsets for n-fold cross validation.
+
+    Assume the input dataset is a text file where each sample is written in a
+    distinct line. This task splits this dataset to given number of folds,
+    extracts the n-th fold as a validation set (where n is specified by the
+    parameter of given key), the others as a training set, and then writes
+    these subsets to output nodes. This is a usual workflow of cross validation
+    in machine learning.
+
+    Note that this task does not shuffle the input dataset. If the order causes
+    imbalancy of each fold, then user should add a task for shuffling the
+    dataset before this task.
+
+    This task requires a parameter indicating an index of the fold. The
+    parameter name is specified by ``parameter_name``. The index must be a
+    non-negative integer less than ``num_folds``.
+
+    Args:
+        num_folds: number of folds for splitting. Inverse of this value is the
+            ratio of validation set size compared to the input dataset size.
+            As noted above, the fold parameter must be less than num_folds.
+        parameter_name: name of the parameter indicating the number of folds.
+
+    """
+    def body(task):
+        source = open(task.inputs[0].abspath())
+        num_lines = 0
+        for line in source: num_lines += 1
+        source.seek(0)
+
+        base = num_lines / num_folds
+        n = int(task.env[parameter_name])
+        test_begin = bese * n
+        test_end = base * (n + 1)
+        
+        with open(task.outputs[0].abspath(), 'w') as train, \
+             open(task.outputs[1].abspath(), 'w') as test:
+            i = 0
+            for line in source:
+                if i < test_begin or i >= test_end:
+                    # in train
+                    train.write(line)
+                else:
+                    test.write(line)
+                i += 1
+        source.close()
+    return body
+
 # Parameter generation
 
 def product(parameter):
-    """Generate direct product of given listed parameters. ::
+    """Generates direct product of given listed parameters. ::
 
         maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
@@ -576,7 +817,7 @@ def sample(num_samples, distribution):
     for key in keys:
         # float case is specified by begin/end in a tuple.
         if isinstance(distribution[key], tuple):
-            begin,end = distribution[key]
+            begin, end = distribution[key]
             if isinstance(begin, float) or isinstance(end, float):
                 begin = float(begin)
                 end = float(end)
@@ -592,12 +833,12 @@ def sample(num_samples, distribution):
         # Any random generating function
         elif isinstance(distribution[key], types.FunctionType):
             gen = distribution[key]
-            
+
         else:
             gen = lambda: distribution[key] # constant
-           
+
         parameter_gens[key] = gen
-         
+
     for i in range(num_samples):
         instance = {}
         for key in keys:
