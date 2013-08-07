@@ -753,7 +753,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
 
         base = num_lines / num_folds
         n = int(task.env[parameter_name])
-        test_begin = bese * n
+        test_begin = base * n
         test_end = base * (n + 1)
         
         with open(task.outputs[0].abspath(), 'w') as train, \
