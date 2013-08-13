@@ -8,6 +8,12 @@ The main target of maf is experiments of machine learning, but it is useful for 
 Usage
 =====
 
+Clone this repository and execute following command. It generates ``maf.py``.
+
+::
+
+  $ python generate_maf.py
+
 Create a directory to run experiments.
 Copy ``waf`` and ``maf.py`` into it.
 Write a file named ``wscript`` that describes procedure of experiments into this directory.
