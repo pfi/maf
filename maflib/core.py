@@ -1,7 +1,3 @@
-"""
-maf - a waf extension for automation of parameterized computational experiments
-"""
-
 # TODO(beam2d): Add a simple documentation at the top.
 # TODO(beam2d): Decide which license to use and add its description.
 

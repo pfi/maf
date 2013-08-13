@@ -1,4 +1,4 @@
-import maf
+import maflib.core as maf
 import subprocess
 
 def options(opt):
