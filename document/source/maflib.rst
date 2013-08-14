@@ -9,14 +9,6 @@ maflib Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`maf` Module
------------------
-
-.. automodule:: maflib.maf
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`plot` Module
 ------------------
 
