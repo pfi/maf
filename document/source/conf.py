@@ -38,13 +38,10 @@ else:
     else:
         raise Exception("waf script is missing. Please place it to the project root directory.")
 
-if waflib:
-    sys.path.insert(0, waflib)
-    sys.path.insert(0, os.path.join(waflib, "waflib"))
+sys.path.insert(0, waflib)
 
 maflib = os.path.join(waf_root, "maflib")
 sys.path.insert(0, waf_root)
-sys.path.insert(0, maflib)
 
 # -- General configuration -----------------------------------------------------
 
