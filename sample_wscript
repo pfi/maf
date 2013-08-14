@@ -1,4 +1,5 @@
-import maflib.core as maf
+import maf
+import maflib.core
 import subprocess
 
 def options(opt):
@@ -47,7 +48,7 @@ def experiment(exp):
 
     exp(source='news20.scale',
         target='model',
-        parameters=maf.product({
+        parameters=maflib.core.product({
             's': [0, 1, 2, 3, 4, 7],
             'C': [0.001, 0.01, 0.1, 1, 10, 100],
             'B': [-1, 1]
@@ -60,18 +61,18 @@ def experiment(exp):
 
     exp(source='raw_result',
         target='result',
-        rule=maf.convert_libsvm_accuracy)
+        rule=maflib.core.convert_libsvm_accuracy)
 
     exp(source='result',
         target='max_accuracy',
         for_each=['s', 'C'],
         # aggregate_by=['B'],
-        rule=maf.max('accuracy'))
+        rule=maflib.core.max('accuracy'))
 
     exp(source='max_accuracy',
         target='figure.png',
         for_each=[],
-        rule=maf.plot_line(
+        rule=maflib.core.plot_line(
             x={'key': 'C', 'scale': 'log'},
             y='accuracy',
             legend={'key': 's', 'labels': LIBLINEAR_METHODS}))
@@ -79,12 +80,12 @@ def experiment(exp):
     # cv
     exp(source='news20.scale',
         target='cv_train cv_test',
-        parameters=maf.product({'fold':range(5)}), # 5-fold cross validation
-        rule=maf.segment_by_line(5)) # assume that a line corresponds to a example
+        parameters=maflib.core.product({'fold':range(5)}), # 5-fold cross validation
+        rule=maflib.core.segment_by_line(5)) # assume that a line corresponds to a example
 
     exp(source='cv_train cv_test',
         target='cv_model cv_raw_result',
-        parameters=maf.product({
+        parameters=maflib.core.product({
             's': [0, 1],
             'C': [0.01],
             'B': [1]
@@ -92,8 +93,8 @@ def experiment(exp):
         rule=liblinear_train_test)
     exp(source='cv_raw_result',
         target='cv_result',
-        rule=maf.convert_libsvm_accuracy)
+        rule=maflib.core.convert_libsvm_accuracy)
     exp(source='cv_result',
         target='cv_ave_accuracy',
         for_each=['s', 'C', 'B'],
-        rule=maf.average())
+        rule=maflib.core.average())
