@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import waflib.Context
 import waflib.Logs
 
 TEMPORARY_FILE_NAME = 'maflib.tar.bz2'
@@ -18,8 +19,6 @@ NEW_LINE = '#XXX'.encode()
 CARRIAGE_RETURN = '#YYY'.encode()
 ARCHIVE_BEGIN = '#==>\n'.encode()
 ARCHIVE_END = '#<==\n'.encode()
-
-MAFLIB_PATH = '.maf'
 
 class _Cleaner:
     def __init__(self, directory):
@@ -37,7 +36,8 @@ class _Cleaner:
 
     def clean(self):
         try:
-            shutil.rmtree(self._directory)
+            path = os.path.join(self._directory, 'maflib')
+            shutil.rmtree(path)
         except OSError:
             pass
 
@@ -75,27 +75,23 @@ def unpack_maflib(directory):
         os.remove(TEMPORARY_FILE_NAME)
 
         maflib_path = os.path.abspath(os.getcwd())
-        sys.path[:0] = [maflib_path]
+        # sys.path[:0] = [maflib_path]
         return maflib_path
 
 def test_maflib(directory):
     try:
-        os.stat(os.path.join(directory, 'waflib'))
+        os.stat(os.path.join(directory, 'maflib'))
         return os.path.abspath(directory)
     except OSError:
         return None
 
 def find_maflib():
-    base = os.path.dirname(os.path.abspath(sys.argv[0]))
-    path = test_maflib(base)
-    if path:
-        return path
-
-    path = os.path.join(base, MAFLIB_PATH)
+    path = waflib.Context.waf_dir
     if not test_maflib(path):
         unpack_maflib(path)
-
     return path
+
+find_maflib()
 
 def configure(conf):
     try:
