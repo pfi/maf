@@ -45,7 +45,6 @@ class ExperimentContext(waflib.Build.BuildContext):
         call_object = CallObject(**kw)
         self._experiment_graph.add_call_object(call_object)
 
-    @staticmethod
     def _process_call_objects(self):
         """Callback function called right after all wscripts are executed.
 
