@@ -19,6 +19,8 @@ CARRIAGE_RETURN = '#YYY'.encode()
 ARCHIVE_BEGIN = '#==>\n'.encode()
 ARCHIVE_END = '#<==\n'.encode()
 
+MAFLIB_PATH = '.maf'
+
 class _Cleaner:
     def __init__(self, directory):
         self._cwd = os.getcwd()
@@ -76,14 +78,38 @@ def unpack_maflib(directory):
         sys.path[:0] = [maflib_path]
         return maflib_path
 
+def test_maflib(directory):
+    try:
+        os.stat(os.path.join(directory, 'waflib'))
+        return os.path.abspath(directory)
+    except OSError:
+        return None
+
+def find_maflib():
+    base = os.path.dirname(os.path.abspath(sys.argv[0]))
+    path = test_maflib(base)
+    if path:
+        return path
+
+    path = os.path.join(base, MAFLIB_PATH)
+    if not test_maflib(path):
+        unpack_maflib(path)
+
+    return path
+
 def configure(conf):
     try:
-        conf.env.MAFLIB_PATH = unpack_maflib('.maf')
+        conf.env.MAFLIB_PATH = find_maflib()
         conf.msg('Unpacking maflib', 'yes')
-        conf.load('maflib')
+        conf.load('maflib.core')
     except:
         conf.msg('Unpacking maflib', 'no')
         waflib.Logs.error(sys.exc_info()[1])
 
 def options(opt):
-    opt.load('maflib')
+    try:
+        find_maflib()
+        opt.load('maflib.core')
+    except:
+        opt.msg('Unpacking maflib', 'no')
+        waflib.Logs.error(sys.exc_info()[1])
