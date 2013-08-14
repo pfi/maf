@@ -39,8 +39,6 @@ else:
         raise Exception("waf script is missing. Please place it to the project root directory.")
 
 sys.path.insert(0, waflib)
-
-maflib = os.path.join(waf_root, "maflib")
 sys.path.insert(0, waf_root)
 
 # -- General configuration -----------------------------------------------------
