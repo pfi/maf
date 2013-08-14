@@ -16,7 +16,35 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+
+waf_root = os.path.join(os.path.abspath('.'), "../../")
+waf_path = os.path.join(waf_root, "waf")
+waflib = ""
+
+def waflib_cands(root):
+    return map((lambda x: os.path.join(root,x)),
+               filter((lambda x: x.startswith(".waf-")), os.listdir(root)))
+
+cands = waflib_cands(waf_root)
+if len(cands) > 0:
+    waflib = cands[0]
+else:
+    if os.path.exists(waf_path):
+        import subprocess
+        devnull = open('/dev/null')
+        # execute waf to create waflib directory
+        subprocess.call(['python', waf_path], stdout=devnull, stderr=devnull)
+        waflib = waflib_cands(waf_root)[0]
+    else:
+        raise Exception("waf script is missing. Please place it to the project root directory.")
+
+if waflib:
+    sys.path.insert(0, waflib)
+    sys.path.insert(0, os.path.join(waflib, "waflib"))
+
+maflib = os.path.join(waf_root, "maflib")
+sys.path.insert(0, waf_root)
+sys.path.insert(0, maflib)
 
 # -- General configuration -----------------------------------------------------
 
@@ -25,7 +53,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
