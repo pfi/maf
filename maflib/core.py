@@ -12,6 +12,7 @@ except ImportError:
 
 import waflib.Build
 import waflib.Utils
+from waflib.TaskGen import before_method, feature
 
 # TODO(beam2d): Add tests.
 
@@ -198,6 +199,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             **call_object.__dict__)
         taskgen.env.source_parameter = source_parameter
         taskgen.env.update(target_parameter.to_str_valued_dict())
+        taskgen.parameter = target_parameter
 
     def _resolve_meta_nodes(self, nodes, parameters):
         if not isinstance(parameters, list):
@@ -272,6 +274,9 @@ class CallObject(object):
 
         _let_element_to_be_list(self.__dict__, 'source')
         _let_element_to_be_list(self.__dict__, 'target')
+        _let_element_to_be_list(self.__dict__, 'features')
+        self.__dict__['features'].append('experiment')
+        
         if 'for_each' in self.__dict__:
             _let_element_to_be_list(self.__dict__, 'for_each')
 
@@ -435,3 +440,24 @@ def _let_element_to_be_list(d, key):
         d[key] = []
     if isinstance(d[key], str):
         d[key] = waflib.Utils.to_list(d[key])
+
+class ExperimentTask(waflib.Task.Task):
+    def __init__(self, env, generator):
+        super(ExperimentTask, self).__init__(env=env, generator=generator)
+        self.parameter = generator.parameter
+
+@feature('experiment')
+@before_method('process_rule')
+def process_experiment(self):
+    self.name = str(getattr(self, 'name', None) or self.target or getattr(self.rule, '__name__', self.rule))
+    params = {}
+    if isinstance(self.rule, str):
+        params['run_str'] = self.rule
+    else:
+        params['run'] = self.rule
+
+    # define ExperimentTask with a user-defined rule (string or function)
+    cls = type(waflib.Task.Task)(self.name, (ExperimentTask,), params)
+    waflib.Task.classes[self.name] = cls
+    
+    self.bld.cache_rule_attr = {(self.name, self.rule):cls}
