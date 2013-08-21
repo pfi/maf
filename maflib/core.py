@@ -12,6 +12,7 @@ except ImportError:
 
 import waflib.Build
 import waflib.Utils
+from waflib.TaskGen import before_method, feature
 
 # TODO(beam2d): Add tests.
 
@@ -198,6 +199,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             **call_object.__dict__)
         taskgen.env.source_parameter = source_parameter
         taskgen.env.update(target_parameter.to_str_valued_dict())
+        taskgen.parameter = target_parameter
 
     def _resolve_meta_nodes(self, nodes, parameters):
         if not isinstance(parameters, list):
@@ -272,6 +274,9 @@ class CallObject(object):
 
         _let_element_to_be_list(self.__dict__, 'source')
         _let_element_to_be_list(self.__dict__, 'target')
+        _let_element_to_be_list(self.__dict__, 'features')
+        self.__dict__['features'].append('experiment')
+        
         if 'for_each' in self.__dict__:
             _let_element_to_be_list(self.__dict__, 'for_each')
 
@@ -435,3 +440,63 @@ def _let_element_to_be_list(d, key):
         d[key] = []
     if isinstance(d[key], str):
         d[key] = waflib.Utils.to_list(d[key])
+
+class ExperimentTask(waflib.Task.Task):
+    """A task class specific for ExperimentContext.
+    The purpose of this class is to bring the parameter as an attribute.
+    The base class (waflib.Task.Task) doesn't bring attributes except env,
+    but the env must be a string-valued dictionary, which is problematic
+    when we want to use the parameter in an object as it is. For example,
+    a float value once converted to string lose some information.
+    """
+    def __init__(self, env, generator):
+        super(ExperimentTask, self).__init__(env=env, generator=generator)
+        self.parameter = generator.parameter
+
+@feature('experiment')
+@before_method('process_rule')
+def regist_experiment_task_with_rule(self):
+    """A task_gen method called before process_rule.
+    WARNING: This method currently strongly connected to the internal of
+    process_rule method, which is defined in waflib.TaskGen,
+    so may require a modification in future version of waf.
+
+    The role of this method is to create self.bld.cache_rule_attr, which
+    is later used in process_rule. It is a dictionary of (task_name, the rule of task)
+    pair to a task class. This task class is a derived class of ExperimentTask
+    defined above, which override the run method of it with the function given by rule
+    attribute written in wscript. This process is necessary because the process_rule
+    cannot create a user-define Task with a user-defined rule (as in our case).
+
+    In the current implementation of process_rule, the cache_rule_attr is used as follows:
+    
+        try:
+                cache = self.bld.cache_rule_attr
+        except AttributeError:
+                cache = self.bld.cache_rule_attr = {}
+
+        cls = None
+            if getattr(self, 'cache_rule', 'True'):
+                    try:
+                            cls = cache[(name, self.rule)]
+                    except KeyError:
+                            pass
+            if not cls:
+                    cls = Task.task_factory(name, self.rule,
+                    ....
+    
+    This snippet search for a task from cache_rule_attr dictionary first,
+    so we set that dictionary beforehand.
+    """
+    self.name = str(getattr(self, 'name', None) or self.target or getattr(self.rule, '__name__', self.rule))
+    params = {}
+    if isinstance(self.rule, str):
+        params['run_str'] = self.rule
+    else:
+        params['run'] = self.rule
+
+    # define ExperimentTask with a user-defined rule (string or function)
+    cls = type(waflib.Task.Task)(self.name, (ExperimentTask,), params)
+    waflib.Task.classes[self.name] = cls
+    
+    self.bld.cache_rule_attr = {(self.name, self.rule):cls}
