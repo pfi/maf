@@ -1,6 +1,7 @@
 import itertools
 import json
 import types
+import numpy as np
 
 def create_aggregator(callback_body):
     """Creates an aggregator using function f independent from waf.
@@ -107,3 +108,8 @@ def sample(num_samples, distribution):
         sampled.append(instance)
 
     return sampled
+
+def set_random_seed(x):
+    np.random.seed(x)
+
+set_random_seed(10)
