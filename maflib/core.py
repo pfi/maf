@@ -280,6 +280,8 @@ class CallObject(object):
         if 'for_each' in self.__dict__:
             _let_element_to_be_list(self.__dict__, 'for_each')
 
+        _let_element_to_be_list(self.__dict__, 'aggregate_by')
+
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
 
