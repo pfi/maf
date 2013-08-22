@@ -51,3 +51,36 @@ class TestParameter(unittest.TestCase):
 
         self.assertFalse(Parameter(a=2) in d)
         self.assertFalse(Parameter(a=1, b=2, c=3) in d)
+
+
+class TestCallObject(unittest.TestCase):
+    def test_listize_source(self):
+        self._test_listize('source')
+
+    def test_listize_target(self):
+        self._test_listize('target')
+
+    def test_listize_features(self):
+        self._test_listize('features')
+
+    def test_listize_for_each(self):
+        self._test_listize('for_each')
+
+    def test_listize_aggregate_by(self):
+        self._test_listize('aggregate_by')
+
+    def test_default_parameters(self):
+        co = CallObject()
+        self.assertListEqual([Parameter()], co.parameters)
+
+    def test_features_experiment(self):
+        co = CallObject()
+        self.assertIn('experiment', co.features)
+
+    def _test_listize(self, key):
+        queries = [('a ab c', ['a', 'ab', 'c'])]
+        for query in queries:
+            co = CallObject(**{ key: query[0] })
+            self.assertTrue(isinstance(getattr(co, key), list))
+            for q in query[1]:
+                self.assertIn(q, getattr(co, key))
