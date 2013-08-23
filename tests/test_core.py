@@ -89,3 +89,94 @@ class TestCallObject(unittest.TestCase):
             self.assertTrue(isinstance(getattr(co, key), list))
             for q in query[1]:
                 self.assertIn(q, getattr(co, key))
+
+
+class TestExperimentGraph(unittest.TestCase):
+    def test_empty_graph(self):
+        g = ExperimentGraph()
+        cos = g.get_sorted_call_objects()
+        self.assertEqual([], cos)
+
+    def test_path_graph(self):
+        self._test_graph(
+            [('c', 'd'), ('a', 'b'), ('d', 'e'), ('b', 'c')],
+            [(1, 3), (3, 0), (0, 2)])
+
+    def test_tree_graph(self):
+        self._test_graph(
+            [('b', 'c'), ('a', 'b'), ('b', 'd')], [(1, 0), (1, 2)])
+
+    def test_tree_graph_2(self):
+        self._test_graph(
+            [('b', 'c'), ('a', 'd'), ('a', 'b')], [(2, 0)])
+
+    def test_tree_graph_3(self):
+        self._test_graph(
+            [('b', 'c'), ('d', 'h'), ('c', 'f'), ('a', 'b'), ('b', 'e'),
+             ('d', 'g'), ('b', 'd')],
+            [(3, 0), (0, 2), (3, 4), (3, 6), (6, 1), (6, 5)])
+
+    def test_reverse_tree_graph(self):
+        self._test_graph(
+            [('a', 'c'), ('c', 'd'), ('b', 'c')], [(0, 1), (2, 1)])
+
+    def test_reverse_tree_graph_2(self):
+        self._test_graph(
+            [('b', 'd'), ('c', 'd'), ('a', 'b')], [(2, 0)])
+
+    def test_reverse_tree_graph_3(self):
+        self._test_graph(
+            [('a', 'd'), ('b', 'd'), ('d', 'f'), ('e', 'f'), ('c', 'd')],
+            [(0, 2), (1, 2), (4, 2)])
+
+    def test_diamond_graph(self):
+        self._test_graph(
+            [('a', 'b'), ('c', 'd'), ('b', 'd'), ('a', 'c')],
+            [(0, 2), (3, 1)])
+
+    def test_acyclic_graph(self):
+        self._test_graph(
+            [('b', 'f'), ('d', 'f'), ('a', 'c'), ('a', 'd'), ('a', 'e'), ('c', 'f')],
+            [(2, 5), (3, 1)])
+
+    def test_hyper_reverse_tree_graph(self):
+        self._test_graph(
+            [('d', 'e'), ('a b', 'd'), ('c', 'd')], [(1, 0), (2, 0)])
+
+    def test_hyper_tree_graph(self):
+        self._test_graph(
+            [('b', 'c d'), ('a', 'b'), ('b', 'e')], [(1, 0), (1, 2)])
+
+    def test_hyper_acyclic_graph(self):
+        self._test_graph(
+            [('d', 'e f'), ('c', 'd'), ('a b', 'd'), ('d', 'g')],
+            [(2, 0), (2, 3), (1, 0), (1, 3)])
+
+    def test_cycle(self):
+        with self.assertRaises(CyclicDependencyException):
+            self._test_graph([('a', 'b'), ('c', 'a'), ('b', 'c')], [])
+
+    def test_cyclic_graph(self):
+        with self.assertRaises(CyclicDependencyException):
+            self._test_graph(
+                [('c', 'd'), ('a', 'c'), ('b', 'c'), ('c', 'e'), ('d', 'b'),
+                 ('b', 'e')],
+                [])
+
+    def _test_graph(self, edges, order):
+        cos = [CallObject(source=src, target=tgt) for src, tgt in edges]
+        g = ExperimentGraph()
+        for co in cos:
+            g.add_call_object(co)
+
+        sorted_cos = g.get_sorted_call_objects()
+        for former, latter in order:
+            former_at = None
+            latter_at = None
+            for i, co in enumerate(sorted_cos):
+                if co == cos[former]:
+                    former_at = i
+                elif co == cos[latter]:
+                    latter_at = i
+
+            self.assertLess(former_at, latter_at)
