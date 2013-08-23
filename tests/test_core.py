@@ -77,6 +77,11 @@ class TestCallObject(unittest.TestCase):
         co = CallObject()
         self.assertIn('experiment', co.features)
 
+    def test_equality(self):
+        co1 = CallObject(source='a b c', target='d e', features='x', for_each='p q')
+        co2 = CallObject(source='a b c', target='d e', features='x', for_each='p q')
+        self.assertEqual(co1, co2)
+
     def _test_listize(self, key):
         queries = [('a ab c', ['a', 'ab', 'c'])]
         for query in queries:

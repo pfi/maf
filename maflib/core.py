@@ -279,6 +279,9 @@ class CallObject(object):
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class ExperimentGraph(object):
     """Bipartite graph consisting of meta node and call object node."""
