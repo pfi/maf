@@ -58,7 +58,8 @@ class ExperimentContext(waflib.Build.BuildContext):
 
         # TODO(beam2d): Remove this stub file name.
         self._parameter_id_generator = ParameterIdGenerator(
-            'build/experiment/.maf_id_table')
+            'build/experiment/.maf_id_table',
+            'build/experiment/.maf_id_table.tsv')
         self._nodes = collections.defaultdict(set)
 
         try:
@@ -360,24 +361,34 @@ class ParameterIdGenerator(object):
     consistent over multiple execution of waf, so we serializes the table to
     hidden file.
 
+    This class also dumps the correspondence to a human-readable text file.
+    The file is tab-separated line for each correspondence: the first element
+    is an identifier and the second is a JSON representation of the
+    correspondent parameter.
+
     NOTE: On exception raised during task generation, save() must be called
     to avoid inconsistency on node names that had been generated before the
     exception was raised.
 
     Attributes:
         path: Path to file that the table is serialized at.
+        text_path: Path to file that the table is dumped to as a human-readable
+            text.
 
     """
-    def __init__(self, path):
+    def __init__(self, path, text_path):
         """Initializes the resolver.
 
         Args:
             path: Path to persistent file of the table.
+            text_path: Path to file that the table is dumped to as a human-
+                readable text.
 
         """
         # TODO(beam2d): Isolate persistency support from resolver.
 
         self.path = path
+        self.text_path = text_path
 
         if os.path.exists(path):
             with open(path) as f:
@@ -389,6 +400,12 @@ class ParameterIdGenerator(object):
         """Serializes the table to the file at self.path."""
         with _create_file(self.path) as f:
             pickle.dump(self._table, f)
+
+        with _create_file(self.text_path) as f:
+            parameter_ids = self._table.items()
+            parameter_ids.sort(key=lambda param_and_id: int(param_and_id[1]))
+            for parameter, id in parameter_ids:
+                f.write('%s\t%s\n' % (id, parameter))
 
     def get_id(self, parameter):
         """Gets the id of given parameter.
