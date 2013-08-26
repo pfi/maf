@@ -4,7 +4,17 @@ import maflib.core
 import maflib.util
 
 def max(key):
-    """Gets an aggregator to select max value of given key."""
+    """Creates an aggregator to select the max value of given key.
+
+    The created aggregator chooses the result with the maximum value of
+    ``key``, and writes the JSON object to the output node.
+
+    :param key: A key to be used for selection of maximum value.
+    :type key: ``str``
+    :return: An aggregator.
+    :rtype: ``function``
+
+    """
     def body(values, outpath):
         max_value = None
         argmax = None
@@ -19,11 +29,19 @@ def max(key):
 
 
 def average():
-    """Calculates average values for all keys.
+    """Creates an aggregator that calculates the average value for each key.
 
-    If some value corresponding to the key cannot be passed to float(), it
-    omits the key.
+    The result contains all keys that some inputs contain. Each value is an
+    average value of the corresponding key through all the inputs. If there
+    is a value that cannot be passed to ``float()``, it omits the corresponding
+    key from the result.
+
+    :return: An aggregator.
+    :rtype: ``function``
+
     """
+    # TODO(beam2d): This function can be a simple aggregator instead of
+    # an aggregator generator.
     def body(values, output):
         scheme = copy.deepcopy(values[0])
         for key in scheme:
@@ -38,7 +56,18 @@ def average():
 
 
 def convert_libsvm_accuracy(task):
-    """Rule that converts message output by svm-predict into json file."""
+    """Rule that converts message output by svm-predict into json file.
+
+    This rule can be used to parse the output messsage of svm-predict command
+    of LIBSVM, which contains an accuracy of prediction. The output is
+    formatted like ``{"accuracy": <value>}``.
+
+    :param task: waf task.
+    :type task: :py:class:`waflib.Task.Task`
+    :return: Zero.
+    :rtype: ``int``
+
+    """
     content = task.inputs[0].read()
     j = {'accuracy': float(content.split(' ')[2][:-1])}
     task.outputs[0].write(json.dumps(j))
@@ -188,8 +217,8 @@ def calculate_stats_multilabel_classification(task):
 
 
 def segment_by_line(num_folds, parameter_name='fold'):
-    """Splits a line-by-line dataset to the k-th fold train and validation
-    subsets for n-fold cross validation.
+    """Creates a rule that splits a line-by-line dataset to the k-th fold train
+    and validation subsets for n-fold cross validation.
 
     Assume the input dataset is a text file where each sample is written in a
     distinct line. This task splits this dataset to given number of folds,
@@ -206,11 +235,13 @@ def segment_by_line(num_folds, parameter_name='fold'):
     parameter name is specified by ``parameter_name``. The index must be a
     non-negative integer less than ``num_folds``.
 
-    Args:
-        num_folds: number of folds for splitting. Inverse of this value is the
-            ratio of validation set size compared to the input dataset size.
-            As noted above, the fold parameter must be less than num_folds.
-        parameter_name: name of the parameter indicating the number of folds.
+    :param num_folds: Number of folds for splitting. Inverse of this value is
+        the ratio of validation set size compared to the input dataset size. As
+        noted above, the fold parameter must be less than ``num_folds``.
+    :param parameter_name: Name of the parameter indicating the number of
+        folds.
+    :return: A rule.
+    :rtype: ``function``
 
     """
     def body(task):
