@@ -5,12 +5,32 @@ import types
 def create_aggregator(callback_body):
     """Creates an aggregator using function f independent from waf.
 
-    Args:
-        callback_body: Function or callable object that takes two arguments, a
-        list of values to be aggregated and the absolute path to the output
-        node. If this function returns string value, the value is written to the
-        output node. If this function itself writes the result to the output
-        file, it must return None.
+    This function creates a wrapper of given callback function that behaves as
+    a rule of an aggregation task. It supposes that input files are represented
+    by JSON files each of which is a flat JSON object (i.e. an object that does
+    not contain any objects) or a JSON array of flat objects. The created rule
+    first combines these JSON objects into an array of Python dictionaries, and
+    then passes it to the user-defined callback body.
+
+    There are two ways to write the result to the output node. First is to let
+    ``callback_body`` return the content string to be written to the output
+    node; then the rule automatically writes it to the output node. Second is
+    to let ``callback_body`` write it using its second argument (called
+    ``abspath``), which is the absolute path to the output node. In this case,
+    ``callback_body`` **MUST** return None to suppress the automatic writing.
+
+    See :py:mod:`maflib.rules` or :py:mod:`maflib.plot` to get
+    examples of ``callback_body``.
+
+    :param callback_body: A function or a callable object that takes two
+        arguments: ``values`` and ``abspath``. ``values`` is an array of
+        dictionaries that represents the content of input files. ``abspath`` is
+        an absolute path to the output node. This function should return str or
+        None.
+    :type callback_body: ``function`` or callble object of signature
+        ``(list, str)``.
+    :return: An aggregator function that calls ``callback_body``.
+    :rtype: ``function``
 
     """
     def callback(task):
@@ -33,13 +53,23 @@ def create_aggregator(callback_body):
 
 
 def product(parameter):
-    """Generates direct product of given listed parameters. ::
+    """Generates a direct product of given listed parameters.
+
+    Here is an example.
+
+    .. code-block:: python
 
         maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
-              {'x': 1, 'y': 1}, {'x': 1, 'y': 3}, {'x': 1, 'y': 5},
-              {'x': 2, 'y': 1}, {'x': 2, 'y': 3}, {'x': 2, 'y': 5}]
+        #     {'x': 1, 'y': 1}, {'x': 1, 'y': 3}, {'x': 1, 'y': 5},
+        #     {'x': 2, 'y': 1}, {'x': 2, 'y': 3}, {'x': 2, 'y': 5}]
         # (the order of parameters may be different)
+
+    :param parameter: A dictionary that represents a set of parameters. Its
+        values are lists of values to be enumerated.
+    :type parameter: ``dict`` from ``str`` to ``list``.
+    :return: A direct product of a set of parameters.
+    :rtype: ``list`` of ``dict``.
 
     """
     keys = sorted(parameter)
@@ -56,19 +86,24 @@ def sample(num_samples, distribution):
     It is useful for hyper-parameter optimization compared to using ``product``,
     since every instance can be different on all dimensions for each other.
 
-    Args:
-        num_samples: Number of samples. Resulting meta node contains this number
-            of physical nodes for each input parameter set.
-        distribution: Dictionary from parameter names to values specifying
-            distributions to sample from. Acceptable values are following:
+    :param num_samples: Number of samples. Resulting meta node contains this
+        number of physical nodes for each input parameter set.
+    :type num_samples: ``int``
+    :param distribution: Dictionary from parameter names to values specifying
+        distributions to sample from. Acceptable values are following:
 
-            **Pair of numbers** ``(a, b)`` specifies a uniform distribution on
-                the continuous interval [a, b].
-            **List of values** specifies a uniform distribution on the descrete
-                set of values.
-            **Callbable object or function** ``f`` can be used for an arbitrary
-                generator of values. Multiple calls of ``f()`` should generate
-                random samples of user-defined distribution.
+        **Pair of numbers**
+            ``(a, b)`` specifies a uniform distribution on the continuous
+            interval [a, b).
+        **List of values**
+            This specifies a uniform distribution on the descrete set of
+            values.
+        **Callable object or function**
+            ``f`` can be used for an arbitrary generator of values. Multiple
+            calls of ``f()`` should generate random samples of user-defined
+            distribution.
+    :return: A list of sampled parameters.
+    :rtype: ``list`` of ``dict``.
 
     """
     parameter_gens = {}
