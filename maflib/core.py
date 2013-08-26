@@ -58,7 +58,8 @@ class ExperimentContext(waflib.Build.BuildContext):
 
         # TODO(beam2d): Remove this stub file name.
         self._parameter_id_generator = ParameterIdGenerator(
-            'build/experiment/.maf_id_table')
+            'build/experiment/.maf_id_table',
+            'build/experiment/.maf_id_table.tsv')
         self._nodes = collections.defaultdict(set)
 
         try:
@@ -246,16 +247,21 @@ class Parameter(dict):
     def conflict_with(self, parameter):
         """Checks whether the parameter conflicts with given other parameter.
 
-        Returns:
-            True if self conflicts with parameter, i.e. contains different
+        :return: True if self conflicts with parameter, i.e. contains different
             values corresponding to same key.
+        :rtype: bool
 
         """
         common_keys = set(self) & set(parameter)
         return any(self[key] != parameter[key] for key in common_keys)
 
     def to_str_valued_dict(self):
-        """Gets dictionary with same key and value of type str."""
+        """Gets dictionary with stringized values.
+
+        :return: A dictionary with same key and stringized values.
+        :rtype: dict of str key and str value
+
+        """
         return dict([(k, str(self[k])) for k in self])
 
 
@@ -263,11 +269,12 @@ class CallObject(object):
     """Object representing one call of ``ExperimentContext.__call__()``."""
 
     def __init__(self, **kw):
-        """Initializes a call object. kw['source'] and kw['target'] are
-        converted into list of strings.
+        """Initializes a call object.
 
-        Args:
-            **kw: Arguments of ``ExperimentContext.__call__``.
+        ``kw['source']`` and ``kw['target']`` are converted into list of
+        strings.
+
+        :param **kw: Arguments of ``ExperimentContext.__call__``.
 
         """
         self.__dict__.update(kw)
@@ -278,6 +285,7 @@ class CallObject(object):
         self.__dict__['features'].append('experiment')
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
+            """List of parameters indicated by the taskgen call."""
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -293,8 +301,8 @@ class ExperimentGraph(object):
     def add_call_object(self, call_object):
         """Adds call object node, related meta nodes and edges.
 
-        Args:
-            call_object: Call object to be added.
+        :param call_object: Call object be added.
+        :type call_object: :py:class:`CallObject`
 
         """
         index = len(self._call_objects)
@@ -307,8 +315,10 @@ class ExperimentGraph(object):
             self._edges[index].add(out_node)
 
     def get_sorted_call_objects(self):
-        """Runs topological sort on the experiment graph and returns a sorted
-        list of call objects.
+        """Runs topological sort on the experiment graph.
+
+        :return: List of call objects that topologically sorted.
+        :rtype: list of :py:class:`CallObject`
 
         """
 
@@ -350,8 +360,8 @@ class ExperimentGraph(object):
 
 
 class ParameterIdGenerator(object):
-    """Maintainer of correspondences between parameters and physical node
-    names.
+    """Consistent generator of physical nodes identifier corresponding to
+    their parameters.
 
     Meta node has a path and its own parameters, each of which corresponds to
     one physical waf node named as 'path/N', where N is a unique name of the
@@ -359,24 +369,33 @@ class ParameterIdGenerator(object):
     consistent over multiple execution of waf, so we serializes the table to
     hidden file.
 
+    This class also dumps the correspondence to a human-readable text file.
+    The file is tab-separated line for each correspondence: the first element
+    is an identifier and the second is a JSON representation of the
+    correspondent parameter.
+
     NOTE: On exception raised during task generation, save() must be called
     to avoid inconsistency on node names that had been generated before the
     exception was raised.
 
-    Attributes:
-        path: Path to file that the table is serialized at.
-
     """
-    def __init__(self, path):
-        """Initializes the resolver.
+    def __init__(self, path, text_path):
+        """Initializes the generator.
 
-        Args:
-            path: Path to persistent file of the table.
+        :param path: Path to persisitent file of the table.
+        :type path: str
+        :param text_path: Path to file that the table is dumped to as a human-
+            readable.
+        :type text_path: str
 
         """
         # TODO(beam2d): Isolate persistency support from resolver.
 
         self.path = path
+        """Path to file that the table is serialized to."""
+
+        self.text_path = text_path
+        """Path to file that the table is dumped to as a human-readable text."""
 
         if os.path.exists(path):
             with open(path) as f:
@@ -389,15 +408,20 @@ class ParameterIdGenerator(object):
         with _create_file(self.path) as f:
             pickle.dump(self._table, f)
 
+        with _create_file(self.text_path) as f:
+            parameter_ids = self._table.items()
+            parameter_ids.sort(key=lambda param_and_id: int(param_and_id[1]))
+            for parameter, id in parameter_ids:
+                f.write('%s\t%s\n' % (id, parameter))
+
     def get_id(self, parameter):
         """Gets the id of given parameter.
 
-        Args:
-            parameter: Parameter object.
-
-        Returns:
-            Id of given parameter. The id may be generated in this method if
-            necessary.
+        :param parameter: Parameter object.
+        :type parameter: :py:class:`Parameter`
+        :return: Identifier of given parameter. The id may be generated in this
+            method if necessary.
+        :rtype: str
 
         """
         if parameter in self._table:
@@ -442,50 +466,67 @@ def _let_element_to_be_list(d, key):
 
 class ExperimentTask(waflib.Task.Task):
     """A task class specific for ExperimentContext.
+
     The purpose of this class is to bring the parameter as an attribute.
-    The base class (waflib.Task.Task) doesn't bring attributes except env,
-    but the env must be a string-valued dictionary, which is problematic
-    when we want to use the parameter in an object as it is. For example,
-    a float value once converted to string lose some information.
+    The base class (:py:class:`waflib.Task.Task`) doesn't bring attributes
+    except ``env``, but the env must be a string-valued dictionary, which is
+    problematic when we want to use the parameter in an object as it is. For
+    example, a float value once converted to string lose some information.
+
     """
     def __init__(self, env, generator):
+        """Initializes the task.
+
+        :param env: Environmental variables.
+        :param generator: Generator function.
+
+        """
+
         super(ExperimentTask, self).__init__(env=env, generator=generator)
+
         self.parameter = generator.parameter
+        """Parameter whose values are not stringized."""
 
 @feature('experiment')
 @before_method('process_rule')
 def regist_experiment_task_with_rule(self):
     """A task_gen method called before process_rule.
+
     WARNING: This method currently strongly connected to the internal of
-    process_rule method, which is defined in waflib.TaskGen,
-    so may require a modification in future version of waf.
+    ``process_rule`` method, which is defined in :py:class:`waflib.TaskGen`, so
+    may require a modification in future version of waf.
 
-    The role of this method is to create self.bld.cache_rule_attr, which
-    is later used in process_rule. It is a dictionary of (task_name, the rule of task)
-    pair to a task class. This task class is a derived class of ExperimentTask
-    defined above, which override the run method of it with the function given by rule
-    attribute written in wscript. This process is necessary because the process_rule
-    cannot create a user-define Task with a user-defined rule (as in our case).
+    The role of this method is to create ``self.bld.cache_rule_attr``, which
+    is later used in ``process_rule``. It is a dictionary of ``(task_name, the
+    rule of task)`` pair to a task class. This task class is a derived class of
+    :py:class:`ExperimentTask` defined above, which override the run method of
+    it with the function given by rule attribute written in wscript. This
+    process is necessary because the ``process_rule`` cannot create a user-
+    defined :py:class:`Task` with a user-defined rule (as in our case).
 
-    In the current implementation of process_rule, the cache_rule_attr is used as follows:
-    
+    In the current implementation of ``process_rule``, the ``cache_rule_attr``
+    is used as follows;
+
+    .. code-block:: py
+
         try:
-                cache = self.bld.cache_rule_attr
+            cache = self.bld.cache_rule_attr
         except AttributeError:
-                cache = self.bld.cache_rule_attr = {}
+            cache = self.bld.cache_rule_attr = {}
 
         cls = None
-            if getattr(self, 'cache_rule', 'True'):
-                    try:
-                            cls = cache[(name, self.rule)]
-                    except KeyError:
-                            pass
-            if not cls:
-                    cls = Task.task_factory(name, self.rule,
-                    ....
-    
+        if getattr(self, 'cache_rule', 'True'):
+            try:
+                cls = cache[(name, self.rule)]
+            except KeyError:
+                pass
+        if not cls:
+            cls = Task.task_factory(name, self.rule,
+            ....
+
     This snippet search for a task from cache_rule_attr dictionary first,
     so we set that dictionary beforehand.
+
     """
     self.name = str(getattr(self, 'name', None) or self.target or getattr(self.rule, '__name__', self.rule))
     params = {}
