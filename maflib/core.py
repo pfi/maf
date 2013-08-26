@@ -524,7 +524,7 @@ def regist_experiment_task_with_rule(self):
         if not cls:
             cls = Task.task_factory(name, self.rule,
             ....
-    
+
     This snippet search for a task from cache_rule_attr dictionary first,
     so we set that dictionary beforehand.
 
