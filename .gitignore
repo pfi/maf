@@ -1,5 +1,8 @@
 *~
 *.o
 *.pyc
+.lock*
 .waf*
+maf.py
+wscript
 build/
