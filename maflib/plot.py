@@ -18,10 +18,10 @@ class PlotData:
     def __init__(self, inputs):
         """Constructs a plot data from a list of values to be plotted.
 
-        Args:
-            inputs: A list of values to be plotted. The first argument of
-            callback body function passed to ``create_aggregator`` can be used
-            for this ``inputs`` argument.
+        :param inputs: A list of values to be plotted. The first argument of
+            callback body function passed to
+            :py:func:`maflib.util.create_aggregator` can be used for this
+            argument.
 
         """
         self._inputs = inputs
@@ -33,17 +33,18 @@ class PlotData:
         list of them. If sort == True, then the list is sorted. User can extract
         different sequences for varying values corresponding to given key(s).
 
-        Args:
-            x: A key string corresponding to x coordinate.
-            key: Key strings that define distinct sequences of data points.
-                It can be either of None, a string value or a tuple of string
-                values.
-            sort: Flag for sorting the sequence(s).
-
-        Returns:
-            If ``key`` is None, then it returns a list of x values. Otherwise,
-            it returns a dictionary from key(s) to a sequence of x values.
-            Each sequence consists of values matched to the key(s).
+        :param x: A key string corresponding to x coordinate.
+        :type x: ``str``
+        :param key: Key strings that define distinct sequences of data points.
+            It can be either of None, a string value or a tuple of string
+            values.
+        :type key: ``str``
+        :param sort: Flag for sorting the sequence(s).
+        :type sort: ``bool``
+        :return: If ``key`` is None, then it returns a list of x values.
+            Otherwise, it returns a dictionary from key(s) to a sequence of x
+            values. Each sequence consists of values matched to the key(s).
+        :rtype: ``dict`` or ``list``
 
         """
         if key is None:
@@ -83,19 +84,21 @@ class PlotData:
         See get_data_1d for detail. Difference from get_data_2d is that the
         values are represented by pairs.
 
-        Args:
-            x: A key string corresponding to x (first) coordinate.
-            y: A key string corresponding to y (second) coordinate.
-            key: Key strings that define distinct sequences of data points.
-                It can be either of None, a string value or a tuple of string
-                values.
-            sort: Flag for sorting the sequence(s).
-
-        Returns:
-            If ``key`` is None, then it returns a pair of x value sequence and
-            y value sequence. Otherwise, it returns a dictionary from a key to
-            a pair of x value sequence and y value sequence. Each sequence
+        :param x: A key string corresponding to x (first) coordinate.
+        :type x: ``str``
+        :param y: A key string corresponding to y (second) coordinate.
+        :type y: ``str``
+        :param key: Key strings that define distinct sequences of data points.
+            It can be either of None, a string value or a tuple of string
+            values.
+        :type key: ``str``
+        :param sort: Flag for sorting the sequence(s).
+        :type sort: ``bool``
+        :return: If ``key`` is None, then it returns a pair of x value sequence
+            and y value sequence. Otherwise, it returns a dictionary from a key
+            to a pair of x value sequence and y value sequence. Each sequence
             consists of values matched to the key(s).
+        :rtype: ``dict`` or ``tuple`` of two ``list`` s
 
         """
         if key is None:
@@ -137,21 +140,24 @@ class PlotData:
         See get_data_1d for detail. Difference from get_data_3d is that the
         values are represented by triples.
 
-        Args:
-            x: A key string corresponding to x (first) coordinate.
-            y: A key string corresponding to y (second) coordinate.
-            z: A key string corresponding to z (third) coordinate.
-            key: Key strings that define distinct sequences of data points.
-                It can be either of None, a string value or a tuple of string
-                values.
-            sort: Flag for sorting the sequence(s).
-
-        Returns:
-            If ``key`` is None, then it returns a triple of x value sequence,
-            y value sequence and z value sequence. Otherwise, it returns a
-            dictionary from a key to a triple of x value sequence, y value
-            sequence and z value sequence. Each sequence consists of values
-            matched to the key(s).
+        :param x: A key string corresponding to x (first) coordinate.
+        :type x: ``str``
+        :param y: A key string corresponding to y (second) coordinate.
+        :type y: ``str``
+        :param z: A key string corresponding to z (third) coordinate.
+        :type z: ``str``
+        :param key: Key strings that define distinct sequences of data points.
+            It can be either of None, a string value or a tuple of string
+            values.
+        :type key: ``str``
+        :param sort: Flag for sorting the sequence(s).
+        :type sort: ``bool``
+        :return: If ``key`` is None, then it returns a triple of x value
+            sequence, y value sequence and z value sequence. Otherwise, it
+            returns a dictionary from a key to a triple of x value sequence, y
+            value sequence and z value sequence. Each sequence consists of
+            values matched to the key(s).
+        :rtype: ``dict`` or ``tuple`` of three ``list`` s.
 
         """
         if key is None:
@@ -198,11 +204,12 @@ class PlotData:
 def plot_by(callback_body):
     """Creates an aggregator to plot data using matplotlib and PlotData.
 
-    Args:
-        callback_body: Callable object or function that plots data. It takes
-            two parameters: matplotlib.figure.Figure object and PlotData object.
-            User must define a callback function that plots given data to given
-            figure.
+    :param callback_body: Callable object or function that plots data. It takes
+        two parameters: matplotlib.figure.Figure object and PlotData object.
+        User must define a callback function that plots given data to given
+        figure.
+    :type callback_body: ``function`` or callable object, whose signature is
+        (:py:class:`matplotlib.figure.Figure`, :py:class:`PlotData`).
 
     """
     def callback(values, abspath):
