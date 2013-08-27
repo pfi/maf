@@ -279,17 +279,16 @@ class CallObject(object):
         """
         self.__dict__.update(kw)
 
-        _let_element_to_be_list(self.__dict__, 'source')
-        _let_element_to_be_list(self.__dict__, 'target')
-        _let_element_to_be_list(self.__dict__, 'features')
-        self.__dict__['features'].append('experiment')
-        
-        if 'for_each' in self.__dict__:
-            _let_element_to_be_list(self.__dict__, 'for_each')
+        for key in ['source', 'target', 'features', 'for_each', 'aggregate_by']:
+            _let_element_to_be_list(self.__dict__, key)
 
+        self.__dict__['features'].append('experiment')
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
             """List of parameters indicated by the taskgen call."""
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 class ExperimentGraph(object):

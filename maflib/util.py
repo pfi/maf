@@ -1,5 +1,6 @@
 import itertools
 import json
+import numpy.random
 import types
 
 def create_aggregator(callback_body):
@@ -114,17 +115,16 @@ def sample(num_samples, distribution):
         # float case is specified by begin/end in a tuple.
         if isinstance(distribution[key], tuple):
             begin, end = distribution[key]
-            if isinstance(begin, float) or isinstance(end, float):
-                begin = float(begin)
-                end = float(end)
-                # random_sample() generate a point from [0,1), so we scale and
-                # shift it.
-                gen = lambda: (end-begin) * np.random.random_sample() + begin
+            begin = float(begin)
+            end = float(end)
+            # random_sample() generate a point from [0,1), so we scale and
+            # shift it.
+            gen = lambda: (end-begin) * numpy.random.random_sample() + begin
 
         # Discrete case is specified by a list
         elif isinstance(distribution[key], list):
             gen = lambda mult_ks=distribution[key]: mult_ks[
-                np.random.randint(0,len(mult_ks))]
+                numpy.random.randint(0,len(mult_ks))]
 
         # Any random generating function
         elif isinstance(distribution[key], types.FunctionType):
