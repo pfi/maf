@@ -489,7 +489,7 @@ class ExperimentTask(waflib.Task.Task):
 
 @feature('experiment')
 @before_method('process_rule')
-def regist_experiment_task_with_rule(self):
+def register_experiment_task_with_rule(self):
     """A task_gen method called before process_rule.
 
     WARNING: This method currently strongly connected to the internal of
