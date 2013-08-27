@@ -48,11 +48,11 @@ class TestSample(unittest.TestCase):
         for param in params:
             self.assertIn(param['key'], values)
 
-    def test_sample_from_generator(self):
-        i = 0
+    def test_sample_from_function(self):
+        i = [0]
         def gen():
-            i += 1
-            return i % 3
+            i[0] += 1
+            return i[0] % 3
 
         expects = [1, 2, 0, 1, 2, 0]
         params = sample(6, { 'key': gen })
