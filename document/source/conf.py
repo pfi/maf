@@ -265,5 +265,5 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 # These lines are automatically inserted for Japanese document
-language = 'ja'
+language = 'en'
 latex_docclass = {'manual': 'jsbook'}
