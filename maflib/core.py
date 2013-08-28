@@ -76,9 +76,9 @@ class ExperimentContext(waflib.Build.BuildContext):
             rule_impl = call_object.rule
             call_object.rule = lambda task: rule_impl(task)
 
-        if 'for_each' in call_object.__dict__:
+        if getattr(call_object, 'for_each', []):
             self._generate_aggregation_tasks(call_object, 'for_each')
-        elif 'aggregate_by' in call_object.__dict__:
+        elif getattr(call_object, 'aggregate_by', []):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
@@ -489,7 +489,7 @@ class ExperimentTask(waflib.Task.Task):
 
 @feature('experiment')
 @before_method('process_rule')
-def regist_experiment_task_with_rule(self):
+def register_experiment_task_with_rule(self):
     """A task_gen method called before process_rule.
 
     WARNING: This method currently strongly connected to the internal of
