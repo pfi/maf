@@ -19,14 +19,12 @@ mafは当初、機械学習の実験を新たに始めるときに役立つツ�
 mafの目的
 ---------
 
-ソフトウェアの実験はおおよそ以下の手順で進みます。
+ソフトウェアの実験はたとえば以下の手順で進みます。
 
 1. 設定を列挙する
 2. 各設定のもとでプログラムを走らせ、結果を書き出す
 3. 得られた結果を集約する
 4. 集約された結果を可視化する
-
-*TODO: 上記の手順についての図を入れる*
 
 実験を回す方法は大きく分けて二種類あります。
 
@@ -53,24 +51,38 @@ wafはPythonで書かれたビルドツールで、拡張性の高さが特徴�
 
 ビルドツールは、ソースコードを実行可能なプログラムに変換する処理を抽象化して記述するためのソフトウェアです。
 入力ファイルと出力ファイルの依存関係を記述すると、ビルドツールがこれを解析して適切な順序で出力ファイルを生成します。
+例えば Figure :num:`build-flow` のように、ソースファイルから実行可能ファイルやライブラリを作ります。
+
+.. _build-flow:
+.. figure:: figures/build_flow.png
+   :scale: 75%
+
+   ソースコードの単純なビルド例。
+
 wafは様々な言語処理系に対応したビルドツールで、依存関係をDSLのような見た目をしたPythonコードで記述することができるのが特徴です。
 wafの詳細については `本家サイト <https://code.google.com/p/waf/>`_ にドキュメントが整備されています (waf bookとAPI doc)。
 使用例としては、例えば `Jubatus <http://github.com/jubatus/jubatus>`_ を参照してください。
 
-*TODO: ビルドツールの仕事を図で書く*
-
 wafを含め、多くのビルドツールはソースコードのコンパイル・リンク以外にも、任意のファイル変換に用いることができます。
 例えば、設定ファイルを読み込んで実験を行い結果を出力するプログラムがあったとします。
 このプログラムは、設定ファイルから実験結果を生成する変換器と見なすことができます。
-すると、実験計画をビルドツール上に記述することができることに気づきます。
-mafを用いた実験は、このような考え方がベースになっています。
-wafとの差分として、mafは実験過程で現れる設定ごとのたくさんの中間ファイルを自動的に管理します。
+図にすると Figure :num:`typical-flow` のようになります。
 
-*TODO: ビルドツールによる実験を図で書く*
+すると、実験計画をビルドツール上に記述することができることに気づきます。
+実際、Figure :num:`typical-flow` は Figure :num:`build-flow` にとてもよく似ています。
+wafを用いると、Figure :num:`typical-flow` のような実験も書くことができます。
+mafは、このようなwafを用いた実験をより書きやすくするためのwaf拡張です。
+
+.. _typical-flow:
+.. figure:: figures/typical_flow.png
+   :scale: 75%
+
+   ビルドツールを参考にした実験の流れの例。
 
 ここからは、wafの（言語に依らない）ごく基本的な使い方は既知のものとして進めます。
 たとえば、以下のwscriptが読めれば十分です。
 このwscriptは、 ``hoge.txt`` と ``fuga.txt`` に文字列を書き込み、それらを結合したファイル ``concat.txt`` を生成します。
+Figure :num:`waf-example` が対応するビルド図を示します。
 
 .. code-block:: python
 
@@ -83,6 +95,12 @@ wafとの差分として、mafは実験過程で現れる設定ごとのたく�
 
        bld(source='hoge.txt fuga.txt', target='concat.txt',
            rule='cat ${SRC} > ${TGT}')
+
+.. _waf-example:
+.. figure:: figures/waf_example.png
+   :scale: 75%
+
+   wafによるファイル処理の例。
 
 実験の際には ``echo`` や ``cat`` などの部分が、一つの設定に対する実験プログラムや結果の集約処理に変わると思ってください。
 次節以降で、より具体的にwafを用いた実験について見ていきます。
@@ -97,18 +115,23 @@ wafを用いた実験例
 
    $ do_experiment input.txt <parameter> > output.txt
 
-このとき、以下のような実験を行いたいとします。
+このとき、以下のような実験 (Figure :num:`waf-experiment`) を行いたいとします。
 
 .. code-block:: bash
 
    $ do_experiment input.txt 1 > output1.txt
    $ do_experiment input.txt 2 > output2.txt
-   $ ...
-   $ do_experiment input.txt 10 > output10.txt
+   $ do_experiment input.txt 3 > output3.txt
+   $ do_experiment input.txt 4 > output4.txt
+   $ do_experiment input.txt 5 > output5.txt
    $
    $ plot these outputs
 
-*TODO: 実験手順を図に書く*
+.. _waf-experiment:
+.. figure:: figures/waf_experiment.png
+   :scale: 75%
+
+   wafによる実験のビルド図。
 
 最後のplotについては何か追加でスクリプトを書くものとします。
 
@@ -117,12 +140,12 @@ wafを用いた実験例
 .. code-block:: python
 
    def build(bld):
-       for i in range(1, 11):
+       for i in range(1, 6):
            bld(source='input.txt',
                target='output%s.txt' % i,
                rule='do_experiment ${SRC} %s > ${TGT}' % i)
 
-       bld(source=['output%s.txt' % i for i in range(1, 11)],
+       bld(source=['output%s.txt' % i for i in range(1, 6)],
            target='plot.png',
            rule=plot)
 
@@ -147,7 +170,7 @@ mafを用いた実験例
    def experiment(exp):
        exp(source='input.txt',
            target='output',
-           parameters=[{'parameter': i} for i in range(1, 11)],
+           parameters=[{'parameter': i} for i in range(1, 6)],
            rule='do_experiment ${SRC} ${parameter} > ${TGT}')
 
        exp(source='output',
@@ -169,13 +192,21 @@ wafの場合とは以下の点で異なっています。
   ここではもはや、パラメータの組合せを知らなくても書けます。
   ``for_each=[]`` についてはここでは触れませんが、 ``output`` に含まれるファイル全部に対して一つの出力ファイルを生成することを意味しています。
 
-*TODO: mafによるこの実験を図に書く*
+mafによる上記の実験例を図に表すと Figure :num:`maf-experiment` のようになります。
+パラメータの数だけ操作と出力ファイルができますが、その管理をmafが自動で行っている様子がわかります。
+ユーザーが触るのはパラメータが違うノードを束ねたもの（図において色がけした塊）だけです。
+
+.. _maf-experiment:
+.. figure:: figures/maf_experiment.png
+   :scale: 75%
+
+   mafによる実験のビルド図。
 
 重要な点は、パラメータの組合せを一箇所だけに書けるようになったことです。
 パラメータについて変更を加えたい場合、この一箇所だけを変更すれば他の部分がそれに追随します。
 
-ようこそ、mafの世界へ
----------------------
+ようこそ
+--------
 
 この章ではビルドツール、そしてその拡張であるmafを用いた実験計画の入り口を垣間見ました。
 mafのエッセンスはすでに上記の例に現れています。

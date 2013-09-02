@@ -1,0 +1,29 @@
+digraph G {
+  graph [rankdir=LR]
+
+  do1 [shape=box, label="do_experiment _ 1"]
+  do2 [shape=box, label="do_experiment _ 2"]
+  do3 [shape=box, label="do_experiment _ 3"]
+  do4 [shape=box, label="do_experiment _ 4"]
+  do5 [shape=box, label="do_experiment _ 5"]
+
+  "input.txt" -> { do1; do2; do3; do4; do5 }
+
+  do1 -> "output1.txt"
+  do2 -> "output2.txt"
+  do3 -> "output3.txt"
+  do4 -> "output4.txt"
+  do5 -> "output5.txt"
+
+  plot [shape=box]
+
+  { "output1.txt";
+    "output2.txt";
+    "output3.txt";
+    "output4.txt";
+    "output5.txt"; }
+    -> plot
+
+  figure [label="結果のグラフ"]
+  plot -> figure
+}

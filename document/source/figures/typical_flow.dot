@@ -1,0 +1,38 @@
+digraph G {
+  graph [rankdir=LR]
+
+  gen_config [shape=box, label="設定の生成"]
+  plot [shape=box, label="集約・プロット"]
+  chart [label="結果グラフ"]
+
+  config1 [label="設定1"]
+  config2 [label="設定2"]
+  config3 [label="設定3"]
+  configN [label="設定N"]
+
+  exp1 [shape=box, label="実験1"]
+  exp2 [shape=box, label="実験2"]
+  exp3 [shape=box, label="実験3"]
+  expN [shape=box, label="実験N"]
+
+  result1 [label="結果1"]
+  result2 [label="結果2"]
+  result3 [label="結果3"]
+  resultN [label="結果N"]
+
+  gen_config -> { config1; config2; config3; configN }
+
+  config1 -> exp1
+  config2 -> exp2
+  config3 -> exp3
+  configN -> expN
+
+  exp1 -> result1
+  exp2 -> result2
+  exp3 -> result3
+  expN -> resultN
+
+  { result1; result2; result3; resultN } -> plot
+
+  plot -> chart
+}

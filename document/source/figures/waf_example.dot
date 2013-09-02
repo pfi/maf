@@ -1,0 +1,13 @@
+digraph G {
+  graph [rankdir=LR]
+
+  echo_hoge [shape=box, label="echo \"hoge\""]
+  echo_fuga [shape=box, label="echo \"fuga\""]
+  cat [shape=box]
+
+  echo_hoge -> "hoge.txt"
+  echo_fuga -> "fuga.txt"
+
+  { "hoge.txt"; "fuga.txt" } -> cat
+  cat -> "concat.txt"
+}
