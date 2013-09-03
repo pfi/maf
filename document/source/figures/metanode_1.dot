@@ -4,9 +4,9 @@ digraph G {
   subgraph cluster_task {
     label="echo ${name} > ${TGT}"
 
-    echo_taro [shape=box, label="{'name': 'Taro'}"]
-    echo_jiro [shape=box, label="{'name': 'Jiro'}"]
-    echo_saburo [shape=box, label="{'name': 'Saburo'}"]
+    echo_taro [shape=box, label="echo Taro > ${TGT}"]
+    echo_jiro [shape=box, label="echo Jiro > ${TGT}"]
+    echo_saburo [shape=box, label="echo Saburo > ${TGT}"]
   }
 
   subgraph cluster_my_out {

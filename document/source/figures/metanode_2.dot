@@ -12,9 +12,9 @@ digraph G {
   subgraph cluster_append_name {
     label="cp ${SRC} ${TGT}; echo Sato >> ${TGT}"
 
-    cp_taro [shape=box, label="{'name': 'Taro'}"]
-    cp_jiro [shape=box, label="{'name': 'Jiro'}"]
-    cp_saburo [shape=box, label="{'name': 'Saburo'}"]
+    cp_taro [shape=box, label="cp ${SRC} ${TGT}; echo Sato >> {$TGT}"]
+    cp_jiro [shape=box, label="cp ${SRC} ${TGT}; echo Sato >> {$TGT}"]
+    cp_saburo [shape=box, label="cp ${SRC} ${TGT}; echo Sato >> {$TGT}"]
   }
 
   taro -> cp_taro
