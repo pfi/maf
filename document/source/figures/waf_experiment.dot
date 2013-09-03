@@ -1,11 +1,11 @@
 digraph G {
   graph [rankdir=LR]
 
-  do1 [shape=box, label="do_experiment _ 1"]
-  do2 [shape=box, label="do_experiment _ 2"]
-  do3 [shape=box, label="do_experiment _ 3"]
-  do4 [shape=box, label="do_experiment _ 4"]
-  do5 [shape=box, label="do_experiment _ 5"]
+  do1 [shape=box, label="do_experiment ${SRC} 1"]
+  do2 [shape=box, label="do_experiment ${SRC} 2"]
+  do3 [shape=box, label="do_experiment ${SRC} 3"]
+  do4 [shape=box, label="do_experiment ${SRC} 4"]
+  do5 [shape=box, label="do_experiment ${SRC} 5"]
 
   "input.txt" -> { do1; do2; do3; do4; do5 }
 

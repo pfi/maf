@@ -1,9 +1,9 @@
 digraph G {
   graph [rankdir=LR]
 
-  echo_hoge [shape=box, label="echo \"hoge\""]
-  echo_fuga [shape=box, label="echo \"fuga\""]
-  cat [shape=box]
+  echo_hoge [shape=box, label="echo \"hoge\" > ${TGT}"]
+  echo_fuga [shape=box, label="echo \"fuga\" > ${TGT}"]
+  cat [shape=box, label="cat ${SRC} > ${TGT}"]
 
   echo_hoge -> "hoge.txt"
   echo_fuga -> "fuga.txt"

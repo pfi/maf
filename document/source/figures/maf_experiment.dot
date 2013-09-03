@@ -4,7 +4,7 @@ digraph G {
   subgraph cluster_do {
     fillcolor="#FFCCCC"
     style=filled
-    label="do_experiment _ <parameter>"
+    label="do_experiment ${SRC} ${parameter}"
 
     do1 [shape=box, label="{'parameter': 1}"]
     do2 [shape=box, label="{'parameter': 2}"]

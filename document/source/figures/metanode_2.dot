@@ -1,0 +1,35 @@
+digraph G {
+  graph [rankdir=LR]
+
+  subgraph cluster_my_out {
+    label="my_out"
+
+    taro [label="{'name': 'Taro'}"]
+    jiro [label="{'name': 'Jiro'}"]
+    saburo [label="{'name': 'Saburo'}"]
+  }
+
+  subgraph cluster_append_name {
+    label="cp ${SRC} ${TGT}; echo Sato >> ${TGT}"
+
+    cp_taro [shape=box, label="{'name': 'Taro'}"]
+    cp_jiro [shape=box, label="{'name': 'Jiro'}"]
+    cp_saburo [shape=box, label="{'name': 'Saburo'}"]
+  }
+
+  taro -> cp_taro
+  jiro -> cp_jiro
+  saburo -> cp_saburo
+
+  subgraph cluster_my_name {
+    label="my_name"
+
+    sato_taro [label="{'name': 'Taro'}"]
+    sato_jiro [label="{'name': 'Jiro'}"]
+    sato_saburo [label="{'name': 'Saburo'}"]
+  }
+
+  cp_taro -> sato_taro
+  cp_jiro -> sato_jiro
+  cp_saburo -> sato_saburo
+}
