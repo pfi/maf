@@ -1,0 +1,61 @@
+digraph G {
+  graph [rankdir=LR]
+
+  subgraph cluster_echo {
+    label="echo A:${A} B:${B} > ${TGT}"
+
+    echo1 [shape=box, label="{'A': 0, 'B': -1}"]
+    echo2 [shape=box, label="{'A': 0, 'B': 0}"]
+    echo3 [shape=box, label="{'A': 0, 'B': 1}"]
+    echo4 [shape=box, label="{'A': 1, 'B': -1}"]
+    echo5 [shape=box, label="{'A': 1, 'B': 0}"]
+    echo6 [shape=box, label="{'A': 1, 'B': 1}"]
+    echo7 [shape=box, label="{'A': 2, 'B': -1}"]
+    echo8 [shape=box, label="{'A': 2, 'B': 0}"]
+    echo9 [shape=box, label="{'A': 2, 'B': 1}"]
+  }
+
+  subgraph cluster_raw_output {
+    label="raw_output"
+
+    raw1 [label="{'A': 0, 'B': -1}"]
+    raw2 [label="{'A': 0, 'B': 0}"]
+    raw3 [label="{'A': 0, 'B': 1}"]
+    raw4 [label="{'A': 1, 'B': -1}"]
+    raw5 [label="{'A': 1, 'B': 0}"]
+    raw6 [label="{'A': 1, 'B': 1}"]
+    raw7 [label="{'A': 2, 'B': -1}"]
+    raw8 [label="{'A': 2, 'B': 0}"]
+    raw9 [label="{'A': 2, 'B': 1}"]
+  }
+
+  subgraph cluster_aggregate {
+    label="cat ${SRC} > ${TGT}"
+
+    aggregate0 [shape=box, label="for A=0"]
+    aggregate1 [shape=box, label="for A=1"]
+    aggregate2 [shape=box, label="for A=2"]
+  }
+
+  subgraph cluster_output_for_each_A {
+    label="output_for_each_A"
+
+    a0 [label="{'A': 0}"]
+    a1 [label="{'A': 1}"]
+    a2 [label="{'A': 2}"]
+  }
+
+  echo1 -> raw1
+  echo2 -> raw2
+  echo3 -> raw3
+  echo4 -> raw4
+  echo5 -> raw5
+  echo6 -> raw6
+  echo7 -> raw7
+  echo8 -> raw8
+  echo9 -> raw9
+
+  { raw1; raw2; raw3 } -> aggregate0 -> a0
+  { raw4; raw5; raw6 } -> aggregate1 -> a1
+  { raw7; raw8; raw9 } -> aggregate2 -> a2
+}

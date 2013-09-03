@@ -1,0 +1,41 @@
+digraph G {
+  graph [rankdir=LR]
+
+  subgraph cluster_do {
+    fillcolor="#FFCCCC"
+    style=filled
+    label="do_experiment ${SRC} ${parameter}"
+
+    do1 [shape=box, label="{'parameter': 1}"]
+    do2 [shape=box, label="{'parameter': 2}"]
+    do3 [shape=box, label="{'parameter': 3}"]
+    do4 [shape=box, label="{'parameter': 4}"]
+    do5 [shape=box, label="{'parameter': 5}"]
+  }
+
+  "input.txt" -> { do1; do2; do3; do4; do5 }
+
+  subgraph cluster_output {
+    fillcolor="#CCCCFF"
+    style=filled
+    label="output"
+
+    output1 [label="{'parameter': 1}"]
+    output2 [label="{'parameter': 2}"]
+    output3 [label="{'parameter': 3}"]
+    output4 [label="{'parameter': 4}"]
+    output5 [label="{'parameter': 5}"]
+  }
+
+  do1 -> output1
+  do2 -> output2
+  do3 -> output3
+  do4 -> output4
+  do5 -> output5
+
+  plot [shape=box]
+  { output1; output2; output3; output4; output5 } -> plot
+
+  figure [label="結果のグラフ"]
+  plot -> figure
+}

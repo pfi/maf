@@ -14,6 +14,8 @@ mafの使い方
 最新版のwafと ``maf.py`` をダウンロードして、同じディレクトリに置きます。
 wafファイルには実行可能フラグを立てておくと良いでしょう。
 
+**TODO: 生成済みのmaf.pyをどこかに置いてリンクを貼る。現状、generate_maf.pyを実行してmaf.pyを自分で生成する必要がある。**
+
 .. code-block:: bash
 
    $ chmod +x waf
@@ -49,6 +51,8 @@ wafでビルドする場合には ``./waf build`` ないし省略して ``./waf`
 以上で「何もしない実験」が実行されます。
 
 以降、 ``experiment`` 関数の中に実験計画を記述していきます。
+mafにおいて利用可能なユーティリティが :py:mod:`maflib` モジュール内に用意されていますが、以降ではimport文などは省略します。
+
 次節ではその書き方に入る前に、まずはmafの最重要概念であるメタノードとパラメータについて解説します。
 
 ノードとメタノードとパラメータ
@@ -80,6 +84,9 @@ mafではタスクにパラメータを指定することができます。
                    {'name': 'Saburo'}],
        rule='echo ${name} > ${TGT}')
 
+.. image:: figures/metanode_1.png
+   :scale: 75%
+
 ``parameters`` に辞書の配列を指定することで、タスクにパラメータの集合を設定することができます。
 各辞書のキーと値はともにハッシュ化可能でなければなりません。
 パラメータの内容は ``rule`` 内で参照することができます。
@@ -97,7 +104,10 @@ mafではメタノードを一つのノードであるかのように扱うこ�
 
    exp(source='my_out',
        target='my_name',
-       rule='echo Sato >> ${TGT}')
+       rule='cp ${SRC} ${TGT}; echo Sato >> ${TGT}')
+
+.. image:: figures/metanode_2.png
+   :scale: 75%
 
 この例の場合、入力ノード ``my_out`` はメタノードなので、各パラメータごとに別々のタスクが生成されます。
 どんなパラメータがあるかはメタノード ``my_out`` に紐付けられているので、改めて記述する必要はありません。
@@ -119,14 +129,14 @@ mafではこのように、パラメータを明示することなくメタノ�
 このような場合に、同じ種類のパラメータに対する範囲を何度も書くのはメンテナンスの観点から望ましくありません。
 そこでmafにはパラメータの組合せを生成する便利な関数が2つ用意されています。
 
-一つ目は **maf.product** です。
+一つ目は :py:func:`maflib.util.product` です。
 各パラメータ名に対するパラメータのリストを指定すると、すべての組合せを生成します。
 productという名前は集合の直積を表します。
 
 .. code-block:: python
 
-   maf.product({'method': ['PA2', 'AROW'],
-                'C': [0.1, 1, 10]})
+   maflib.util.product({'method': ['PA2', 'AROW'],
+                        'C': [0.1, 1, 10]})
 
    # => [{'method': 'PA2', 'C': 0.1},
    #     {'method': 'PA2', 'C': 1},
@@ -136,7 +146,7 @@ productという名前は集合の直積を表します。
    #     {'method': 'AROW', 'C': 10}]
    # (順番が入れ替わる可能性はあります)
 
-もう一つは **maf.sample** です。
+もう一つは :py:func:`maflib.util.sample` です。
 各パラメータ名に対してパラメータを生成する関数を渡すと、それらを用いて指定した数の組合せを生成します。
 関数の代わりに数値の対を渡すとその区間の連続一様分布を用います。
 関数の代わりに値のリストを渡すと、リストから値を選ぶような離散一様分布を用います。
@@ -144,8 +154,8 @@ productという名前は集合の直積を表します。
 
 .. code-block:: python
 
-   maf.sample(4, {'method': ['PA2', 'AROW'],
-                  'C': lambda: math.pow(10, random.uniform(-1, 1))})
+   maflib.util.sample(4, {'method': ['PA2', 'AROW'],
+                          'C': lambda: math.pow(10, random.uniform(-1, 1))})
 
 メタノードの組合せ
 ~~~~~~~~~~~~~~~~~~
@@ -174,6 +184,9 @@ productという名前は集合の直積を表します。
        target='z',
        rule=...)
 
+.. image:: figures/combination.png
+   :scale: 75%
+
 パラメータ ``A, B`` を持つメタノード ``x`` と、パラメータ ``A, C`` を持つメタノード ``y`` があり、それらを入力としてメタノード ``z`` を出力しています。
 この場合、 ``z`` を出力するタスクでは ``x`` と ``y`` のノードの全組合せが試されますが、そのうちパラメータ ``A`` の値が食い違っている組合せについてはタスクを実行しません。
 
@@ -200,7 +213,7 @@ mafでは ``parameters`` を指定することでタスクおよび出力ノー�
 .. code-block:: python
 
    exp(target='x',
-       parameters=maf.product({'A': [1, 2, 3], 'B': [1, 10]}),
+       parameters=maflib.util.product({'A': [1, 2, 3], 'B': [1, 10]}),
        rule=...)
 
    exp(source='x',
@@ -209,6 +222,9 @@ mafでは ``parameters`` を指定することでタスクおよび出力ノー�
                    {'A': 2, 'C': 0},
                    {'A': 3, 'C': 1}],
        rule=...)
+
+.. image:: figures/combination_2.png
+   :scale: 75%
 
 この例ではメタノード ``x`` を入力とするタスク生成で同時に ``parameters`` が指定されています。
 このとき出力メタノード ``y`` は以下のパラメータを持つことになります::
@@ -228,6 +244,9 @@ mafでは ``parameters`` を指定することでタスクおよび出力ノー�
 mafでは、メタノードが持つ複数のパラメータに対するノード集合に対して一つのノードを出力するようなタスクを **集約タスク** と呼びます。
 集約タスクを用いれば、このような集約操作を書くことができます。
 
+.. image:: figures/aggregation_image.png
+   :scale: 75%
+
 タスクを書く際に ``for_each`` または ``aggregate_by`` を指定した場合に、そのタスクは集約タスクとなります。
 集約する際に、どのパラメータについて集約するかをこれらのキーで選びます。
 これらにはパラメータ名のリストを指定します。
@@ -241,8 +260,8 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 .. code-block:: python
 
    exp(target='raw_output',
-       parameters=maf.product({'A': [0, 1, 2],
-                               'B': [-1, 0, 1]}),
+       parameters=maflib.util.product({'A': [0, 1, 2],
+                                       'B': [-1, 0, 1]}),
        rule='echo A:${A} B:${B} > ${TGT}')
 
    exp(source='raw_output',
@@ -252,6 +271,9 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 
    # 注意: ruleに指定した文字列内で ${SRC} と書いた場合、
    # そこには入力ノードすべてのファイル名がスペース区切りで列挙される。
+
+.. image:: figures/aggregation.png
+   :scale: 75%
 
 この例の場合、 ``for_each=['A']`` の指定により、各 ``A`` の値ごとに ``output_for_each_A`` のノードを生成するタスクが実行されます。
 すなわち、 ``A`` の値が等しくて ``B`` の値が異なる3つの入力ノードに対して1つのタスクが作られます。
@@ -280,7 +302,7 @@ mafユーティリティ関数
 ---------------------
 
 mafにはいくつかの便利な関数が定義されています。
-そのうち、すでにパラメータリストを生成するための ``maf.product`` や ``maf.sample`` を紹介しました。
+そのうち、すでにパラメータリストを生成するための :py:func:`maflib.util.product` や :py:func:`maflib.util.sample` を紹介しました。
 ここではその他のユーティリティ関数群を簡単に紹介します。
 
 簡単な統計処理
@@ -288,10 +310,10 @@ mafにはいくつかの便利な関数が定義されています。
 
 入力ファイルが前節で述べたようなJSON形式の時、それらのJSONに関する簡単な統計値を計算することができます。
 
-``maf.max`` ルールを用いると、特定のキーについて最大値を取ることができます。
+:py:func:`maflib.rules.max` ルールを用いると、特定のキーについて最大値を取ることができます。
 例えば機械学習において、ハイパーパラメータをいくつか試したあとで最も良かった結果だけを取り出したい場合に用います。
-``maf.max`` は集約ルールのため、 ``for_each`` または ``aggregate_by`` と共に用います。
-``maf.max`` は最大値に対応する入力JSONオブジェクトに、そのJSONオブジェクトを含むノードに対応する集約パラメータを付け足したものを出力します。
+:py:func:`maflib.rules.max` は集約ルールのため、 ``for_each`` または ``aggregate_by`` と共に用います。
+:py:func:`maflib.rules.max` は最大値に対応する入力JSONオブジェクトに、そのJSONオブジェクトを含むノードに対応する集約パラメータを付け足したものを出力します。
 
 .. code-block:: python
 
@@ -302,9 +324,9 @@ mafにはいくつかの便利な関数が定義されています。
    exp(source='result',
        target='max_accuracy',
        aggregate_by=['C'],
-       rule=maf.max('accuracy'))
+       rule=maflib.rules.max('accuracy'))
 
-他にも、すべてのキーについて平均値を取る ``maf.average`` ルールがあります。
+他にも、すべてのキーについて平均値を取る :py:func:`maflib.rules.average` ルールがあります。
 
 実験結果のプロット
 ~~~~~~~~~~~~~~~~~~
@@ -313,9 +335,9 @@ mafにはいくつかの便利な関数が定義されています。
 Pythonには便利なグラフ描画ライブラリとしてmatplotlibがあります。
 mafではJSON形式の実験結果をmatplotlibに流しこむための便利な仕組みがあります。
 
-``maf.plot_by`` ルールは、実際にmatplotlibに描画を行う関数を受け取ります。
-このコールバック関数は、実験結果そのものではなく、それを ``maf.PlotData`` というクラスのオブジェクトに変換したものを引数に取ります。
-``maf.PlotData`` からは、matplotlibに入力するためのカラムベクトルを取り出すことができます。
+:py:func:`maflib.plot.plot_by` ルールは、実際にmatplotlibに描画を行う関数を受け取ります。
+このコールバック関数は、実験結果そのものではなく、それを :py:class:`maflib.plot.PlotData` というクラスのオブジェクトに変換したものを引数に取ります。
+:py:class:`maflib.plot.PlotData` からは、matplotlibに入力するためのカラムベクトルを取り出すことができます。
 
 次の例では、JSON形式で書かれた実験結果 ``result`` をもとに折れ線グラフを描画しています。
 実験結果は ``{"time": 数値, "accuracy": 数値}`` という形式で書かれており、各入力ノードはこのようなJSONオブジェクトの配列になっています。
@@ -337,10 +359,10 @@ mafではJSON形式の実験結果をmatplotlibに流しこむための便利な
    exp(source='result',
        target='plot.png',
        for_each=[],
-       rule=maf.plot_by(plot_my_result))
+       rule=maflib.plot.plot_by(plot_my_result))
 
-単純な折れ線グラフに関しては、さらに簡単な ``maf.plot_line`` も用意しています。
-ただしこちらは自由度が低いので、グラフの体裁をいじりたい場合には ``maf.plot_by`` を用いてmatplotlibを直接使うことをおすすめします。
+単純な折れ線グラフに関しては、さらに簡単な :py:func:`maflib.plot.plot_line` も用意しています。
+ただしこちらは自由度が低いので、グラフの体裁をいじりたい場合には :py:func:`maflib.plot.plot_by` を用いてmatplotlibを直接使うことをおすすめします。
 
 .. code-block:: python
 
@@ -348,4 +370,4 @@ mafではJSON形式の実験結果をmatplotlibに流しこむための便利な
    exp(source='result',
        target='plot.png',
        for_each=[],
-       rule=maf.plot_line('time', 'accuracy', legend={'key': 'method'}))
+       rule=maflib.plot.plot_line('time', 'accuracy', legend={'key': 'method'}))

@@ -13,6 +13,7 @@ Welcome to maf's documentation!
 
    introduction
    concept
+   modules
 
 Indices and tables
 ==================
@@ -20,4 +21,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

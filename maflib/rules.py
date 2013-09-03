@@ -113,7 +113,7 @@ def calculate_stats_multilabel_classification(task):
 
     The output of this task is one json file, like
 
-    ..
+    .. code-block:: javascript
 
       {
         "accuracy": 0.7,

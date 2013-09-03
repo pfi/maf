@@ -1,0 +1,36 @@
+digraph G {
+  graph [rankdir=LR]
+
+  source1 [label="ソースコード1"]
+  source2 [label="ソースコード2"]
+  source3 [label="ソースコード3"]
+  sourceN [label="ソースコードN"]
+
+  compile1 [shape=box, label="コンパイル"]
+  compile2 [shape=box, label="コンパイル"]
+  compile3 [shape=box, label="コンパイル"]
+  compileN [shape=box, label="コンパイル"]
+
+  object1 [label="オブジェクト\nコード1"]
+  object2 [label="オブジェクト\nコード2"]
+  object3 [label="オブジェクト\nコード3"]
+  objectN [label="オブジェクト\nコードN"]
+
+  link [shape=box, label="リンク"]
+
+  executable [label="実行可能ファイルや\nライブラリ"]
+
+  source1 -> compile1
+  source2 -> compile2
+  source3 -> compile3
+  sourceN -> compileN
+
+  compile1 -> object1
+  compile2 -> object2
+  compile3 -> object3
+  compileN -> objectN
+
+  { object1; object2; object3; objectN } -> link
+
+  link -> executable
+}
