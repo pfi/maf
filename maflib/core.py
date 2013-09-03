@@ -76,9 +76,9 @@ class ExperimentContext(waflib.Build.BuildContext):
             rule_impl = call_object.rule
             call_object.rule = lambda task: rule_impl(task)
 
-        if getattr(call_object, 'for_each', []):
+        if hasattr(call_object, 'for_each'):
             self._generate_aggregation_tasks(call_object, 'for_each')
-        elif getattr(call_object, 'aggregate_by', []):
+        elif hasattr(call_object, 'aggregate_by'):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
@@ -279,8 +279,12 @@ class CallObject(object):
         """
         self.__dict__.update(kw)
 
-        for key in ['source', 'target', 'features', 'for_each', 'aggregate_by']:
+        for key in ['source', 'target', 'features']:
             _let_element_to_be_list(self.__dict__, key)
+
+        for key in ['for_each', 'aggregate_by']:
+            if hasattr(self, key):
+                _let_element_to_be_list(self.__dict__, key)
 
         self.__dict__['features'].append('experiment')
         if 'parameters' not in self.__dict__:
