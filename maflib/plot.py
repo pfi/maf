@@ -213,6 +213,7 @@ def plot_by(callback_body):
         (:py:class:`matplotlib.figure.Figure`, :py:class:`PlotData`).
 
     """
+    @maflib.util.aggregator
     def callback(values, abspath, parameter):
         figure = matplotlib.pyplot.figure()
         plot_data = PlotData(values)
@@ -220,7 +221,7 @@ def plot_by(callback_body):
         figure.savefig(abspath)
         return None
 
-    return maflib.util.create_aggregator(callback)
+    return callback
 
 
 def plot_line(x, y, legend=None):

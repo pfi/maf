@@ -54,6 +54,15 @@ def create_aggregator(callback_body):
     return callback
 
 
+def aggregator(callback_body):
+    """Alias of :py:func:`maflib.util.create_aggregator` as a decorator.
+
+    See :py:func:`maflib.util.create_aggregator` for detail.
+    """
+
+    return create_aggregator(callback_body)
+
+
 def product(parameter):
     """Generates a direct product of given listed parameters.
 
