@@ -15,7 +15,7 @@ def max(key):
     :rtype: ``function``
 
     """
-    def body(values, outpath):
+    def body(values, outpath, parameter):
         max_value = None
         argmax = None
         for value in values:
@@ -42,7 +42,7 @@ def average():
     """
     # TODO(beam2d): This function can be a simple aggregator instead of
     # an aggregator generator.
-    def body(values, output):
+    def body(values, output, parameter):
         scheme = copy.deepcopy(values[0])
         for key in scheme:
             try:

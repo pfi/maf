@@ -205,17 +205,18 @@ def plot_by(callback_body):
     """Creates an aggregator to plot data using matplotlib and PlotData.
 
     :param callback_body: Callable object or function that plots data. It takes
-        two parameters: matplotlib.figure.Figure object and PlotData object.
-        User must define a callback function that plots given data to given
-        figure.
+        three parameters: :py:class:`matplotlib.figure.Figure` object,
+        :py:class:`maflib.plot.PlotData` object and a parameter of class
+        :py:class:`maflib.core.Parameter`. User must define a callback function
+        that plots given data to given figure.
     :type callback_body: ``function`` or callable object, whose signature is
         (:py:class:`matplotlib.figure.Figure`, :py:class:`PlotData`).
 
     """
-    def callback(values, abspath):
+    def callback(values, abspath, parameter):
         figure = matplotlib.pyplot.figure()
         plot_data = PlotData(values)
-        callback_body(figure, plot_data)
+        callback_body(figure, plot_data, parameter)
         figure.savefig(abspath)
         return None
 
@@ -234,7 +235,7 @@ def plot_line(x, y, legend=None):
     x = get_normalized_axis_config(x)
     y = get_normalized_axis_config(y)
 
-    def callback(figure, data):
+    def callback(figure, data, parameter):
         axes = figure.add_subplot(111)
 
         if 'scale' in x:

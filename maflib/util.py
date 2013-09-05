@@ -23,11 +23,12 @@ def create_aggregator(callback_body):
     See :py:mod:`maflib.rules` or :py:mod:`maflib.plot` to get
     examples of ``callback_body``.
 
-    :param callback_body: A function or a callable object that takes two
-        arguments: ``values`` and ``abspath``. ``values`` is an array of
-        dictionaries that represents the content of input files. ``abspath`` is
-        an absolute path to the output node. This function should return str or
-        None.
+    :param callback_body: A function or a callable object that takes three
+        arguments: ``values``, ``abspath``, and ``parameter``. ``values`` is an
+        array of dictionaries that represents the content of input files.
+        ``abspath`` is an absolute path to the output node. ``parameter`` is
+        the parameter of the output node, i.e. the parameter of this task. This
+        function should return str or None.
     :type callback_body: ``function`` or callble object of signature
         ``(list, str)``.
     :return: An aggregator function that calls ``callback_body``.
@@ -45,7 +46,7 @@ def create_aggregator(callback_body):
             values += content
 
         abspath = task.outputs[0].abspath()
-        result = callback_body(values, abspath)
+        result = callback_body(values, abspath, task.parameter)
 
         if result is not None:
             task.outputs[0].write(result)
