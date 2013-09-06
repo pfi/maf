@@ -5,6 +5,8 @@ import collections
 import copy
 import os
 import os.path
+import types
+import inspect
 try:
     import cPickle as pickle
 except ImportError:
@@ -23,6 +25,33 @@ def options(opt):
 def configure(conf):
     pass
 
+class Rule(object):
+    """A wrapper object of a rule function with associate values,
+    which change is tracked on the experiment."""
+    
+    def __init__(self, fun, dependson=[]):
+        """
+
+        :param fun: target function of the task.
+        :param dependson: list of variable or function, which one wants to track.
+            All these variables are later converted to string values, so if
+            one wants to pass the variable of user-defined class, that class
+            must provide meaningful `__str__` method.
+        
+        """
+        self.fun = fun
+        self.dependson = dependson
+        self.dependson.append(self.fun)
+
+    def add_dependson(self, dependson):
+        self.dependson += dependson
+
+    def stred_dependson(self):
+        def to_str(d):
+            # function type is converted to the string of the body by inspect.getsource
+            if isinstance(d, types.FunctionType): return inspect.getsource(d)
+            else: return str(d)
+        return map(to_str, self.dependson)
 
 class ExperimentContext(waflib.Build.BuildContext):
     """Context class of waf experiment (a.k.a. maf)."""
@@ -69,12 +98,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
-        if ('rule' in call_object.__dict__ and
-                not isinstance(call_object.rule, str)):
-            # Callable object other than function is not allowed as a rule in
-            # waf. Here we relax this restriction.
-            rule_impl = call_object.rule
-            call_object.rule = lambda task: rule_impl(task)
+        self._set_rule_and_dependson(call_object)        
 
         if hasattr(call_object, 'for_each'):
             self._generate_aggregation_tasks(call_object, 'for_each')
@@ -82,7 +106,26 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
-
+            
+    def _set_rule_and_dependson(self, call_object):
+        # dependson attribute is a variable or a function, which the change is
+        # automatically traced; this is set by two ways:
+        #  1) write dependson attribute in wscript
+        #  2) give rule in Rule object, which is set dependson values
+        rule = call_object.rule
+        if ('rule' in call_object.__dict__ and not isinstance(rule, str)):
+            dependson = getattr(call_object, 'dependson', [])
+            if isinstance(rule, types.FunctionType):
+                rule = Rule(rule, dependson)
+            else:
+                rule.add_dependson(dependson)
+            # Callable object other than function is not allowed as a rule in
+            # waf. Here we relax this restriction.
+            call_object.rule = lambda task: rule.fun(task)
+            call_object.dependson = rule.stred_dependson()
+        else:
+            call_object.dependson = []
+            
     def _generate_tasks(self, call_object):
         if not call_object.source:
             for parameter in call_object.parameters:
@@ -200,6 +243,10 @@ class ExperimentContext(waflib.Build.BuildContext):
             **call_object.__dict__)
         taskgen.env.source_parameter = source_parameter
         taskgen.env.update(target_parameter.to_str_valued_dict())
+
+        depkeys = [('dependson%d' % i) for i in range(len(call_object.dependson))]
+        taskgen.env.update(dict(zip(depkeys, call_object.dependson)))
+
         taskgen.parameter = target_parameter
 
     def _resolve_meta_nodes(self, nodes, parameters):
@@ -477,6 +524,11 @@ class ExperimentTask(waflib.Task.Task):
     problematic when we want to use the parameter in an object as it is. For
     example, a float value once converted to string lose some information.
 
+    Another motivation for this task is to control the hash value of a task:
+    It is calculated based on the env, in which key is registered in ``vars``
+    or ``dep_vars``. In ``__init__``, this task registers necessary keys to
+    dep_vars.
+
     """
     def __init__(self, env, generator):
         """Initializes the task.
@@ -490,6 +542,10 @@ class ExperimentTask(waflib.Task.Task):
 
         self.parameter = generator.parameter
         """Parameter whose values are not stringized."""
+
+        if not hasattr(self, 'dep_vars'): self.dep_vars = []
+        self.dep_vars += self.parameter.keys()
+        self.dep_vars += filter(lambda k: k.startswith("dependson"), env.keys())
 
 @feature('experiment')
 @before_method('process_rule')

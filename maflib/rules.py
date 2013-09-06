@@ -54,7 +54,7 @@ def average():
                 pass
         return json.dumps(scheme)
 
-    return body
+    return maflib.core.Rule(fun=body, dependson=[average])
 
 
 def convert_libsvm_accuracy(task):
