@@ -27,18 +27,17 @@ def configure(conf):
 
 class Rule(object):
     """A wrapper object of a rule function with associate values,
-    which change is tracked on the experiment."""
+    which change is tracked on the experiment.
+    
+    :param fun: target function of the task.
+    :param dependson: list of variable or function, which one wants to track.
+        All these variables are later converted to string values, so if
+        one wants to pass the variable of user-defined class, that class
+        must provide meaningful `__str__` method.
+        
+    """
     
     def __init__(self, fun, dependson=[]):
-        """
-
-        :param fun: target function of the task.
-        :param dependson: list of variable or function, which one wants to track.
-            All these variables are later converted to string values, so if
-            one wants to pass the variable of user-defined class, that class
-            must provide meaningful `__str__` method.
-        
-        """
         self.fun = fun
         self.dependson = dependson
         self.dependson.append(self.fun)
