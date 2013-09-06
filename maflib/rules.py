@@ -15,7 +15,8 @@ def max(key):
     :rtype: ``function``
 
     """
-    def body(values, outpath):
+    @maflib.util.aggregator
+    def body(values, outpath, parameter):
         max_value = None
         argmax = None
         for value in values:
@@ -25,7 +26,7 @@ def max(key):
             argmax = value
         return json.dumps(argmax)
 
-    return maflib.util.create_aggregator(body)
+    return body
 
 
 def average():
@@ -42,7 +43,8 @@ def average():
     """
     # TODO(beam2d): This function can be a simple aggregator instead of
     # an aggregator generator.
-    def body(values, output):
+    @maflib.util.aggregator
+    def body(values, output, parameter):
         scheme = copy.deepcopy(values[0])
         for key in scheme:
             try:
@@ -52,7 +54,7 @@ def average():
                 pass
         return json.dumps(scheme)
 
-    return maflib.util.create_aggregator(body)
+    return body
 
 
 def convert_libsvm_accuracy(task):
