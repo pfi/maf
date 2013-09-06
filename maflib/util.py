@@ -4,7 +4,8 @@ import numpy.random
 import types
 
 def create_aggregator(callback_body):
-    """Creates an aggregator using function f independent from waf.
+    """Creates an aggregator using function ``callback_body`` independent from
+    waf.
 
     This function creates a wrapper of given callback function that behaves as
     a rule of an aggregation task. It supposes that input files are represented
