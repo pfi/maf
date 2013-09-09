@@ -485,37 +485,6 @@ class ParameterIdGenerator(object):
         return new_id
 
 
-def _create_file(path):
-    """Opens file in write mode. It also creates intermediate directories if
-    necessary.
-
-    """
-    prefixes = []
-    cur_dir = path
-    while cur_dir:
-        cur_dir = os.path.dirname(cur_dir)
-        prefixes.append(cur_dir)
-    prefixes.reverse()
-
-    for prefix in prefixes:
-        if prefix and not os.path.exists(prefix):
-            os.mkdir(prefix)
-
-    return open(path, 'w')
-
-
-def _get_list_from_kw(kw, key):
-    if key in kw:
-        return waflib.Utils.to_list(kw[key])
-    return []
-
-
-def _let_element_to_be_list(d, key):
-    if key not in d:
-        d[key] = []
-    if isinstance(d[key], str):
-        d[key] = waflib.Utils.to_list(d[key])
-
 class ExperimentTask(waflib.Task.Task):
     """A task class specific for ExperimentContext.
 
@@ -601,3 +570,35 @@ def register_experiment_task_with_rule(self):
     waflib.Task.classes[self.name] = cls
     
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
+
+
+def _create_file(path):
+    """Opens file in write mode. It also creates intermediate directories if
+    necessary.
+
+    """
+    prefixes = []
+    cur_dir = path
+    while cur_dir:
+        cur_dir = os.path.dirname(cur_dir)
+        prefixes.append(cur_dir)
+    prefixes.reverse()
+
+    for prefix in prefixes:
+        if prefix and not os.path.exists(prefix):
+            os.mkdir(prefix)
+
+    return open(path, 'w')
+
+
+def _get_list_from_kw(kw, key):
+    if key in kw:
+        return waflib.Utils.to_list(kw[key])
+    return []
+
+
+def _let_element_to_be_list(d, key):
+    if key not in d:
+        d[key] = []
+    if isinstance(d[key], str):
+        d[key] = waflib.Utils.to_list(d[key])
