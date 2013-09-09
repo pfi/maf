@@ -25,32 +25,6 @@ def options(opt):
 def configure(conf):
     pass
 
-class Rule(object):
-    """A wrapper object of a rule function with associate values,
-    which change is tracked on the experiment.
-    
-    :param fun: target function of the task.
-    :param dependson: list of variable or function, which one wants to track.
-        All these variables are later converted to string values, so if
-        one wants to pass the variable of user-defined class, that class
-        must provide meaningful `__str__` method.
-        
-    """
-    
-    def __init__(self, fun, dependson=[]):
-        self.fun = fun
-        self.dependson = dependson
-        self.dependson.append(self.fun)
-
-    def add_dependson(self, dependson):
-        self.dependson += dependson
-
-    def stred_dependson(self):
-        def to_str(d):
-            # function type is converted to the string of the body by inspect.getsource
-            if isinstance(d, types.FunctionType): return inspect.getsource(d)
-            else: return str(d)
-        return map(to_str, self.dependson)
 
 class ExperimentContext(waflib.Build.BuildContext):
     """Context class of waf experiment (a.k.a. maf)."""
@@ -309,6 +283,34 @@ class Parameter(dict):
 
         """
         return dict([(k, str(self[k])) for k in self])
+
+
+class Rule(object):
+    """A wrapper object of a rule function with associate values,
+    which change is tracked on the experiment.
+    
+    :param fun: target function of the task.
+    :param dependson: list of variable or function, which one wants to track.
+        All these variables are later converted to string values, so if
+        one wants to pass the variable of user-defined class, that class
+        must provide meaningful `__str__` method.
+        
+    """
+    
+    def __init__(self, fun, dependson=[]):
+        self.fun = fun
+        self.dependson = dependson
+        self.dependson.append(self.fun)
+
+    def add_dependson(self, dependson):
+        self.dependson += dependson
+
+    def stred_dependson(self):
+        def to_str(d):
+            # function type is converted to the string of the body by inspect.getsource
+            if isinstance(d, types.FunctionType): return inspect.getsource(d)
+            else: return str(d)
+        return map(to_str, self.dependson)
 
 
 class CallObject(object):
