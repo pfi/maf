@@ -76,7 +76,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
-        self._set_rule_and_dependson(call_object)        
+        self._set_rule_and_dependson(call_object)
 
         if hasattr(call_object, 'for_each'):
             self._generate_aggregation_tasks(call_object, 'for_each')
