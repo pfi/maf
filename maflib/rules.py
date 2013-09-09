@@ -12,7 +12,7 @@ def max(key):
     :param key: A key to be used for selection of maximum value.
     :type key: ``str``
     :return: An aggregator.
-    :rtype: ``function``
+    :rtype: ``maflib.core.Rule``
 
     """
     @maflib.util.aggregator
@@ -26,7 +26,7 @@ def max(key):
             argmax = value
         return json.dumps(argmax)
 
-    return body
+    return maflib.core.Rule(fun=body, dependson=[max, key])
 
 
 def average():
@@ -38,7 +38,7 @@ def average():
     key from the result.
 
     :return: An aggregator.
-    :rtype: ``function``
+    :rtype: ``maflib.core.Rule``
 
     """
     # TODO(beam2d): This function can be a simple aggregator instead of
@@ -54,7 +54,7 @@ def average():
                 pass
         return json.dumps(scheme)
 
-    return body
+    return maflib.core.Rule(fun=body, dependson=[average])
 
 
 def convert_libsvm_accuracy(task):

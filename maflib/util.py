@@ -2,6 +2,7 @@ import itertools
 import json
 import numpy.random
 import types
+import numpy as np
 
 def create_aggregator(callback_body):
     """Creates an aggregator using function ``callback_body`` independent from
@@ -153,3 +154,19 @@ def sample(num_samples, distribution):
         sampled.append(instance)
 
     return sampled
+
+def set_random_seed(x):
+    np.random.seed(x)
+
+"""Set the random seed of numpy to a fixed value.
+Without this, util.sample method generate different random numbers in each call,
+that is, we get a different parameter combination without any modify to the wscript.
+This is problematic when we add or remove snippets to the wscript; we don't want to re-run
+the experiments that have been already completed.
+
+WARNING: By fixing the random seed, we can control the generation of random numbers,
+but it is limited to some extent: if we add in wscript a experiment with util.sample
+above the previously defined experiment, which also use util.sample, generations of
+random number no longer follow the previous execution.
+"""
+set_random_seed(10)
