@@ -12,7 +12,7 @@ def max(key):
     :param key: A key to be used for selection of maximum value.
     :type key: ``str``
     :return: An aggregator.
-    :rtype: ``maflib.core.Rule``
+    :rtype: :py:class:`maflib.core.Rule`
 
     """
     @maflib.util.aggregator
@@ -38,7 +38,7 @@ def min(key):
     :param key: A key to be used for selection of minimum value.
     :type key: ``str``
     :return: An aggregator.
-    :rtype: ``maflib.core.Rule``
+    :rtype: :py:class:`maflib.core.Rule`
 
     """
     @maflib.util.aggregator
