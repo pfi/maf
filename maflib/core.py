@@ -93,7 +93,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         rule = call_object.rule
         if ('rule' in call_object.__dict__ and not isinstance(rule, str)):
             dependson = getattr(call_object, 'dependson', [])
-            if isinstance(rule, types.FunctionType):
+            if _is_callable(rule):
                 rule = Rule(rule, dependson)
             else:
                 rule.add_dependson(dependson)
@@ -312,9 +312,11 @@ class Rule(object):
 
     def stred_dependson(self):
         def to_str(d):
-            # function type is converted to the string of the body by inspect.getsource
-            if isinstance(d, types.FunctionType): return inspect.getsource(d)
-            else: return str(d)
+            # Callable object is converted to its source code as str.
+            if _is_callable(d):
+                return inspect.getsource(d)
+            else:
+                return str(d)
         return map(to_str, self.dependson)
 
 
@@ -601,3 +603,7 @@ def _let_element_to_be_list(d, key):
         d[key] = []
     if isinstance(d[key], str):
         d[key] = waflib.Utils.to_list(d[key])
+
+
+def _is_callable(o):
+    return isinstance(o, types.FunctionType) or hasattr(o, '__call__')
