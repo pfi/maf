@@ -99,4 +99,4 @@ def experiment(exp):
     exp(source='cv_result',
         target='cv_ave_accuracy',
         for_each=['s', 'C', 'B'],
-        rule=maflib.rules.average())
+        rule=maflib.rules.average)
