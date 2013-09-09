@@ -29,32 +29,50 @@ def max(key):
     return maflib.core.Rule(fun=body, dependson=[max, key])
 
 
-def average():
-    """Creates an aggregator that calculates the average value for each key.
+def min(key):
+    """Creates an aggregator to select the minimum value of given key.
+
+    The created aggregator chooses the result with the minimum value of
+    ``key``, and writes the JSON object to the output node.
+
+    :param key: A key to be used for selection of minimum value.
+    :type key: ``str``
+    :return: An aggregator.
+    :rtype: ``maflib.core.Rule``
+
+    """
+    @maflib.util.aggregator
+    def body(values, outpath, parameter):
+        min_value = None
+        argmin = None
+        for value in values:
+            if min_value <= value[key]:
+                continue
+            min_value = value[key]
+            argmin = value
+        return json.dumps(argmin)
+
+    return maflib.core.Rule(fun=body, dependson=[min, key])
+
+
+@maflib.util.aggregator
+def average(values, output, parameter):
+    """Aggregator that calculates the average value for each key.
 
     The result contains all keys that some inputs contain. Each value is an
     average value of the corresponding key through all the inputs. If there
     is a value that cannot be passed to ``float()``, it omits the corresponding
     key from the result.
 
-    :return: An aggregator.
-    :rtype: ``maflib.core.Rule``
-
     """
-    # TODO(beam2d): This function can be a simple aggregator instead of
-    # an aggregator generator.
-    @maflib.util.aggregator
-    def body(values, output, parameter):
-        scheme = copy.deepcopy(values[0])
-        for key in scheme:
-            try:
-                scheme[key] = sum(
-                    float(v[key]) for v in values) / float(len(values))
-            except:
-                pass
-        return json.dumps(scheme)
-
-    return maflib.core.Rule(fun=body, dependson=[average])
+    scheme = copy.deepcopy(values[0])
+    for key in scheme:
+        try:
+            scheme[key] = sum(
+                float(v[key]) for v in values) / float(len(values))
+        except:
+            pass
+    return json.dumps(scheme)
 
 
 def convert_libsvm_accuracy(task):
