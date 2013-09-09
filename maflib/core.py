@@ -1,3 +1,10 @@
+"""
+A core of maf - an environment for computational experimentations on waf.
+
+This module contains the core functionality of maf that handles parameterized
+tasks and metanodes.
+"""
+
 # TODO(beam2d): Decide which license to use and add its description.
 
 import collections
