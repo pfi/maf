@@ -40,8 +40,9 @@ def decompress(filetype='auto'):
     """A rule to decompress an input file.
 
     :param filetype: Type of compressed file. Following values are available.
+
         - ``'auto'``: Use automatically detected type from the extension of the
-            input file name.
+          input file name.
         - ``'bz2'``: bzip2 file.
         - ``'gz'``: gzip file.
         - ``'zip'``: zip file.
