@@ -1,6 +1,11 @@
+import bz2
 import copy
+import gzip
 import json
+import os.path
 import urllib
+import zlib
+
 import maflib.core
 import maflib.util
 
@@ -19,6 +24,43 @@ def download(url):
         urllib.urlretrieve(url, task.outputs[0].abspath())
 
     return maflib.core.Rule(fun=body, dependson=[download, url])
+
+
+def decompress(filetype='auto'):
+    """A rule to decompress an input file.
+
+    :param filetype: Type of compressed file. Following values are available.
+        - ``'auto'``: Use automatically detected type from the extension of the
+            input file name.
+        - ``'bz2'``: bzip2 file.
+        - ``'gz'``: gzip file.
+        - ``'zip'``: zip file.
+    :type filetype: ``str``
+    :return: A rule.
+    :rtype: :py:class:`maflib.core.Rule`
+
+    """
+    def body(task):
+        ft = filetype
+        if ft == 'auto':
+            ft = os.path.splitext(task.inputs[0].abspath())[1][1:]
+
+        if ft == 'bz2':
+            with bz2.BZ2File(task.inputs[0].abspath()) as f:
+                decompressed_data = f.read()
+        elif ft == 'gz':
+            with gzip.GzipFile(task.inputs[0].abspath()) as f:
+                decompressed_data = f.read()
+        elif ft == 'zip':
+            compressed_data = task.inputs[0].read()
+            decompressed_data = zlip.decompress(compressed_data)
+        else:
+            raise Exception(
+                "Filetype %s is not supported in decompress." % filetype)
+
+        task.outputs[0].write(decompressed_data)
+
+    return maflib.core.Rule(fun=body, dependson=[decompress, filetype])
 
 
 def max(key):
