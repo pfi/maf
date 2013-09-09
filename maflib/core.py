@@ -591,12 +591,6 @@ def _create_file(path):
     return open(path, 'w')
 
 
-def _get_list_from_kw(kw, key):
-    if key in kw:
-        return waflib.Utils.to_list(kw[key])
-    return []
-
-
 def _let_element_to_be_list(d, key):
     if key not in d:
         d[key] = []
