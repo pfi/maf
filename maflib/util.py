@@ -74,7 +74,7 @@ def product(parameter):
 
     .. code-block:: python
 
-        maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
+        maflib.util.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
         #     {'x': 1, 'y': 1}, {'x': 1, 'y': 3}, {'x': 1, 'y': 5},
         #     {'x': 2, 'y': 1}, {'x': 2, 'y': 3}, {'x': 2, 'y': 5}]
