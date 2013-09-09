@@ -29,6 +29,32 @@ def max(key):
     return maflib.core.Rule(fun=body, dependson=[max, key])
 
 
+def min(key):
+    """Creates an aggregator to select the minimum value of given key.
+
+    The created aggregator chooses the result with the minimum value of
+    ``key``, and writes the JSON object to the output node.
+
+    :param key: A key to be used for selection of minimum value.
+    :type key: ``str``
+    :return: An aggregator.
+    :rtype: ``maflib.core.Rule``
+
+    """
+    @maflib.util.aggregator
+    def body(values, outpath, parameter):
+        min_value = None
+        argmin = None
+        for value in values:
+            if min_value <= value[key]:
+                continue
+            min_value = value[key]
+            argmin = value
+        return json.dumps(argmin)
+
+    return maflib.core.Rule(fun=body, dependson=[min, key])
+
+
 @maflib.util.aggregator
 def average(values, output, parameter):
     """Aggregator that calculates the average value for each key.
