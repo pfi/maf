@@ -3,25 +3,35 @@ import copy
 import gzip
 import json
 import os.path
+import tempfile
 import urllib
 import zlib
 
 import maflib.core
 import maflib.util
 
-def download(url):
+def download(url, decompress_as=''):
     """Create a rule to download a file from given URL.
 
-    It stores the file to the target node.
+    It stores the file to the target node. If ``decompress_as`` is given, then
+    it automatically decompresses the downloaded file.
 
     :param url: URL string of the file to be downloaded.
     :type url: ``str``
+    :param decompress_as: Decompression method of downloaded file. If an empty
+        string is given, then this function does not do decompression.
+        ``'bz2'``, ``'gz'`` or ``'zip'`` is available.
     :return: A rule.
     :rtype: :py:class:`maflib.core.Rule`
 
     """
     def body(task):
-        urllib.urlretrieve(url, task.outputs[0].abspath())
+        if decompress_as != '':
+            t = tempfile.NamedTemporaryFile()
+            urllib.urlretrieve(url, t.name)
+            _decompress(t.name, task.outputs[0].abspath(), decompress_as)
+        else:
+            urllib.urlretrieve(url, task.outputs[0].abspath())
 
     return maflib.core.Rule(fun=body, dependson=[download, url])
 
@@ -45,20 +55,11 @@ def decompress(filetype='auto'):
         if ft == 'auto':
             ft = os.path.splitext(task.inputs[0].abspath())[1][1:]
 
-        if ft == 'bz2':
-            with bz2.BZ2File(task.inputs[0].abspath()) as f:
-                decompressed_data = f.read()
-        elif ft == 'gz':
-            with gzip.GzipFile(task.inputs[0].abspath()) as f:
-                decompressed_data = f.read()
-        elif ft == 'zip':
-            compressed_data = task.inputs[0].read()
-            decompressed_data = zlip.decompress(compressed_data)
-        else:
+        res = _decompress(
+            task.inputs[0].abspath(), task.outputs[0].abspath(), ft)
+        if not res:
             raise Exception(
-                "Filetype %s is not supported in decompress." % filetype)
-
-        task.outputs[0].write(decompressed_data)
+                "Filetype %s is not supported in decompress." % ft)
 
     return maflib.core.Rule(fun=body, dependson=[decompress, filetype])
 
@@ -347,3 +348,23 @@ def segment_by_line(num_folds, parameter_name='fold'):
                 i += 1
         source.close()
     return body
+
+
+def _decompress(srcpath, dstpath, filetype):
+    if filetype == 'bz2':
+        with bz2.BZ2File(srcpath) as f:
+            decompressed_data = f.read()
+    elif filetype == 'gz':
+        with gzip.GzipFile(srcpath) as f:
+            decompressed_data = f.read()
+    elif filetype == 'zip':
+        with open(srcpath) as f:
+            compressed_data = f.read()
+        decompressed_data = zlip.decompress(compressed_data)
+    else:
+        return False
+
+    with open(dstpath, 'w') as f:
+        f.write(decompressed_data)
+
+    return True
