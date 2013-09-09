@@ -1,3 +1,5 @@
+import functools
+
 # These two lines are necessary for desktop-enabled environment.
 import matplotlib
 matplotlib.use('Agg')
@@ -213,6 +215,7 @@ def plot_by(callback_body):
         (:py:class:`matplotlib.figure.Figure`, :py:class:`PlotData`).
 
     """
+    @functools.wraps(callback_body)
     @maflib.util.aggregator
     def callback(values, abspath, parameter):
         figure = matplotlib.pyplot.figure()

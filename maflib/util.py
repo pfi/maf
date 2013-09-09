@@ -1,3 +1,4 @@
+import functools
 import itertools
 import json
 import numpy.random
@@ -37,6 +38,7 @@ def create_aggregator(callback_body):
     :rtype: ``function``
 
     """
+    @functools.wraps(callback_body)
     def callback(task):
         values = []
         for node, parameter in zip(task.inputs, task.env.source_parameter):
