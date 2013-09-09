@@ -5,7 +5,7 @@ import maflib.core
 import maflib.util
 
 def download(url):
-    """Rule to download a file from given URL.
+    """Create a rule to download a file from given URL.
 
     It stores the file to the target node.
 
