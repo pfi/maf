@@ -1,7 +1,25 @@
 import copy
 import json
+import urllib
 import maflib.core
 import maflib.util
+
+def download(url):
+    """Rule to download a file from given URL.
+
+    It stores the file to the target node.
+
+    :param url: URL string of the file to be downloaded.
+    :type url: ``str``
+    :return: A rule.
+    :rtype: :py:class:`maflib.core.Rule`
+
+    """
+    def body(task):
+        urllib.urlretrieve(url, task.outputs[0].abspath())
+
+    return maflib.core.Rule(fun=body, dependson=[download, url])
+
 
 def max(key):
     """Creates an aggregator to select the max value of given key.
