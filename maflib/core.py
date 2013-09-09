@@ -16,7 +16,6 @@ import waflib.Build
 import waflib.Utils
 from waflib.TaskGen import before_method, feature
 
-# TODO(beam2d): Add tests.
 
 def options(opt):
     pass
