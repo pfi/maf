@@ -16,7 +16,30 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+
+waf_root = os.path.join(os.path.abspath('.'), "../../")
+waf_path = os.path.join(waf_root, "waf")
+waflib = ""
+
+def waflib_cands(root):
+    return map((lambda x: os.path.join(root,x)),
+               filter((lambda x: x.startswith(".waf-")), os.listdir(root)))
+
+cands = waflib_cands(waf_root)
+if len(cands) > 0:
+    waflib = cands[0]
+else:
+    if os.path.exists(waf_path):
+        import subprocess
+        devnull = open('/dev/null')
+        # execute waf to create waflib directory
+        subprocess.call(['python', waf_path], stdout=devnull, stderr=devnull)
+        waflib = waflib_cands(waf_root)[0]
+    else:
+        raise Exception("waf script is missing. Please place it to the project root directory.")
+
+sys.path.insert(0, waflib)
+sys.path.insert(0, waf_root)
 
 # -- General configuration -----------------------------------------------------
 
@@ -25,7 +48,8 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath']
+sys.path.insert(0, './exts')
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numfig']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -41,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'maf'
-copyright = u'2013, Seiya Tokui'
+copyright = u'2013, Preferred Infrastructure, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,7 +208,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'maf.tex', u'maf Documentation',
-   u'Seiya Tokui', 'manual'),
+   u'Preferred Infrastructure, Inc.', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -214,7 +238,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'maf', u'maf Documentation',
-     [u'Seiya Tokui'], 1)
+     [u'Preferred Infrastructure, Inc.'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -228,7 +252,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'maf', u'maf Documentation',
-   u'Seiya Tokui', 'maf', 'One line description of project.',
+   u'Preferred Infrastructure, Inc.', 'maf', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -242,5 +266,5 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 # These lines are automatically inserted for Japanese document
-language = 'ja'
+language = 'en'
 latex_docclass = {'manual': 'jsbook'}

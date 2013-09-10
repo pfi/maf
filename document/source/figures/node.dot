@@ -1,0 +1,9 @@
+digraph G {
+  graph [rankdir=LR]
+
+  node1 [label="ノード"]
+  task [shape=box, label="タスク"]
+  node2 [label="ノード"]
+
+  node1 -> task -> node2
+}

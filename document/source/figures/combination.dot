@@ -1,0 +1,43 @@
+digraph G {
+  graph [rankdir=LR]
+
+  subgraph cluster_x {
+    label="x"
+
+    x1 [label="{'A': 1, 'B': 1}"]
+    x2 [label="{'A': 2, 'B': 10}"]
+    x3 [label="{'A': 3, 'B': 1}"]
+  }
+
+  subgraph cluster_y {
+    label="y"
+
+    y1 [label="{'A': 1, 'C': -1}"]
+    y2 [label="{'A': 2, 'C': 0}"]
+    y3 [label="{'A': 3, 'C': 1}"]
+  }
+
+  subgraph cluster_z {
+    label="z"
+
+    z1 [label="{'A': 1, 'B': 1, 'C': -1}"]
+    z2 [label="{'A': 2, 'B': 10, 'C': 0}"]
+    z3 [label="{'A': 3, 'B': 1, 'C': 1}"]
+  }
+
+  subgraph cluster_task {
+    label="task: x y -> z"
+
+    task1 [shape=box, label="{'A': 1, 'B': 1, 'C': -1}"]
+    task2 [shape=box, label="{'A': 2, 'B': 10, 'C': 0}"]
+    task3 [shape=box, label="{'A': 3, 'B': 1, 'C': 1}"]
+  }
+
+  { x1; y1 } -> task1
+  { x2; y2 } -> task2
+  { x3; y3 } -> task3
+
+  task1 -> z1
+  task2 -> z2
+  task3 -> z3
+}

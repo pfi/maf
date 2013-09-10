@@ -1,0 +1,17 @@
+digraph G {
+  graph [rankdir=LR]
+
+  subgraph cluster_metanode {
+    label="メタノード"
+
+    node1 [label="{パラメータ1}"]
+    node2 [label="{パラメータ2}"]
+    node3 [label="{パラメータ3}"]
+    node4 [label="{パラメータ4}"]
+  }
+
+  aggregation [shape=box, label="集約タスク"]
+  result [label="集約結果"]
+
+  { node1; node2; node3; node4 } -> aggregation -> result
+}

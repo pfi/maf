@@ -1,0 +1,23 @@
+digraph G {
+  graph [rankdir=LR]
+
+  subgraph cluster_task {
+    label="echo ${name} > ${TGT}"
+
+    echo_taro [shape=box, label="echo Taro > ${TGT}"]
+    echo_jiro [shape=box, label="echo Jiro > ${TGT}"]
+    echo_saburo [shape=box, label="echo Saburo > ${TGT}"]
+  }
+
+  subgraph cluster_my_out {
+    label="my_out"
+
+    taro [label="{'name': 'Taro'}"]
+    jiro [label="{'name': 'Jiro'}"]
+    saburo [label="{'name': 'Saburo'}"]
+  }
+
+  echo_taro -> taro
+  echo_jiro -> jiro
+  echo_saburo -> saburo
+}
