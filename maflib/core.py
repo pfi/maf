@@ -89,7 +89,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         # dependson attribute is a variable or a function, changes of which will be
         # automatically traced; this is set by two ways:
         #  1) write dependson attribute in wscript
-        #  2) give rule in Rule object, which is set dependson values
+        #  2) give rule in Rule object having non-empty dependson
         rule = call_object.rule
         if ('rule' in call_object.__dict__ and not isinstance(rule, str)):
             dependson = getattr(call_object, 'dependson', [])
