@@ -1,5 +1,6 @@
 import copy
 import json
+from collections import defaultdict
 import maflib.core
 import maflib.util
 
@@ -93,7 +94,14 @@ is not consistent with the one of test file (%s)." % (predict_f, test_f))
     task.outputs[0].write(json.dumps(instances))
     return 0
 
+def _weighted_average(num_examples, values):
+    s = sum(num_examples)
+    label_weight = map(lambda a: float(a) / s, num_examples)
+    return sum([w * v for (w, v) in zip(label_weight, values)])
 
+def _macro_average(values):
+    return float(sum(values)) / len(values)
+    
 def calculate_stats_multilabel_classification(task):
     """Calculates various performance measure for multi-label classification.
 
@@ -104,14 +112,16 @@ def calculate_stats_multilabel_classification(task):
 
     The output measures is summarized as follows, most of which are cited from (*):
 
-    - Accuracy
-    - AverageAccuracy
-    - ErrorRate
-    - Precision for each label
-    - Recall for each label
-    - F1 for each label
-    - Specifity for each label
-    - AUC for each label
+    Accuracy, AverageAccuray, ErrorRate
+
+    Other measures:
+      Precision, Recall, F1, Specifity and AUC
+    are calculated for each label.
+
+    In terms of precision, Recall and F1, averaged results are also calculated.
+    There are two different type of averaging: micro and macro.
+    Micro average is calculated using global count of true positive, false positive, etc,
+    while macro average is calculated naively by dividing the number of labels.
 
     The output of this task is one json file, like
 
@@ -126,6 +136,8 @@ def calculate_stats_multilabel_classification(task):
         "1-F1": 0.6,
         "1-specifity": 0.6,
         "1-AUC": 0.7,
+        "precision-micro":0.7
+        "precision-macro":0.6
         ...
         "2-precision": 0.6,
         "2-recall": 0.7,
@@ -133,90 +145,82 @@ def calculate_stats_multilabel_classification(task):
       }
 
     where accuracy, average_accuracy and error_rate corresponds to Accuracy,
-    AverageAccuracy and ErrorRate respectively. Average is macro average, which
-    is consistent with the output of e.g., svm-predict. Other results (e.g.
-    1-precision) are calculated for each label and represented as a pair of
-    "label" and "result name" combined with a hyphen. For example, 1-precision
-    is precision for the label 1, while 3-F1 is F1 for the label 3.
+    AverageAccuracy and ErrorRate respectively. Average is macro average of
+    all data, which is consistent with the output of e.g., svm-predict.
+    Other results (e.g. 1-precision) are calculated for each label and represented
+    as a pair of "label" and "measure" combined with a hyphen. For example,
+    1-precision is precision for the label 1, while 3-F1 is F1 for the label 3.
 
     (*) Marina Sokolova, Guy Lapalme
     A systematic analysis of performance measures for classification tasks
     Information Processing and Management 45 (2009) 427-437
     
     """
-    def accuracy(labelstats):
-        correct = 0
-        for stat in labelstats.values():
-            correct += stat["tp"]
-        head_key = labelstats.keys()[0]
-        n = sum(labelstats[head_key].values())
-        return float(correct) / n
+    class labelstat(object):
+        def __init__(self):
+            self.tp = 0  # true positive
+            self.tn = 0  # true negative
+            self.fp = 0  # false positive
+            self.fn = 0  # false negative
             
-    def average_accuracy(labelstats):
-        ret = 0
-        for stat in labelstats.values():
-            ret += float(stat["tp"] + stat["tn"]) \
-                / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
-        return ret / float(len(labelstats))
-    
-    def error_rate(labelstats):
-        ret = 0
-        for stat in labelstats.values():
-            ret += float(stat["fp"] + stat["fn"]) \
-                / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
-        return ret / float(len(labelstats))
-    
-    def label_precision(stat):
-        return float(stat["tp"]) / (stat["tp"] + stat["fp"])
-    def label_recall(stat):
-        return float(stat["tp"]) / (stat["tp"] + stat["fn"])
-    def label_F1(stat):
-        return float(2 * stat["tp"]) / (2 * stat["tp"] + stat["fn"] + stat["fp"])
-    def label_specifity(stat):
-        return float(stat["tn"]) / (stat["fp"] + stat["tn"])
-    def label_AUC(stat):
-        return 0.5 * (float(stat["tp"]) / (stat["tp"] + stat["fn"]) + \
-                      float(stat["tn"]) / (stat["tn"] + stat["fp"]))
+        def add_count(self, is_predict_label, is_collect_label):
+            if is_predict_label and is_collect_label: self.tp += 1
+            elif is_predict_label and not is_collect_label: self.fp += 1
+            elif not is_predict_label and is_collect_label: self.fn += 1
+            else: self.tn += 1
+            
+        def accuracy(self): return float(self.tp + self.tn) / self.sum()
+        def error_rate(self): return float(self.fp + self.fn) / self.sum()
+
+        def precision_numer(self): return self.tp
+        def precision_denom(self): return self.tp + self.fp
+        def recall_numer(self): return self.tp
+        def recall_denom(self): return self.tp + self.fn
+        
+        def precision(self): return float(self.precision_numer()) / self.precision_denom()
+        def recall(self): return float(self.recall_numer()) / self.recall_denom()
+        
+        def specifity(self): return float(self.tn) / (self.fp + self.tn)
+        def AUC(self):
+            return 0.5 * (float(self.tp) / (self.tp + self.fn) + \
+                          float(self.tn) / (self.tn + self.fp))
+        def sum(self): return self.tp + self.fn + self.fp + self.tn
+        def num_instance(self): return self.tp + self.fn
+
+    def F1(prec, recall): return 2 * prec * recall / (prec + recall)
     
     predict_correct_labels = json.loads(task.inputs[0].read())
-    labelstats = {}
-    labelset = set()
+    labelset = set([e["c"] for e in predict_correct_labels])
+    labelstats = defaultdict(labelstat)
     for e in predict_correct_labels:
-        labelset.add(e["p"])
-        labelset.add(e["c"])
-    for label in labelset:
-        labelstats[label] = {"tp": 0, # true positive
-                             "tn": 0, # true negative
-                             "fp": 0, # false positive
-                             "fn": 0} # false negative
-    for e in predict_correct_labels:
-        p = e["p"]
-        c = e["c"]
-        for label, stat in labelstats.items():
-            label_p = p == label
-            label_c = c == label
-            if label_p and label_c:
-                stat["tp"] += 1
-            elif label_p and not label_c:
-                stat["fp"] += 1
-            elif not label_p and label_c:
-                stat["fn"] += 1
-            else:
-                stat["tn"] += 1
+        p, c = e["p"], e["c"]
+        for label in labelset:
+            labelstats[label].add_count(p == label, c == label)
     
     results = {}
-    results["accuracy"] = accuracy(labelstats)
-    results["average_accuracy"] = average_accuracy(labelstats)
-    results["error_rate"] = error_rate(labelstats)
-    for label in labelset:
-        results["%s-precision" % label] = label_precision(labelstats[label])
-        results["%s-recall" % label] = label_recall(labelstats[label])
-        results["%s-F1" % label] = label_F1(labelstats[label])
-        results["%s-specifity" % label] = label_specifity(labelstats[label])
-        results["%s-AUC" % label] = label_AUC(labelstats[label])
-        
-    task.outputs[0].write(json.dumps(results))
+    results["accuracy"] = \
+        float(sum([s.tp for s in labelstats.values()])) / labelstats.values()[0].sum()
+    results["average_accuracy"] = _macro_average([s.accuracy() for s in labelstats.values()])
+    results["error_rate"] = _macro_average([s.error_rate() for s in labelstats.values()])
 
+    for label, s in labelstats.items():
+        prec = results["%s-precision" % label] = s.precision()
+        recall = results["%s-recall" % label] = s.recall()
+        results["%s-F1" % label] = F1(prec, recall)
+        results["%s-specifity" % label] = s.specifity()
+        results["%s-AUC" % label] = s.AUC()
+    results["precision-macro"] = _macro_average([v for (k,v) in results.items() \
+                                                     if k.endswith("precision")])
+    results["precision-micro"] = float(sum([v.precision_numer() for v in labelstats.values()])) \
+                               / sum([v.precision_denom() for v in labelstats.values()])
+    results["recall-macro"] = _macro_average([v for (k,v) in results.items() \
+                                                  if k.endswith("recall")])
+    results["recall-micro"] = float(sum([v.recall_numer() for v in labelstats.values()])) \
+                            / sum([v.recall_denom() for v in labelstats.values()])
+    results["F1-macro"] = F1(results["precision-macro"], results["recall-macro"])
+    results["F1-micro"] = F1(results["precision-micro"], results["recall-micro"])
+    
+    task.outputs[0].write(json.dumps(results))
 
 def segment_by_line(num_folds, parameter_name='fold'):
     """Creates a rule that splits a line-by-line dataset to the k-th fold train
