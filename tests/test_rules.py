@@ -4,6 +4,7 @@ import json
 
 class MulticlassEvaluationTask(object):
     """This is dummy class for the use of a test below.
+    
     When task object is separated from a rule, this class would be unnecessary.
     
     """
