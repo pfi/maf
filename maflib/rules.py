@@ -102,7 +102,7 @@ def _weighted_average(num_examples, values):
 def _macro_average(values):
     return float(sum(values)) / len(values)
     
-def calculate_stats_multilabel_classification(task):
+def calculate_stats_multiclass_classification(task):
     """Calculates various performance measure for multi-label classification.
 
     The "source" of this task is assumed to a json of a list, in which each

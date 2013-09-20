@@ -36,6 +36,6 @@ class TestMulticlassEvaluation(unittest.TestCase):
 
     def _get_result_json(self):
         task = MulticlassEvaluationTask()
-        calculate_stats_multilabel_classification(task)
+        calculate_stats_multiclass_classification(task)
         return json.loads(task.outputs[0].read())
         
