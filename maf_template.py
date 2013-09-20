@@ -30,6 +30,9 @@
 maf - a waf extension for automation of parameterized computational experiments
 """
 
+# NOTE: coding ISO8859-1 is necessary for attaching maflib at the end of this
+# file.
+
 import os
 import os.path
 import shutil
