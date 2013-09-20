@@ -1,14 +1,3 @@
-===================
- Repository status
-===================
-
-Owner
-    beam2d
-Purpose
-    Development of maf. To be publicized.
-Period
-    2013/07-
-
 =====
  maf
 =====
