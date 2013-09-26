@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2013, Preferred Infrastructure, Inc.
 # All rights reserved.
 #
