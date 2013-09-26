@@ -122,7 +122,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             call_object.dependson = rule.stred_dependson()
         else:
             call_object.dependson = []
-            
+
     def _generate_tasks(self, call_object):
         if not call_object.source:
             for parameter in call_object.parameters:
