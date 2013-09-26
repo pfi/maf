@@ -109,19 +109,15 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_tasks(call_object)
             
     def _set_rule_and_dependson(self, call_object):
-        # dependson attribute is a variable or a function, changes of which will be
-        # automatically traced; this is set by two ways:
+        # dependson attribute is a variable or a function, changes of which
+        # will be automatically traced; this is set by two ways:
         #  1) write dependson attribute in wscript
         #  2) give rule in Rule object having non-empty dependson
         rule = call_object.rule
-        if ('rule' in call_object.__dict__ and not isinstance(rule, str)):
-            dependson = getattr(call_object, 'dependson', [])
-            if _is_callable(rule):
-                rule = Rule(rule, dependson)
-            else:
-                rule.add_dependson(dependson)
-            # Callable object other than function is not allowed as a rule in
-            # waf. Here we relax this restriction.
+        if 'rule' in call_object.__dict__ and not isinstance(rule, str):
+            if not isinstance(rule, Rule):
+                rule = Rule(rule)
+            rule.add_dependson(getattr(call_object, 'dependson', []))
             call_object.rule = lambda task: rule.fun(task)
             call_object.dependson = rule.stred_dependson()
         else:
