@@ -107,7 +107,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
-            
+
     def _set_rule_and_dependson(self, call_object):
         # dependson attribute is a variable or a function, changes of which
         # will be automatically traced; this is set by two ways:
@@ -312,15 +312,15 @@ class Parameter(dict):
 class Rule(object):
     """A wrapper object of a rule function with associate values,
     which change is tracked on the experiment.
-    
+
     :param fun: target function of the task.
     :param dependson: list of variable or function, which one wants to track.
         All these variables are later converted to string values, so if
         one wants to pass the variable of user-defined class, that class
         must provide meaningful `__str__` method.
-        
+
     """
-    
+
     def __init__(self, fun, dependson=[]):
         self.fun = fun
         self.dependson = dependson
@@ -594,7 +594,7 @@ def register_experiment_task_with_rule(self):
     # define ExperimentTask with a user-defined rule (string or function)
     cls = type(waflib.Task.Task)(self.name, (ExperimentTask,), params)
     waflib.Task.classes[self.name] = cls
-    
+
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
 
 

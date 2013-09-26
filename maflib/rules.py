@@ -247,7 +247,7 @@ def calculate_stats_multilabel_classification(task):
     (*) Marina Sokolova, Guy Lapalme
     A systematic analysis of performance measures for classification tasks
     Information Processing and Management 45 (2009) 427-437
-    
+
     """
     def accuracy(labelstats):
         correct = 0
@@ -256,21 +256,21 @@ def calculate_stats_multilabel_classification(task):
         head_key = labelstats.keys()[0]
         n = sum(labelstats[head_key].values())
         return float(correct) / n
-            
+
     def average_accuracy(labelstats):
         ret = 0
         for stat in labelstats.values():
             ret += float(stat["tp"] + stat["tn"]) \
                 / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
         return ret / float(len(labelstats))
-    
+
     def error_rate(labelstats):
         ret = 0
         for stat in labelstats.values():
             ret += float(stat["fp"] + stat["fn"]) \
                 / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
         return ret / float(len(labelstats))
-    
+
     def label_precision(stat):
         return float(stat["tp"]) / (stat["tp"] + stat["fp"])
     def label_recall(stat):
@@ -282,7 +282,7 @@ def calculate_stats_multilabel_classification(task):
     def label_AUC(stat):
         return 0.5 * (float(stat["tp"]) / (stat["tp"] + stat["fn"]) + \
                       float(stat["tn"]) / (stat["tn"] + stat["fp"]))
-    
+
     predict_correct_labels = json.loads(task.inputs[0].read())
     labelstats = {}
     labelset = set()
@@ -308,7 +308,7 @@ def calculate_stats_multilabel_classification(task):
                 stat["fn"] += 1
             else:
                 stat["tn"] += 1
-    
+
     results = {}
     results["accuracy"] = accuracy(labelstats)
     results["average_accuracy"] = average_accuracy(labelstats)
@@ -319,7 +319,7 @@ def calculate_stats_multilabel_classification(task):
         results["%s-F1" % label] = label_F1(labelstats[label])
         results["%s-specifity" % label] = label_specifity(labelstats[label])
         results["%s-AUC" % label] = label_AUC(labelstats[label])
-        
+
     task.outputs[0].write(json.dumps(results))
 
 
@@ -361,7 +361,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
         n = int(task.env[parameter_name])
         test_begin = base * n
         test_end = base * (n + 1)
-        
+
         with open(task.outputs[0].abspath(), 'w') as train, \
              open(task.outputs[1].abspath(), 'w') as test:
             i = 0
