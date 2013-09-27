@@ -52,7 +52,15 @@ def average():
                 scheme[key] = sum(
                     float(v[key]) for v in values) / float(len(values))
             except:
-                pass
+                # Some values of scheme may not be json-serializable, which include
+                # user-defined class for parameters.
+                # These are expected to only be used as a "symbol" for a later process,
+                # so we convert these into strings here.
+                # TODO: should we generalize this mechanism in other place ?
+                try:
+                    scheme[key] = json.dumps(scheme[key])
+                except:
+                    scheme[key] = str(scheme[key])
         return json.dumps(scheme)
 
     return body
