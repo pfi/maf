@@ -31,6 +31,7 @@ import os.path
 import tempfile
 import urllib
 import zlib
+from collections import defaultdict
 
 import maflib.core
 import maflib.util
@@ -375,6 +376,63 @@ def segment_by_line(num_folds, parameter_name='fold'):
         source.close()
     return body
 
+def segment_libsvm(weights):
+    """Segment libsvm style data into k-fold where k is the length of param weights.
+    
+    This method consider the label-bias when segmentation:
+    In machine learning experiments, we often want to prepare training or testing examples
+    in equal proportions for each label for the correct evaluation.
+    ``weights`` specifies the proportion of examples in the k-th fold for each label.
+
+    A typical usage of this task is as follows:
+
+    .. code-block:: py
+
+        exp(source='news20.scale',
+            target='train dev test',
+            rule=segment_libsvm([0.8, 0.1, 0.1]))
+
+    This exp segment data news20.scale into 3-fold for train/develop/test.
+    For each label, train contains 80% of the examples of that label, while dev/test contains
+    10% of examples of the one.
+
+    The input is assmed to be the format of "label other_data..." (an example per line),
+    which includes, but not limited to libsvm format.
+    
+    :param weights: list of floats specifing the weight by which data are segmented
+
+    """
+
+    def _label(line):
+        return line[:line.find(' ')]
+    def _segment_data_with_weights(data):
+        normalized = map(lambda w: w / sum(weights), weights)
+        accumulate = []
+        a = 0
+        for n in normalized:
+            a += n
+            accumulate.append(a)
+        accumulate[len(accumulate)-1] = 1.0
+        endpoints = [0] + map(lambda w: int(len(data) * w)+1, accumulate)
+        print endpoints[len(endpoints)-1]
+        print len(data)
+        assert endpoints[len(endpoints)-1] == len(data)+1
+        return [data[endpoints[i]:endpoints[i+1]] for i in range(len(endpoints)-1)]
+    
+    def body(task):
+        if len(weights) != len(task.outputs):
+            raise maflib.core.InvalidMafArgumentException("lengths of weights must be the same as the number of target")
+
+        label2examples = defaultdict(list)
+        for line in open(task.inputs[0].abspath()): label2examples[_label(line)].append(line)
+        label2examples = dict([(k, _segment_data_with_weights(v)) \
+                                   for k,v in label2examples.items()])
+        for i, o in enumerate(task.outputs):
+            with open(o.abspath(), 'w') as f:
+                for examples in label2examples.values():
+                    for line in examples[i]: f.write(line)
+        return 0
+    return maflib.core.Rule(body, dependson=[segment_libsvm])
 
 def _decompress(srcpath, dstpath, filetype):
     if filetype == 'bz2':
