@@ -56,7 +56,7 @@ def average():
                 # user-defined class for parameters.
                 # These are expected to only be used as a "symbol" for a later process,
                 # so we convert these into strings here.
-                # TODO: should we generalize this mechanism in other place ?
+                # TODO(noji): should we generalize this mechanism in other place ?
                 try:
                     scheme[key] = json.dumps(scheme[key])
                 except:
