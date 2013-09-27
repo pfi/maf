@@ -103,7 +103,7 @@ def _macro_average(values):
     return float(sum(values)) / len(values)
     
 def calculate_stats_multiclass_classification(task):
-    """Calculates various performance measure for multi-label classification.
+    """Calculates various performance measure for multi-class classification.
 
     The "source" of this task is assumed to a json of a list, in which each
     item is a dictionary of the form ``{"p": 3, "c": 5}`` where ``"p"``
@@ -177,20 +177,31 @@ def calculate_stats_multiclass_classification(task):
         def recall_numer(self): return self.tp
         def recall_denom(self): return self.tp + self.fn
         
-        def precision(self): return float(self.precision_numer()) / self.precision_denom()
-        def recall(self): return float(self.recall_numer()) / self.recall_denom()
+        def precision(self):
+            if self.precision_denom() == 0: return 1.0
+            else: return float(self.precision_numer()) / self.precision_denom()
+        def recall(self):
+            if self.recall_denom() == 0: return 1.0
+            else: return float(self.recall_numer()) / self.recall_denom()
         
-        def specifity(self): return float(self.tn) / (self.fp + self.tn)
+        def specifity(self):
+            if self.fp + self.tn == 0: return 1.0
+            else: return float(self.tn) / (self.fp + self.tn)
         def AUC(self):
-            return 0.5 * (float(self.tp) / (self.tp + self.fn) + \
-                          float(self.tn) / (self.tn + self.fp))
+            a = 1.0 if self.tp == 0 else float(self.tp) / (self.tp + self.fn)
+            b = 1.0 if self.tn == 0 else float(self.tn) / (self.tn + self.fp)
+            return 0.5 * (a + b)
         def sum(self): return self.tp + self.fn + self.fp + self.tn
         def num_instance(self): return self.tp + self.fn
 
-    def F1(prec, recall): return 2 * prec * recall / (prec + recall)
+    def F1(prec, recall):
+        if prec * recall == 0: return 0
+        else: return 2 * prec * recall / (prec + recall)
     
     predict_correct_labels = json.loads(task.inputs[0].read())
-    labelset = set([e["c"] for e in predict_correct_labels])
+    labelset = set([e["p"] for e in predict_correct_labels] \
+                       + [e["c"] for e in predict_correct_labels])
+                       
     labelstats = defaultdict(labelstat)
     for e in predict_correct_labels:
         p, c = e["p"], e["c"]
@@ -213,6 +224,8 @@ def calculate_stats_multiclass_classification(task):
                                                      if k.endswith("precision")])
     results["precision-micro"] = float(sum([v.precision_numer() for v in labelstats.values()])) \
                                / sum([v.precision_denom() for v in labelstats.values()])
+    results["precision-micro-numer"] = sum([v.precision_numer() for v in labelstats.values()])
+    results["precision-micro-denom"] = sum([v.precision_denom() for v in labelstats.values()])
     results["recall-macro"] = _macro_average([v for (k,v) in results.items() \
                                                   if k.endswith("recall")])
     results["recall-micro"] = float(sum([v.recall_numer() for v in labelstats.values()])) \
