@@ -1,7 +1,34 @@
+# Copyright (c) 2013, Preferred Infrastructure, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import functools
 import itertools
 import json
 import numpy.random
 import types
+import numpy as np
 
 def create_aggregator(callback_body):
     """Creates an aggregator using function ``callback_body`` independent from
@@ -36,6 +63,7 @@ def create_aggregator(callback_body):
     :rtype: ``function``
 
     """
+    @functools.wraps(callback_body)
     def callback(task):
         values = []
         for node, parameter in zip(task.inputs, task.env.source_parameter):
@@ -71,7 +99,7 @@ def product(parameter):
 
     .. code-block:: python
 
-        maf.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
+        maflib.util.product({'x': [0, 1, 2], 'y': [1, 3, 5]})
         # => [{'x': 0, 'y': 1}, {'x': 0, 'y': 3}, {'x': 0, 'y': 5},
         #     {'x': 1, 'y': 1}, {'x': 1, 'y': 3}, {'x': 1, 'y': 5},
         #     {'x': 2, 'y': 1}, {'x': 2, 'y': 3}, {'x': 2, 'y': 5}]
@@ -153,3 +181,20 @@ def sample(num_samples, distribution):
         sampled.append(instance)
 
     return sampled
+
+def set_random_seed(x):
+    np.random.seed(x)
+
+# Set the random seed of numpy to a fixed value.
+# Without this, util.sample method generate different random numbers in each
+# call, that is, we get a different parameter combination without any modify to
+# the wscript. This is problematic when we add or remove snippets to the
+# wscript; we don't want to re-run the experiments that have been already
+# completed.
+#
+# WARNING: By fixing the random seed, we can control the generation of random
+# numbers, but it is limited to some extent: if we add in wscript a experiment
+# with util.sample above the previously defined experiment, which also use
+# util.sample, generations of random number no longer follow the previous
+# execution.
+set_random_seed(10)

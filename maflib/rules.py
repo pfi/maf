@@ -1,8 +1,95 @@
-import copy
-import json
+# Copyright (c) 2013, Preferred Infrastructure, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import bz2
 from collections import defaultdict
+import copy
+import gzip
+import json
+import os.path
+import tempfile
+import urllib
+import zlib
+
 import maflib.core
 import maflib.util
+
+def download(url, decompress_as=''):
+    """Create a rule to download a file from given URL.
+
+    It stores the file to the target node. If ``decompress_as`` is given, then
+    it automatically decompresses the downloaded file.
+
+    :param url: URL string of the file to be downloaded.
+    :type url: ``str``
+    :param decompress_as: Decompression method of downloaded file. If an empty
+        string is given, then this function does not do decompression.
+        ``'bz2'``, ``'gz'`` or ``'zip'`` is available.
+    :return: A rule.
+    :rtype: :py:class:`maflib.core.Rule`
+
+    """
+    def body(task):
+        if decompress_as != '':
+            t = tempfile.NamedTemporaryFile()
+            urllib.urlretrieve(url, t.name)
+            _decompress(t.name, task.outputs[0].abspath(), decompress_as)
+        else:
+            urllib.urlretrieve(url, task.outputs[0].abspath())
+
+    return maflib.core.Rule(fun=body, dependson=[download, url])
+
+
+def decompress(filetype='auto'):
+    """A rule to decompress an input file.
+
+    :param filetype: Type of compressed file. Following values are available.
+
+        - ``'auto'``: Use automatically detected type from the extension of the
+          input file name.
+        - ``'bz2'``: bzip2 file.
+        - ``'gz'``: gzip file.
+        - ``'zip'``: zip file.
+    :type filetype: ``str``
+    :return: A rule.
+    :rtype: :py:class:`maflib.core.Rule`
+
+    """
+    def body(task):
+        ft = filetype
+        if ft == 'auto':
+            ft = os.path.splitext(task.inputs[0].abspath())[1][1:]
+
+        res = _decompress(
+            task.inputs[0].abspath(), task.outputs[0].abspath(), ft)
+        if not res:
+            raise Exception(
+                "Filetype %s is not supported in decompress." % ft)
+
+    return maflib.core.Rule(fun=body, dependson=[decompress, filetype])
+
 
 def max(key):
     """Creates an aggregator to select the max value of given key.
@@ -13,7 +100,7 @@ def max(key):
     :param key: A key to be used for selection of maximum value.
     :type key: ``str``
     :return: An aggregator.
-    :rtype: ``function``
+    :rtype: :py:class:`maflib.core.Rule`
 
     """
     @maflib.util.aggregator
@@ -27,23 +114,21 @@ def max(key):
             argmax = value
         return json.dumps(argmax)
 
-    return body
+    return maflib.core.Rule(fun=body, dependson=[max, key])
 
 
-def average():
-    """Creates an aggregator that calculates the average value for each key.
+def min(key):
+    """Creates an aggregator to select the minimum value of given key.
 
-    The result contains all keys that some inputs contain. Each value is an
-    average value of the corresponding key through all the inputs. If there
-    is a value that cannot be passed to ``float()``, it omits the corresponding
-    key from the result.
+    The created aggregator chooses the result with the minimum value of
+    ``key``, and writes the JSON object to the output node.
 
+    :param key: A key to be used for selection of minimum value.
+    :type key: ``str``
     :return: An aggregator.
-    :rtype: ``function``
+    :rtype: :py:class:`maflib.core.Rule`
 
     """
-    # TODO(beam2d): This function can be a simple aggregator instead of
-    # an aggregator generator.
     @maflib.util.aggregator
     def body(values, output, parameter):
         scheme = copy.deepcopy(values[0])
@@ -63,7 +148,27 @@ def average():
                     scheme[key] = str(scheme[key])
         return json.dumps(scheme)
 
-    return body
+    return maflib.core.Rule(fun=body, dependson=[min, key])
+
+
+@maflib.util.aggregator
+def average(values, output, parameter):
+    """Aggregator that calculates the average value for each key.
+
+    The result contains all keys that some inputs contain. Each value is an
+    average value of the corresponding key through all the inputs. If there
+    is a value that cannot be passed to ``float()``, it omits the corresponding
+    key from the result.
+
+    """
+    scheme = copy.deepcopy(values[0])
+    for key in scheme:
+        try:
+            scheme[key] = sum(
+                float(v[key]) for v in values) / float(len(values))
+        except:
+            pass
+    return json.dumps(scheme)
 
 
 def convert_libsvm_accuracy(task):
@@ -162,7 +267,7 @@ def calculate_stats_multiclass_classification(task):
     (*) Marina Sokolova, Guy Lapalme
     A systematic analysis of performance measures for classification tasks
     Information Processing and Management 45 (2009) 427-437
-    
+
     """
     class labelstat(object):
         def __init__(self):
@@ -281,7 +386,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
         n = int(task.env[parameter_name])
         test_begin = base * n
         test_end = base * (n + 1)
-        
+
         with open(task.outputs[0].abspath(), 'w') as train, \
              open(task.outputs[1].abspath(), 'w') as test:
             i = 0
@@ -294,3 +399,23 @@ def segment_by_line(num_folds, parameter_name='fold'):
                 i += 1
         source.close()
     return body
+
+
+def _decompress(srcpath, dstpath, filetype):
+    if filetype == 'bz2':
+        with bz2.BZ2File(srcpath) as f:
+            decompressed_data = f.read()
+    elif filetype == 'gz':
+        with gzip.GzipFile(srcpath) as f:
+            decompressed_data = f.read()
+    elif filetype == 'zip':
+        with open(srcpath) as f:
+            compressed_data = f.read()
+        decompressed_data = zlip.decompress(compressed_data)
+    else:
+        return False
+
+    with open(dstpath, 'w') as f:
+        f.write(decompressed_data)
+
+    return True

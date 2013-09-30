@@ -40,13 +40,11 @@ def liblinear_train_test(task):
     out.close()
 
 def experiment(exp):
-    exp(target='news20.scale.bz2',
-        rule='wget http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/news20.scale.bz2 -O ${TGT}')
-    exp(source='news20.scale.bz2', target='news20.scale', rule='bunzip2 ${SRC} --keep')
+    exp(target='news20.scale',
+        rule=maflib.rules.download('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/news20.scale.bz2'), 'bz2')
 
-    exp(target='news20.t.scale.bz2',
-        rule='wget http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/news20.t.scale.bz2 -O ${TGT}')
-    exp(source='news20.t.scale.bz2', target='news20.t.scale', rule='bunzip2 ${SRC} --keep')
+    exp(target='news20.t.scale',
+        rule=maflib.rules.download('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/news20.t.scale.bz2'), 'bz2')
 
     exp(source='news20.scale',
         target='model',
@@ -99,4 +97,4 @@ def experiment(exp):
     exp(source='cv_result',
         target='cv_ave_accuracy',
         for_each=['s', 'C', 'B'],
-        rule=maflib.rules.average())
+        rule=maflib.rules.average)

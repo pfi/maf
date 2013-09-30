@@ -1,10 +1,41 @@
-# TODO(beam2d): Add a simple documentation at the top.
-# TODO(beam2d): Decide which license to use and add its description.
+# Copyright (c) 2013, Preferred Infrastructure, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""
+A core of maf - an environment for computational experimentations on waf.
+
+This module contains the core functionality of maf that handles parameterized
+tasks and metanodes.
+"""
 
 import collections
 import copy
 import os
 import os.path
+import types
+import inspect
 try:
     import cPickle as pickle
 except ImportError:
@@ -14,7 +45,6 @@ import waflib.Build
 import waflib.Utils
 from waflib.TaskGen import before_method, feature
 
-# TODO(beam2d): Add tests.
 
 def options(opt):
     pass
@@ -69,12 +99,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
-        if ('rule' in call_object.__dict__ and
-                not isinstance(call_object.rule, str)):
-            # Callable object other than function is not allowed as a rule in
-            # waf. Here we relax this restriction.
-            rule_impl = call_object.rule
-            call_object.rule = lambda task: rule_impl(task)
+        self._set_rule_and_dependson(call_object)
 
         if hasattr(call_object, 'for_each'):
             self._generate_aggregation_tasks(call_object, 'for_each')
@@ -82,6 +107,21 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
+
+    def _set_rule_and_dependson(self, call_object):
+        # dependson attribute is a variable or a function, changes of which
+        # will be automatically traced; this is set by two ways:
+        #  1) write dependson attribute in wscript
+        #  2) give rule in Rule object having non-empty dependson
+        rule = call_object.rule
+        if 'rule' in call_object.__dict__ and not isinstance(rule, str):
+            if not isinstance(rule, Rule):
+                rule = Rule(rule)
+            rule.add_dependson(getattr(call_object, 'dependson', []))
+            call_object.rule = lambda task: rule.fun(task)
+            call_object.dependson = rule.stred_dependson()
+        else:
+            call_object.dependson = []
 
     def _generate_tasks(self, call_object):
         if not call_object.source:
@@ -200,6 +240,10 @@ class ExperimentContext(waflib.Build.BuildContext):
             **call_object.__dict__)
         taskgen.env.source_parameter = source_parameter
         taskgen.env.update(target_parameter.to_str_valued_dict())
+
+        depkeys = [('dependson%d' % i) for i in range(len(call_object.dependson))]
+        taskgen.env.update(dict(zip(depkeys, call_object.dependson)))
+
         taskgen.parameter = target_parameter
 
     def _resolve_meta_nodes(self, nodes, parameters):
@@ -263,6 +307,36 @@ class Parameter(dict):
 
         """
         return dict([(k, str(self[k])) for k in self])
+
+
+class Rule(object):
+    """A wrapper object of a rule function with associate values,
+    which change is tracked on the experiment.
+
+    :param fun: target function of the task.
+    :param dependson: list of variable or function, which one wants to track.
+        All these variables are later converted to string values, so if
+        one wants to pass the variable of user-defined class, that class
+        must provide meaningful `__str__` method.
+
+    """
+
+    def __init__(self, fun, dependson=[]):
+        self.fun = fun
+        self.dependson = dependson
+        self.dependson.append(self.fun)
+
+    def add_dependson(self, dependson):
+        self.dependson += dependson
+
+    def stred_dependson(self):
+        def to_str(d):
+            # Callable object is converted to its source code as str.
+            if _is_callable(d):
+                return inspect.getsource(d)
+            else:
+                return str(d)
+        return map(to_str, self.dependson)
 
 
 class CallObject(object):
@@ -437,37 +511,6 @@ class ParameterIdGenerator(object):
         return new_id
 
 
-def _create_file(path):
-    """Opens file in write mode. It also creates intermediate directories if
-    necessary.
-
-    """
-    prefixes = []
-    cur_dir = path
-    while cur_dir:
-        cur_dir = os.path.dirname(cur_dir)
-        prefixes.append(cur_dir)
-    prefixes.reverse()
-
-    for prefix in prefixes:
-        if prefix and not os.path.exists(prefix):
-            os.mkdir(prefix)
-
-    return open(path, 'w')
-
-
-def _get_list_from_kw(kw, key):
-    if key in kw:
-        return waflib.Utils.to_list(kw[key])
-    return []
-
-
-def _let_element_to_be_list(d, key):
-    if key not in d:
-        d[key] = []
-    if isinstance(d[key], str):
-        d[key] = waflib.Utils.to_list(d[key])
-
 class ExperimentTask(waflib.Task.Task):
     """A task class specific for ExperimentContext.
 
@@ -476,6 +519,11 @@ class ExperimentTask(waflib.Task.Task):
     except ``env``, but the env must be a string-valued dictionary, which is
     problematic when we want to use the parameter in an object as it is. For
     example, a float value once converted to string lose some information.
+
+    Another motivation for this task is to control the hash value of a task:
+    It is calculated based on the env, in which key is registered in ``vars``
+    or ``dep_vars``. In ``__init__``, this task registers necessary keys to
+    dep_vars.
 
     """
     
@@ -494,6 +542,10 @@ class ExperimentTask(waflib.Task.Task):
 
         self.parameter = generator.parameter
         """Parameter whose values are not stringized."""
+
+        if not hasattr(self, 'dep_vars'): self.dep_vars = []
+        self.dep_vars += self.parameter.keys()
+        self.dep_vars += filter(lambda k: k.startswith("dependson"), env.keys())
 
 @feature('experiment')
 @before_method('process_rule')
@@ -546,5 +598,35 @@ def register_experiment_task_with_rule(self):
     # define ExperimentTask with a user-defined rule (string or function)
     cls = type(waflib.Task.Task)(self.name, (ExperimentTask,), params)
     waflib.Task.classes[self.name] = cls
-    
+
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
+
+
+def _create_file(path):
+    """Opens file in write mode. It also creates intermediate directories if
+    necessary.
+
+    """
+    prefixes = []
+    cur_dir = path
+    while cur_dir:
+        cur_dir = os.path.dirname(cur_dir)
+        prefixes.append(cur_dir)
+    prefixes.reverse()
+
+    for prefix in prefixes:
+        if prefix and not os.path.exists(prefix):
+            os.mkdir(prefix)
+
+    return open(path, 'w')
+
+
+def _let_element_to_be_list(d, key):
+    if key not in d:
+        d[key] = []
+    if isinstance(d[key], str):
+        d[key] = waflib.Utils.to_list(d[key])
+
+
+def _is_callable(o):
+    return isinstance(o, types.FunctionType) or hasattr(o, '__call__')
