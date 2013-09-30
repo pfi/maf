@@ -53,20 +53,14 @@ def experiment(exp):
     # Download and decompress 20 newsgroup dataset from LIBSVM webiste.
     website = 'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/'
 
-    exp(target='news20.scale.bz2',
-        rule='wget %s/news20.scale.bz2 -O ${TGT}' % website)
-    exp(source='news20.scale.bz2',
-        target='news20.scale',
-        rule='bunzip2 ${SRC} --keep')
+    exp(target='news20.scale',
+        rule=maflib.rules.download('%s/news20.scale.bz2' % website, 'bz2'))
     exp(source='news20.scale',
         target='news20.scale.vw',
         rule=convert_libsvm_format_to_vowpal)
 
-    exp(target='news20.t.scale.bz2',
-        rule='wget %s/news20.t.scale.bz2 -O ${TGT}' % website)
-    exp(source='news20.t.scale.bz2',
-        target='news20.t.scale',
-        rule='bunzip2 ${SRC} --keep')
+    exp(target='news20.t.scale',
+        rule=maflib.rules.download('%s/news20.t.scale.bz2' % website, 'bz2'))
     exp(source='news20.t.scale',
         target='news20.t.scale.vw',
         rule=convert_libsvm_format_to_vowpal)
