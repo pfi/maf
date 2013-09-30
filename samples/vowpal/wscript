@@ -35,7 +35,7 @@ def evaluate(exp, prefix, testdata_vw, testdata_libsvm, graph_key):
     exp(source='%s.result' % prefix,
         target='%s.result.average' % prefix,
         aggregate_by = ['exp'],
-        rule=maflib.rules.average())
+        rule=maflib.rules.average)
     
     exp(source='%s.result.average' % prefix,
         target='%s.iter2f1.png' % prefix,
