@@ -478,6 +478,10 @@ class ExperimentTask(waflib.Task.Task):
     example, a float value once converted to string lose some information.
 
     """
+    
+    shell = True
+    """support pipe style rule str in default"""
+    
     def __init__(self, env, generator):
         """Initializes the task.
 
