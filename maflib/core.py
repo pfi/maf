@@ -526,6 +526,10 @@ class ExperimentTask(waflib.Task.Task):
     dep_vars.
 
     """
+    
+    shell = True
+    """support pipe style rule str in default"""
+    
     def __init__(self, env, generator):
         """Initializes the task.
 
