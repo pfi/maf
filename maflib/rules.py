@@ -414,9 +414,6 @@ def segment_libsvm(weights):
             accumulate.append(a)
         accumulate[len(accumulate)-1] = 1.0
         endpoints = [0] + map(lambda w: int(len(data) * w)+1, accumulate)
-        print endpoints[len(endpoints)-1]
-        print len(data)
-        assert endpoints[len(endpoints)-1] == len(data)+1
         return [data[endpoints[i]:endpoints[i+1]] for i in range(len(endpoints)-1)]
     
     def body(task):
