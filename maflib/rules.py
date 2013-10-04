@@ -438,7 +438,7 @@ def segment_libsvm(weights):
             a += n
             accumulate.append(a)
         accumulate[len(accumulate)-1] = 1.0
-        endpoints = [0] + map(lambda w: int(len(data) * w)+1, accumulate)
+        endpoints = [0] + map(lambda w: int(len(data) * w), accumulate)
         return [data[endpoints[i]:endpoints[i+1]] for i in range(len(endpoints)-1)]
     
     def body(task):
@@ -447,11 +447,11 @@ def segment_libsvm(weights):
 
         label2examples = defaultdict(list)
         for line in open(task.inputs[0].abspath()): label2examples[_label(line)].append(line)
-        label2examples = dict([(k, _segment_data_with_weights(v)) \
+        label2segmented_examples = dict([(k, _segment_data_with_weights(v)) \
                                    for k,v in label2examples.items()])
         for i, o in enumerate(task.outputs):
             with open(o.abspath(), 'w') as f:
-                for examples in label2examples.values():
+                for examples in label2segmented_examples.values():
                     for line in examples[i]: f.write(line)
         return 0
     return maflib.core.Rule(body, dependson=[segment_libsvm])
