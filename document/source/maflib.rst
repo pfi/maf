@@ -25,6 +25,14 @@ maflib Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`test` Module
+------------------
+
+.. automodule:: maflib.test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`util` Module
 ------------------
 
