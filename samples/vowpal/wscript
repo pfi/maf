@@ -2,6 +2,7 @@ import maf
 import maflib.plot
 import maflib.rules
 import maflib.util
+import maflib.test
 from vowpal_util import *
 
 def configure(conf):
@@ -45,6 +46,16 @@ def evaluate(exp, prefix, testdata_vw, testdata_libsvm, graph_key):
             y='F1-micro',
             legend={'key': graph_key}))
 
+def exptest(test):
+    """Here, you can write unit-tests for tasks which you defined in the experiment.
+
+    See :py:func:`maflib.test.ExpTestContext.add`. In this example, the python file
+    name is specified, in which all tests found on the file are executed.
+    
+    """
+    
+    test.add("vowpal_util_test.py")
+    
 def experiment(exp):
     """maf example that evaluates algorithms implemented on LIBLINEAR using
     20 Newsgroup dataset.

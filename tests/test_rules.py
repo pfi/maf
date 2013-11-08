@@ -1,27 +1,32 @@
-from maflib.rules import *
+from maflib import rules
+#import maflib.rules
+import waflib.Node
 import unittest
 import json
+from maflib.test import TestTask
 
-class MulticlassEvaluationTask(object):
-    """This is dummy class for the use of a test below.
-    
-    When task object is separated from a rule, this class would be unnecessary.
-    
-    """
-    class DummyInput(object):
-        def label(self, (p, c)): return {"p":p, "c":c}
-        def read(self):
-            return json.dumps(map(self.label, [(1,1),(1,2),(2,2),(2,2)]))
-    class DummyOutput(object):
-        def write(self, s): self.body = s
-        def read(self): return self.body
-    def __init__(self):
-        self.inputs = [MulticlassEvaluationTask.DummyInput()]
-        self.outputs = [MulticlassEvaluationTask.DummyOutput()]
+class TestAggregationTask(unittest.TestCase):
+    def test_max(self):
+        task = TestTask()
+        task.env.source_parameter = [({"param1":0}), {"param1":1}]
+
+        task.set_input_by_json(0, {"key1":10, "key2":20})
+        task.set_input_by_json(1, {"key1": 5, "key2":30})
+        
+        rule = rules.max("key1")
+        rule.fun(task)
+
+        result = task.json_output(0)
+        self.assertEqual(result, {"param1": 0, "key1": 10, "key2": 20})
 
 class TestMulticlassEvaluation(unittest.TestCase):
+    def label(self, (p, c)): return {"p":p, "c":c}
     def test_multilabel_evaluation(self):
-        result = self._get_result_json()
+        task = TestTask()
+        task.set_input_by_json(0, map(self.label, [(1,1),(1,2),(2,2),(2,2)]))
+        
+        rules.calculate_stats_multiclass_classification(task)
+        result = task.json_output(0)
         
         self.assertEqual(result["accuracy"], 3./4)
         self.assertEqual(result["average_accuracy"], 3./4)
@@ -34,9 +39,3 @@ class TestMulticlassEvaluation(unittest.TestCase):
         self.assertEqual(result["precision-micro"], 3./4)
         self.assertEqual(result["recall-micro"], 3./4)
         self.assertEqual(result["precision-macro"], 3./4)
-
-    def _get_result_json(self):
-        task = MulticlassEvaluationTask()
-        calculate_stats_multiclass_classification(task)
-        return json.loads(task.outputs[0].read())
-        
