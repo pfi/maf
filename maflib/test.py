@@ -37,7 +37,7 @@ class ExpTestContext(waflib.Context.Context):
 
         :param tests_list: The adding tests that specified in the following way:
 
-        - file name (ends with .py): find test class in that files
+        - file name (ends with .py): find all test classes in that file
         - directory name: find all test classes in files in the directory
         - class name: add tests defined in the class
 
