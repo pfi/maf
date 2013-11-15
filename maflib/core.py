@@ -505,10 +505,12 @@ class ParameterIdGenerator(object):
 
     def _load_table(self, path):
         table = {}
-        with open(path) as f:
-            dict_param_list = pickle.load(f)
-            for i, dict_param in enumerate(dict_param_list):
-                if dict_param is not None: table[Parameter(dict_param)] = str(i)
+        try:
+            with open(path) as f:
+                dict_param_list = pickle.load(f)
+                for i, dict_param in enumerate(dict_param_list):
+                    if dict_param is not None: table[Parameter(dict_param)] = str(i)
+        except EOFError: pass
         return table
 
     def get_id(self, parameter):
