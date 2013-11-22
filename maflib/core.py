@@ -483,6 +483,8 @@ class ParameterIdGenerator(object):
     def save(self):
         """Serializes the table to the file at self.path."""
 
+        if len(self._table) == 0: return
+
         parameter_ids = [(param, int(id)) for (param, id) in self._table.items()]
         parameter_ids.sort(key=lambda param_and_id: param_and_id[1])
         
