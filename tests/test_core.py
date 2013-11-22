@@ -77,7 +77,32 @@ class TestParameter(unittest.TestCase):
         self.assertFalse(Parameter(a=2) in d)
         self.assertFalse(Parameter(a=1, b=2, c=3) in d)
 
+        
+class TestParameterIdGenerator(unittest.TestCase):
+    def test_decode_pickled_parameter_with_object(self):
+        # TODO(noji): change to use tempfile for generating pickle_path after revise_create_file is merged
+        # pickle_path = tempfile.NamedTemporaryFile()
+        # text_path = tempfile.NamedTemporaryFile()
+        # pickle_path.close()
+        # text_path.close()
+        # pickle_path = pickle_path.name
+        # text_path = text_path.name
+        pickle_path = ".maf_tmp_dir/tmp_parameters.pickle"
+        text_path = ".maf_tmp_dir/tmp_parameters.txt"
+        try:
+            id_generator = ParameterIdGenerator(pickle_path, text_path)
 
+            id_generator.get_id(Parameter({"setting": Setting(0,1,2)}))
+            id_generator.save()
+        
+            table = pickle.load(open(pickle_path))
+        
+            self.assertEqual(1, len(table))
+            self.assertEqual({"setting":Setting(0,1,2)}, table[0])
+        finally:
+            shutil.rmtree(".maf_tmp_dir")
+
+            
 class TestCallObject(unittest.TestCase):
     def test_listize_source(self):
         self._test_listize('source')
