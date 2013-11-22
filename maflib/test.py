@@ -33,9 +33,9 @@ class ExpTestContext(waflib.Context.Context):
         return test_k2v.values()
 
     def add(self, tests_list):
-        """Add executing tests.
+        """Adds executing tests.
 
-        :param tests_list: The adding tests that specified in the following way:
+        :param tests_list: Tests to add, specified in the following way:
 
         - file name (ends with .py): find all test classes in that file
         - directory name: find all test classes in files in the directory
@@ -69,7 +69,7 @@ class ExpTestContext(waflib.Context.Context):
 
 
 class TestTask(object):
-    """A task object making easy to write unittest for rules.
+    """A task object making it easy to write unittest for rules.
 
     This class mimics the behavior of task object by having dummy Node objects internally.
     These node objects are :py:func:`maflib.core.ExperimentNode`.
@@ -93,9 +93,11 @@ class TestTask(object):
         self.outputs = TestTask.ExperimentNodeList()
 
         self.env = ConfigSet()
-        """The ConfigSet is a waf module which is used as a dictionary to store any attributes.
+        """A ConfigSet to store any attributes.
 
-        The values can be accessed both by attributes or by keys;
+        ConfigSet is a class defined by waflib which is used as a dictionary to
+        store any attributes. Its values can be accessed both by attributes or
+        by keys;
 
         .. code-block:: py
 
