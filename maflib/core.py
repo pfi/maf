@@ -657,17 +657,10 @@ def _create_file(path):
     necessary.
 
     """
-    prefixes = []
-    cur_dir = path
-    while cur_dir:
-        cur_dir = os.path.dirname(cur_dir)
-        prefixes.append(cur_dir)
-    prefixes.reverse()
-
-    for prefix in prefixes:
-        if prefix and not os.path.exists(prefix):
-            os.mkdir(prefix)
-
+    
+    dirname = os.path.dirname(path)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     return open(path, 'w')
 
 
