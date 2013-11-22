@@ -241,7 +241,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         taskgen.env.source_parameter = source_parameter
         taskgen.env.update(target_parameter.to_str_valued_dict())
 
-        depkeys = [('dependson%d' % i) for i in range(len(call_object.dependson))]
+        depkeys = [('dependsond' % i) for i in range(len(call_object.dependson))]
         taskgen.env.update(dict(zip(depkeys, call_object.dependson)))
 
         taskgen.parameter = target_parameter
@@ -526,10 +526,10 @@ class ExperimentTask(waflib.Task.Task):
     dep_vars.
 
     """
-    
+
     shell = True
     """support pipe style rule str in default"""
-    
+
     def __init__(self, env, generator):
         """Initializes the task.
 
@@ -576,7 +576,7 @@ class ExperimentNode(object):
 
     Example usages of this class at test case are found at, for example,
     tests/test_rule.py. See also :py:func:`test.TestTask`.
-    
+
     """
     def __init__(self, waflib_node = None):
         if waflib_node:
@@ -586,17 +586,17 @@ class ExperimentNode(object):
             import tempfile
             self.tmpfile = tempfile.NamedTemporaryFile()
             self.abspath_ = self.tmpfile.name
-            
+
     def read(self):
         return ''.join([line for line in open(self.abspath_)])
-        
+
     def write(self, s):
         with open(self.abspath_, 'w') as o: o.write(s)
-        
+
     def abspath(self):
         return self.abspath_
 
-    
+
 @feature('experiment')
 @before_method('process_rule')
 def register_experiment_task_with_rule(self):

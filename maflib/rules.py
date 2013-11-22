@@ -214,7 +214,7 @@ def _weighted_average(num_examples, values):
 
 def _macro_average(values):
     return float(sum(values)) / len(values)
-    
+
 def calculate_stats_multiclass_classification(task):
     """Calculates various performance measure for multi-class classification.
 
@@ -275,13 +275,13 @@ def calculate_stats_multiclass_classification(task):
             self.tn = 0  # true negative
             self.fp = 0  # false positive
             self.fn = 0  # false negative
-            
+
         def add_count(self, is_predict_label, is_collect_label):
             if is_predict_label and is_collect_label: self.tp += 1
             elif is_predict_label and not is_collect_label: self.fp += 1
             elif not is_predict_label and is_collect_label: self.fn += 1
             else: self.tn += 1
-            
+
         def accuracy(self): return float(self.tp + self.tn) / self.sum()
         def error_rate(self): return float(self.fp + self.fn) / self.sum()
 
@@ -289,14 +289,14 @@ def calculate_stats_multiclass_classification(task):
         def precision_denom(self): return self.tp + self.fp
         def recall_numer(self): return self.tp
         def recall_denom(self): return self.tp + self.fn
-        
+
         def precision(self):
             if self.precision_denom() == 0: return 1.0
             else: return float(self.precision_numer()) / self.precision_denom()
         def recall(self):
             if self.recall_denom() == 0: return 1.0
             else: return float(self.recall_numer()) / self.recall_denom()
-        
+
         def specifity(self):
             if self.fp + self.tn == 0: return 1.0
             else: return float(self.tn) / (self.fp + self.tn)
@@ -310,17 +310,17 @@ def calculate_stats_multiclass_classification(task):
     def F1(prec, recall):
         if prec * recall == 0: return 0
         else: return 2 * prec * recall / (prec + recall)
-    
+
     predict_correct_labels = json.loads(task.inputs[0].read())
     labelset = set([e["p"] for e in predict_correct_labels] \
                        + [e["c"] for e in predict_correct_labels])
-                       
+
     labelstats = defaultdict(labelstat)
     for e in predict_correct_labels:
         p, c = e["p"], e["c"]
         for label in labelset:
             labelstats[label].add_count(p == label, c == label)
-    
+
     results = {}
     results["accuracy"] = \
         float(sum([s.tp for s in labelstats.values()])) / labelstats.values()[0].sum()
@@ -345,7 +345,7 @@ def calculate_stats_multiclass_classification(task):
                             / sum([v.recall_denom() for v in labelstats.values()])
     results["F1-macro"] = F1(results["precision-macro"], results["recall-macro"])
     results["F1-micro"] = F1(results["precision-micro"], results["recall-micro"])
-    
+
     task.outputs[0].write(json.dumps(results))
 
 def segment_by_line(num_folds, parameter_name='fold'):

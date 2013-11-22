@@ -12,7 +12,7 @@ class TestAggregationTask(unittest.TestCase):
 
         task.set_input_by_json(0, {"key1":10, "key2":20})
         task.set_input_by_json(1, {"key1": 5, "key2":30})
-        
+
         rule = rules.max("key1")
         rule.fun(task)
 
@@ -24,10 +24,10 @@ class TestMulticlassEvaluation(unittest.TestCase):
     def test_multilabel_evaluation(self):
         task = TestTask()
         task.set_input_by_json(0, map(self.label, [(1,1),(1,2),(2,2),(2,2)]))
-        
+
         rules.calculate_stats_multiclass_classification(task)
         result = task.json_output(0)
-        
+
         self.assertEqual(result["accuracy"], 3./4)
         self.assertEqual(result["average_accuracy"], 3./4)
         self.assertEqual(result["error_rate"], 1./4)
