@@ -24,6 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from maflib.core import *
+import tempfile
+import os
+import shutil
 import unittest
 
 class TestParameter(unittest.TestCase):
@@ -205,3 +208,26 @@ class TestExperimentGraph(unittest.TestCase):
                     latter_at = i
 
             self.assertLess(former_at, latter_at)
+
+class TestUtility(unittest.TestCase):    
+    def test_create_file_relative_path(self):
+        relpath = ".maflib_test_utility_tmp_dir_rel/tmpfile"
+        self._write_and_read(relpath)
+        shutil.rmtree(".maflib_test_utility_tmp_dir_rel")
+        
+    def test_create_file_existing_path(self):
+        tmp_path = tempfile.NamedTemporaryFile()
+        tmp_path.close()
+        self._write_and_read(tmp_path.name)
+        
+    def test_create_file_absolute_path(self):
+        abspath = os.path.abspath(".maflib_test_utility_tmp_dir_abs/tmpfile")
+        self._write_and_read(abspath)
+        shutil.rmtree(".maflib_test_utility_tmp_dir_abs")
+
+    def _write_and_read(self, path):
+        import maflib.core
+        with maflib.core._create_file(path) as f: f.write("aaa")
+        self.assertEqual(self._read(path), "aaa")
+        
+    def _read(self, path): return "".join([line for line in open(path)])
