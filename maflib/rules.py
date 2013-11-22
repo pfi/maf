@@ -429,8 +429,6 @@ def segment_without_label_bias(weights, extract_label = (lambda line: line[:line
 
     """
 
-    # def _label(line):
-    #     return line[:line.find(' ')]
     def _segment_data_with_weights(data):
         normalized = map(lambda w: w / sum(weights), weights)
         accumulate = []
