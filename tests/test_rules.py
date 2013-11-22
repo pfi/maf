@@ -41,6 +41,7 @@ class TestMulticlassEvaluation(unittest.TestCase):
         calculate_stats_multiclass_classification(task)
         return json.loads(task.outputs[0].read())
 
+# TODO(noji): change the test style to use test module after merging
 class SegmentLibsvmTask(object):
     class Node(object):
         def __init__(self, f):
@@ -71,7 +72,7 @@ class TestSegmentLibsvm(unittest.TestCase):
 
     def _process_task(self, data):
         task = SegmentLibsvmTask(data, len(self.weights))
-        rule = segment_libsvm(self.weights)
+        rule = segment_without_label_bias(self.weights)
         rule.fun(task)
         return task
     

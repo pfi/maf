@@ -401,8 +401,8 @@ def segment_by_line(num_folds, parameter_name='fold'):
         source.close()
     return body
 
-def segment_libsvm(weights):
-    """Segment libsvm style data into k-fold where k is the length of param weights.
+def segment_without_label_bias(weights, extract_label = (lambda line: line[:line.find(' ')])):
+    """Segments an example per line data into k-fold where k is the length of param weights.
     
     This method consider the label-bias when segmentation:
     In machine learning experiments, we often want to prepare training or testing examples
@@ -415,21 +415,22 @@ def segment_libsvm(weights):
 
         exp(source='news20.scale',
             target='train dev test',
-            rule=segment_libsvm([0.8, 0.1, 0.1]))
+            rule=segment_without_label_bias([0.8, 0.1, 0.1]))
 
     This exp segment data news20.scale into 3-fold for train/develop/test.
     For each label, train contains 80% of the examples of that label, while dev/test contains
     10% of examples of the one.
 
-    The input is assmed to be the format of "label other_data..." (an example per line),
-    which includes, but not limited to libsvm format.
+    The input is assumed to be the format of an example per line, such as libsvm or vowpal format.
+    The param ``extract_label`` specifies the way to extract the label from each line, so you can handle other format by customizing this function as far as it follows the one example per line format.
     
     :param weights: list of floats specifing the weight by which data are segmented
+    :param extract_label: function extracting the label from an input line
 
     """
 
-    def _label(line):
-        return line[:line.find(' ')]
+    # def _label(line):
+    #     return line[:line.find(' ')]
     def _segment_data_with_weights(data):
         normalized = map(lambda w: w / sum(weights), weights)
         accumulate = []
@@ -446,7 +447,7 @@ def segment_libsvm(weights):
             raise maflib.core.InvalidMafArgumentException("lengths of weights must be the same as the number of target")
 
         label2examples = defaultdict(list)
-        for line in open(task.inputs[0].abspath()): label2examples[_label(line)].append(line)
+        for line in open(task.inputs[0].abspath()): label2examples[extract_label(line)].append(line)
         label2segmented_examples = dict([(k, _segment_data_with_weights(v)) \
                                    for k,v in label2examples.items()])
         for i, o in enumerate(task.outputs):
@@ -454,7 +455,7 @@ def segment_libsvm(weights):
                 for examples in label2segmented_examples.values():
                     for line in examples[i]: f.write(line)
         return 0
-    return maflib.core.Rule(body, dependson=[segment_libsvm])
+    return maflib.core.Rule(body, dependson=[segment_without_label_bias])
 
 def _decompress(srcpath, dstpath, filetype):
     if filetype == 'bz2':
