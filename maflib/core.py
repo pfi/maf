@@ -1,11 +1,34 @@
+# Copyright (c) 2013, Preferred Infrastructure, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 """
 A core of maf - an environment for computational experimentations on waf.
 
 This module contains the core functionality of maf that handles parameterized
 tasks and metanodes.
 """
-
-# TODO(beam2d): Decide which license to use and add its description.
 
 import collections
 import copy
@@ -84,26 +107,22 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
-            
+
     def _set_rule_and_dependson(self, call_object):
-        # dependson attribute is a variable or a function, which the change is
-        # automatically traced; this is set by two ways:
+        # dependson attribute is a variable or a function, changes of which
+        # will be automatically traced; this is set by two ways:
         #  1) write dependson attribute in wscript
-        #  2) give rule in Rule object, which is set dependson values
+        #  2) give rule in Rule object having non-empty dependson
         rule = call_object.rule
-        if ('rule' in call_object.__dict__ and not isinstance(rule, str)):
-            dependson = getattr(call_object, 'dependson', [])
-            if _is_callable(rule):
-                rule = Rule(rule, dependson)
-            else:
-                rule.add_dependson(dependson)
-            # Callable object other than function is not allowed as a rule in
-            # waf. Here we relax this restriction.
+        if 'rule' in call_object.__dict__ and not isinstance(rule, str):
+            if not isinstance(rule, Rule):
+                rule = Rule(rule)
+            rule.add_dependson(getattr(call_object, 'dependson', []))
             call_object.rule = lambda task: rule.fun(task)
             call_object.dependson = rule.stred_dependson()
         else:
             call_object.dependson = []
-            
+
     def _generate_tasks(self, call_object):
         if not call_object.source:
             for parameter in call_object.parameters:
@@ -293,15 +312,15 @@ class Parameter(dict):
 class Rule(object):
     """A wrapper object of a rule function with associate values,
     which change is tracked on the experiment.
-    
+
     :param fun: target function of the task.
     :param dependson: list of variable or function, which one wants to track.
         All these variables are later converted to string values, so if
         one wants to pass the variable of user-defined class, that class
         must provide meaningful `__str__` method.
-        
+
     """
-    
+
     def __init__(self, fun, dependson=[]):
         self.fun = fun
         self.dependson = dependson
@@ -507,6 +526,10 @@ class ExperimentTask(waflib.Task.Task):
     dep_vars.
 
     """
+    
+    shell = True
+    """support pipe style rule str in default"""
+    
     def __init__(self, env, generator):
         """Initializes the task.
 
@@ -575,7 +598,7 @@ def register_experiment_task_with_rule(self):
     # define ExperimentTask with a user-defined rule (string or function)
     cls = type(waflib.Task.Task)(self.name, (ExperimentTask,), params)
     waflib.Task.classes[self.name] = cls
-    
+
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
 
 

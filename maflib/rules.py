@@ -1,4 +1,30 @@
+# Copyright (c) 2013, Preferred Infrastructure, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 import bz2
+from collections import defaultdict
 import copy
 import gzip
 import json
@@ -6,6 +32,7 @@ import os.path
 import tempfile
 import urllib
 import zlib
+from collections import defaultdict
 
 import maflib.core
 import maflib.util
@@ -104,15 +131,23 @@ def min(key):
 
     """
     @maflib.util.aggregator
-    def body(values, outpath, parameter):
-        min_value = None
-        argmin = None
-        for value in values:
-            if min_value <= value[key]:
-                continue
-            min_value = value[key]
-            argmin = value
-        return json.dumps(argmin)
+    def body(values, output, parameter):
+        scheme = copy.deepcopy(values[0])
+        for key in scheme:
+            try:
+                scheme[key] = sum(
+                    float(v[key]) for v in values) / float(len(values))
+            except:
+                # Some values of scheme may not be json-serializable, which include
+                # user-defined class for parameters.
+                # These are expected to only be used as a "symbol" for a later process,
+                # so we convert these into strings here.
+                # TODO(noji): should we generalize this mechanism in other place ?
+                try:
+                    scheme[key] = json.dumps(scheme[key])
+                except:
+                    scheme[key] = str(scheme[key])
+        return json.dumps(scheme)
 
     return maflib.core.Rule(fun=body, dependson=[min, key])
 
@@ -173,9 +208,16 @@ is not consistent with the one of test file (%s)." % (predict_f, test_f))
     task.outputs[0].write(json.dumps(instances))
     return 0
 
+def _weighted_average(num_examples, values):
+    s = sum(num_examples)
+    label_weight = map(lambda a: float(a) / s, num_examples)
+    return sum([w * v for (w, v) in zip(label_weight, values)])
 
-def calculate_stats_multilabel_classification(task):
-    """Calculates various performance measure for multi-label classification.
+def _macro_average(values):
+    return float(sum(values)) / len(values)
+    
+def calculate_stats_multiclass_classification(task):
+    """Calculates various performance measure for multi-class classification.
 
     The "source" of this task is assumed to a json of a list, in which each
     item is a dictionary of the form ``{"p": 3, "c": 5}`` where ``"p"``
@@ -184,14 +226,16 @@ def calculate_stats_multilabel_classification(task):
 
     The output measures is summarized as follows, most of which are cited from (*):
 
-    - Accuracy
-    - AverageAccuracy
-    - ErrorRate
-    - Precision for each label
-    - Recall for each label
-    - F1 for each label
-    - Specifity for each label
-    - AUC for each label
+    Accuracy, AverageAccuray, ErrorRate
+
+    Other measures:
+      Precision, Recall, F1, Specifity and AUC
+    are calculated for each label.
+
+    In terms of precision, Recall and F1, averaged results are also calculated.
+    There are two different type of averaging: micro and macro.
+    Micro average is calculated using global count of true positive, false positive, etc,
+    while macro average is calculated naively by dividing the number of labels.
 
     The output of this task is one json file, like
 
@@ -206,6 +250,8 @@ def calculate_stats_multilabel_classification(task):
         "1-F1": 0.6,
         "1-specifity": 0.6,
         "1-AUC": 0.7,
+        "precision-micro":0.7
+        "precision-macro":0.6
         ...
         "2-precision": 0.6,
         "2-recall": 0.7,
@@ -213,90 +259,95 @@ def calculate_stats_multilabel_classification(task):
       }
 
     where accuracy, average_accuracy and error_rate corresponds to Accuracy,
-    AverageAccuracy and ErrorRate respectively. Average is macro average, which
-    is consistent with the output of e.g., svm-predict. Other results (e.g.
-    1-precision) are calculated for each label and represented as a pair of
-    "label" and "result name" combined with a hyphen. For example, 1-precision
-    is precision for the label 1, while 3-F1 is F1 for the label 3.
+    AverageAccuracy and ErrorRate respectively. Average is macro average of
+    all data, which is consistent with the output of e.g., svm-predict.
+    Other results (e.g. 1-precision) are calculated for each label and represented
+    as a pair of "label" and "measure" combined with a hyphen. For example,
+    1-precision is precision for the label 1, while 3-F1 is F1 for the label 3.
 
     (*) Marina Sokolova, Guy Lapalme
     A systematic analysis of performance measures for classification tasks
     Information Processing and Management 45 (2009) 427-437
-    
+
     """
-    def accuracy(labelstats):
-        correct = 0
-        for stat in labelstats.values():
-            correct += stat["tp"]
-        head_key = labelstats.keys()[0]
-        n = sum(labelstats[head_key].values())
-        return float(correct) / n
+    class labelstat(object):
+        def __init__(self):
+            self.tp = 0  # true positive
+            self.tn = 0  # true negative
+            self.fp = 0  # false positive
+            self.fn = 0  # false negative
             
-    def average_accuracy(labelstats):
-        ret = 0
-        for stat in labelstats.values():
-            ret += float(stat["tp"] + stat["tn"]) \
-                / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
-        return ret / float(len(labelstats))
-    
-    def error_rate(labelstats):
-        ret = 0
-        for stat in labelstats.values():
-            ret += float(stat["fp"] + stat["fn"]) \
-                / (stat["tp"] + stat["fn"] + stat["fp"] + stat["tn"])
-        return ret / float(len(labelstats))
-    
-    def label_precision(stat):
-        return float(stat["tp"]) / (stat["tp"] + stat["fp"])
-    def label_recall(stat):
-        return float(stat["tp"]) / (stat["tp"] + stat["fn"])
-    def label_F1(stat):
-        return float(2 * stat["tp"]) / (2 * stat["tp"] + stat["fn"] + stat["fp"])
-    def label_specifity(stat):
-        return float(stat["tn"]) / (stat["fp"] + stat["tn"])
-    def label_AUC(stat):
-        return 0.5 * (float(stat["tp"]) / (stat["tp"] + stat["fn"]) + \
-                      float(stat["tn"]) / (stat["tn"] + stat["fp"]))
+        def add_count(self, is_predict_label, is_collect_label):
+            if is_predict_label and is_collect_label: self.tp += 1
+            elif is_predict_label and not is_collect_label: self.fp += 1
+            elif not is_predict_label and is_collect_label: self.fn += 1
+            else: self.tn += 1
+            
+        def accuracy(self): return float(self.tp + self.tn) / self.sum()
+        def error_rate(self): return float(self.fp + self.fn) / self.sum()
+
+        def precision_numer(self): return self.tp
+        def precision_denom(self): return self.tp + self.fp
+        def recall_numer(self): return self.tp
+        def recall_denom(self): return self.tp + self.fn
+        
+        def precision(self):
+            if self.precision_denom() == 0: return 1.0
+            else: return float(self.precision_numer()) / self.precision_denom()
+        def recall(self):
+            if self.recall_denom() == 0: return 1.0
+            else: return float(self.recall_numer()) / self.recall_denom()
+        
+        def specifity(self):
+            if self.fp + self.tn == 0: return 1.0
+            else: return float(self.tn) / (self.fp + self.tn)
+        def AUC(self):
+            a = 1.0 if self.tp == 0 else float(self.tp) / (self.tp + self.fn)
+            b = 1.0 if self.tn == 0 else float(self.tn) / (self.tn + self.fp)
+            return 0.5 * (a + b)
+        def sum(self): return self.tp + self.fn + self.fp + self.tn
+        def num_instance(self): return self.tp + self.fn
+
+    def F1(prec, recall):
+        if prec * recall == 0: return 0
+        else: return 2 * prec * recall / (prec + recall)
     
     predict_correct_labels = json.loads(task.inputs[0].read())
-    labelstats = {}
-    labelset = set()
+    labelset = set([e["p"] for e in predict_correct_labels] \
+                       + [e["c"] for e in predict_correct_labels])
+                       
+    labelstats = defaultdict(labelstat)
     for e in predict_correct_labels:
-        labelset.add(e["p"])
-        labelset.add(e["c"])
-    for label in labelset:
-        labelstats[label] = {"tp": 0, # true positive
-                             "tn": 0, # true negative
-                             "fp": 0, # false positive
-                             "fn": 0} # false negative
-    for e in predict_correct_labels:
-        p = e["p"]
-        c = e["c"]
-        for label, stat in labelstats.items():
-            label_p = p == label
-            label_c = c == label
-            if label_p and label_c:
-                stat["tp"] += 1
-            elif label_p and not label_c:
-                stat["fp"] += 1
-            elif not label_p and label_c:
-                stat["fn"] += 1
-            else:
-                stat["tn"] += 1
+        p, c = e["p"], e["c"]
+        for label in labelset:
+            labelstats[label].add_count(p == label, c == label)
     
     results = {}
-    results["accuracy"] = accuracy(labelstats)
-    results["average_accuracy"] = average_accuracy(labelstats)
-    results["error_rate"] = error_rate(labelstats)
-    for label in labelset:
-        results["%s-precision" % label] = label_precision(labelstats[label])
-        results["%s-recall" % label] = label_recall(labelstats[label])
-        results["%s-F1" % label] = label_F1(labelstats[label])
-        results["%s-specifity" % label] = label_specifity(labelstats[label])
-        results["%s-AUC" % label] = label_AUC(labelstats[label])
-        
-    task.outputs[0].write(json.dumps(results))
+    results["accuracy"] = \
+        float(sum([s.tp for s in labelstats.values()])) / labelstats.values()[0].sum()
+    results["average_accuracy"] = _macro_average([s.accuracy() for s in labelstats.values()])
+    results["error_rate"] = _macro_average([s.error_rate() for s in labelstats.values()])
 
+    for label, s in labelstats.items():
+        prec = results["%s-precision" % label] = s.precision()
+        recall = results["%s-recall" % label] = s.recall()
+        results["%s-F1" % label] = F1(prec, recall)
+        results["%s-specifity" % label] = s.specifity()
+        results["%s-AUC" % label] = s.AUC()
+    results["precision-macro"] = _macro_average([v for (k,v) in results.items() \
+                                                     if k.endswith("precision")])
+    results["precision-micro"] = float(sum([v.precision_numer() for v in labelstats.values()])) \
+                               / sum([v.precision_denom() for v in labelstats.values()])
+    results["precision-micro-numer"] = sum([v.precision_numer() for v in labelstats.values()])
+    results["precision-micro-denom"] = sum([v.precision_denom() for v in labelstats.values()])
+    results["recall-macro"] = _macro_average([v for (k,v) in results.items() \
+                                                  if k.endswith("recall")])
+    results["recall-micro"] = float(sum([v.recall_numer() for v in labelstats.values()])) \
+                            / sum([v.recall_denom() for v in labelstats.values()])
+    results["F1-macro"] = F1(results["precision-macro"], results["recall-macro"])
+    results["F1-micro"] = F1(results["precision-micro"], results["recall-micro"])
+    
+    task.outputs[0].write(json.dumps(results))
 
 def segment_by_line(num_folds, parameter_name='fold'):
     """Creates a rule that splits a line-by-line dataset to the k-th fold train
@@ -336,7 +387,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
         n = int(task.env[parameter_name])
         test_begin = base * n
         test_end = base * (n + 1)
-        
+
         with open(task.outputs[0].abspath(), 'w') as train, \
              open(task.outputs[1].abspath(), 'w') as test:
             i = 0
@@ -350,6 +401,59 @@ def segment_by_line(num_folds, parameter_name='fold'):
         source.close()
     return body
 
+def segment_without_label_bias(weights, extract_label = (lambda line: line[:line.find(' ')])):
+    """Segments an example per line data into k-fold where k is the length of param weights.
+    
+    This method consider the label-bias when segmentation:
+    In machine learning experiments, we often want to prepare training or testing examples
+    in equal proportions for each label for the correct evaluation.
+    ``weights`` specifies the proportion of examples in the k-th fold for each label.
+
+    A typical usage of this task is as follows:
+
+    .. code-block:: py
+
+        exp(source='news20.scale',
+            target='train dev test',
+            rule=segment_without_label_bias([0.8, 0.1, 0.1]))
+
+    This exp segment data news20.scale into 3-fold for train/develop/test.
+    For each label, train contains 80% of the examples of that label, while dev/test contains
+    10% of examples of the one.
+
+    The input is assumed to be the format of an example per line, such as libsvm or vowpal format.
+    The param ``extract_label`` specifies the way to extract the label from each line, so you can handle other format by customizing this function as far as it follows the one example per line format.
+    
+    :param weights: list of floats specifing the weight by which data are segmented
+    :param extract_label: function extracting the label from an input line
+
+    """
+
+    def _segment_data_with_weights(data):
+        normalized = map(lambda w: w / sum(weights), weights)
+        accumulate = []
+        a = 0
+        for n in normalized:
+            a += n
+            accumulate.append(a)
+        accumulate[len(accumulate)-1] = 1.0
+        endpoints = [0] + map(lambda w: int(len(data) * w), accumulate)
+        return [data[endpoints[i]:endpoints[i+1]] for i in range(len(endpoints)-1)]
+    
+    def body(task):
+        if len(weights) != len(task.outputs):
+            raise maflib.core.InvalidMafArgumentException("lengths of weights must be the same as the number of target")
+
+        label2examples = defaultdict(list)
+        for line in open(task.inputs[0].abspath()): label2examples[extract_label(line)].append(line)
+        label2segmented_examples = dict([(k, _segment_data_with_weights(v)) \
+                                   for k,v in label2examples.items()])
+        for i, o in enumerate(task.outputs):
+            with open(o.abspath(), 'w') as f:
+                for examples in label2segmented_examples.values():
+                    for line in examples[i]: f.write(line)
+        return 0
+    return maflib.core.Rule(body, dependson=[segment_without_label_bias])
 
 def _decompress(srcpath, dstpath, filetype):
     if filetype == 'bz2':
