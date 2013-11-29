@@ -25,6 +25,7 @@
 
 from maflib.core import *
 import unittest
+import shutil
 
 class TestParameter(unittest.TestCase):
     def test_empty_parameter_does_not_conflict(self):
@@ -77,7 +78,18 @@ class TestParameter(unittest.TestCase):
         self.assertFalse(Parameter(a=2) in d)
         self.assertFalse(Parameter(a=1, b=2, c=3) in d)
 
-        
+
+class Setting(object):
+    def __init__(self, a, b, c):
+        self.a = a
+        self.b = b
+        self.c = c
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+            and self.__dict__ == other.__dict__)
+    def __ne__(self, other): return not self.__eq__(other)
+
+    
 class TestParameterIdGenerator(unittest.TestCase):
     def test_decode_pickled_parameter_with_object(self):
         # TODO(noji): change to use tempfile for generating pickle_path after revise_create_file is merged
@@ -87,9 +99,15 @@ class TestParameterIdGenerator(unittest.TestCase):
         # text_path.close()
         # pickle_path = pickle_path.name
         # text_path = text_path.name
-        pickle_path = ".maf_tmp_dir/tmp_parameters.pickle"
-        text_path = ".maf_tmp_dir/tmp_parameters.txt"
+
+        def clean_environment():
+            if os.path.exists(".maf_tmp_dir"): shutil.rmtree(".maf_tmp_dir")
+
+        clean_environment()
         try:
+            pickle_path = ".maf_tmp_dir/tmp_parameters.pickle"
+            text_path = ".maf_tmp_dir/tmp_parameters.txt"
+
             id_generator = ParameterIdGenerator(pickle_path, text_path)
 
             id_generator.get_id(Parameter({"setting": Setting(0,1,2)}))
@@ -100,7 +118,7 @@ class TestParameterIdGenerator(unittest.TestCase):
             self.assertEqual(1, len(table))
             self.assertEqual({"setting":Setting(0,1,2)}, table[0])
         finally:
-            shutil.rmtree(".maf_tmp_dir")
+            clean_environment()
 
             
 class TestCallObject(unittest.TestCase):
