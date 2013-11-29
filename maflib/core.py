@@ -364,6 +364,8 @@ class CallObject(object):
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
             """List of parameters indicated by the taskgen call."""
+        else:
+            self.parameters = [Parameter(p) for p in self.parameters]
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
