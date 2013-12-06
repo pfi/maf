@@ -241,7 +241,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         taskgen.env.source_parameter = source_parameter
         taskgen.env.update(target_parameter.to_str_valued_dict())
 
-        depkeys = [('dependsond' % i) for i in range(len(call_object.dependson))]
+        depkeys = [('dependson%d' % i) for i in range(len(call_object.dependson))]
         taskgen.env.update(dict(zip(depkeys, call_object.dependson)))
 
         taskgen.parameter = target_parameter
