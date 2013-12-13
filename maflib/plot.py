@@ -65,7 +65,7 @@ class PlotData:
         :param key: Key strings that define distinct sequences of data points.
             It can be either of None, a string value or a tuple of string
             values.
-        :type key: ``str``
+        :type key: None, ``str`` or tuple of strings
         :param sort: Flag for sorting the sequence(s).
         :type sort: ``bool``
         :return: If ``key`` is None, then it returns a list of x values.
@@ -118,7 +118,7 @@ class PlotData:
         :param key: Key strings that define distinct sequences of data points.
             It can be either of None, a string value or a tuple of string
             values.
-        :type key: ``str``
+        :type key: None, ``str`` or tuple of strings
         :param sort: Flag for sorting the sequence(s).
         :type sort: ``bool``
         :return: If ``key`` is None, then it returns a pair of x value sequence
@@ -176,7 +176,7 @@ class PlotData:
         :param key: Key strings that define distinct sequences of data points.
             It can be either of None, a string value or a tuple of string
             values.
-        :type key: ``str``
+        :type key: None, ``str`` or tuple of strings
         :param sort: Flag for sorting the sequence(s).
         :type sort: ``bool``
         :return: If ``key`` is None, then it returns a triple of x value
