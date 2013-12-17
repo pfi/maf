@@ -29,3 +29,8 @@ More detail
 
 More detailed description of usage is in ``document`` directory.
 Currently only Japanese document is available.
+
+Acknowledgments
+===============
+
+This project is supported by `New Energy and Industrial Technology Development Organization (NEDO) <http://www.nedo.go.jp/english/>`_.
