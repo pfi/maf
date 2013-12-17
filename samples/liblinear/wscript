@@ -1,0 +1,92 @@
+import maf
+import maflib.plot
+import maflib.rules
+import maflib.util
+
+def configure(conf):
+    conf.load('maf')
+
+def build(bld):
+    pass  # for enabling waf-clean
+
+@maflib.plot.plot_by
+def plot(figure, data):
+    """Plot figure for LIBLINEAR experiment."""
+
+    LIBLINEAR_METHODS = {
+        0: 'L2R Logistic Regression (primal)',
+        1: 'L2 SVM (dual)',
+        2: 'L2 SVM (primal)',
+        3: 'SVM (dual)',
+        4: 'Multiclass SVM',
+        5: 'L1R L2-loss SVM',
+        6: 'L1R Logistic Regression',
+        7: 'L2R Logistic Regression (dual)'
+    }
+
+    axes = figure.add_subplot(111)
+
+    axes.set_xlabel('C')
+    axes.set_xscale('log')
+    axes.set_ylabel('accuracy')
+
+    key_to_xys = data.get_data_2d('C', 'accuracy', key='s')
+    for key in sorted(key_to_xys):
+        xs, ys = key_to_xys[key]
+        axes.plot(xs, ys, label=LIBLINEAR_METHODS[key])
+
+    axes.legend(loc='best')
+
+def experiment(exp):
+    """maf example that evaluates algorithms implemented on LIBLINEAR using
+    20 Newsgroup dataset.
+
+    """
+    # Download and decompress 20 newsgroup dataset from LIBSVM webiste.
+    website = 'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/'
+
+    exp(target='news20.scale.bz2',
+        rule='wget %s/news20.scale.bz2 -O ${TGT}' % website)
+    exp(source='news20.scale.bz2',
+        target='news20.scale',
+        rule='bunzip2 ${SRC} --keep')
+
+    exp(target='news20.t.scale.bz2',
+        rule='wget %s/news20.t.scale.bz2 -O ${TGT}' % website)
+    exp(source='news20.t.scale.bz2',
+        target='news20.t.scale',
+        rule='bunzip2 ${SRC} --keep')
+
+    # Train with various parameters.
+    exp(source='news20.scale',
+        target='model',
+        parameters=maflib.util.product({
+            's': [0, 1, 2, 3, 4, 5, 6, 7],  # method
+            'C': [0.001, 0.01, 0.1, 1, 10, 100],  # regularization parameter
+            'B': [1, -1]  # use bias or not
+        }),
+        rule='liblinear-train -s ${s} -c ${C} -B ${B} ${SRC} ${TGT} > /dev/null')
+
+    # Predict the test dataset by trained model.
+    exp(source='news20.t.scale model',
+        target='raw_result',
+        rule='liblinear-predict ${SRC} /dev/null > ${TGT}')
+
+    # Parse the output message and extract the accuracy.
+    exp(source='raw_result',
+        target='result',
+        rule=maflib.rules.convert_libsvm_accuracy)
+
+    # Take the one between the results with or without bias which has the higher
+    # accuracy.
+    exp(source='result',
+        target='max_accuracy',
+        aggregate_by='B',
+        rule=maflib.rules.max('accuracy'))
+
+    # Plot a line chart.
+    exp(source='max_accuracy',
+        target='figure.png',
+        for_each='',
+        # aggregate_by='s C',
+        rule=plot)

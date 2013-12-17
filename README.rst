@@ -1,14 +1,3 @@
-===================
- Repository status
-===================
-
-Owner
-    beam2d
-Purpose
-    Development of maf. To be publicized.
-Period
-    2013/07-
-
 =====
  maf
 =====
@@ -40,3 +29,8 @@ More detail
 
 More detailed description of usage is in ``document`` directory.
 Currently only Japanese document is available.
+
+Acknowledgments
+===============
+
+This project is supported by `New Energy and Industrial Technology Development Organization (NEDO) <http://www.nedo.go.jp/english/>`_.

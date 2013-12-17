@@ -1,0 +1,120 @@
+import maf
+import maflib.plot
+import maflib.rules
+import maflib.util
+import maflib.test
+from vowpal_util import *
+
+def configure(conf):
+    conf.load('maf')
+
+def build(bld):
+    pass  # for enabling waf-clean
+
+def model_name(prefix): return '%s.model' % prefix
+
+def evaluate(exp, prefix, testdata_vw, testdata_libsvm, graph_key):
+    # prediction
+    exp(source='%s %s' % (model_name(prefix), testdata_vw),
+        target='%s.predict.raw' % prefix,
+        rule='vw -i ${SRC[0].abspath()} -t -d ${SRC[1].abspath()} -p ${TGT}')
+    
+    # data conversion for the evaluation
+    exp(source='%s.predict.raw' % prefix,
+        target='%s.predict' % prefix,
+        rule=normalize_vowpal_output)
+    exp(source='%s.predict %s' % (prefix, testdata_libsvm),
+        target='%s.labels' % prefix,
+        rule=maflib.rules.create_label_result_libsvm)
+
+    # evaluate the prediction in some metric such as labeld precision or micro F1
+    exp(source='%s.labels' % prefix,
+        target='%s.result' % prefix,
+        rule=maflib.rules.calculate_stats_multiclass_classification)
+    
+    # aggregate the same setting experiments
+    exp(source='%s.result' % prefix,
+        target='%s.result.average' % prefix,
+        aggregate_by = ['exp'],
+        rule=maflib.rules.average)
+    
+    exp(source='%s.result.average' % prefix,
+        target='%s.iter2f1.png' % prefix,
+        for_each=[],
+        rule=maflib.plot.plot_line(
+            x={'key': 'pass'},
+            y='F1-micro',
+            legend={'key': graph_key}))
+
+def exptest(test):
+    """Here, you can write unit-tests for tasks which you defined in the experiment.
+
+    See :py:func:`maflib.test.ExpTestContext.add`. In this example, the python file
+    name is specified, in which all tests found on the file are executed.
+    
+    """
+    
+    test.add("vowpal_util_test.py")
+    
+def experiment(exp):
+    """maf example that evaluates algorithms implemented on LIBLINEAR using
+    20 Newsgroup dataset.
+
+    """
+    # Download and decompress 20 newsgroup dataset from LIBSVM webiste.
+    website = 'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/'
+
+    exp(target='news20.scale',
+        rule=maflib.rules.download('%s/news20.scale.bz2' % website, 'bz2'))
+    exp(source='news20.scale',
+        target='news20.scale.vw',
+        rule=convert_libsvm_format_to_vowpal)
+
+    exp(target='news20.t.scale',
+        rule=maflib.rules.download('%s/news20.t.scale.bz2' % website, 'bz2'))
+    exp(source='news20.t.scale',
+        target='news20.t.scale.vw',
+        rule=convert_libsvm_format_to_vowpal)
+
+    exp(source='news20.scale.vw',
+        target='num_classes',
+        rule=num_classes)
+
+    # experiments for the effect of L2-regularization in SGD
+    prefix = 'sgd.l2'
+    exp(source='news20.scale.vw num_classes',
+        target=model_name(prefix),
+        parameters=maflib.util.product(
+            {'pass':[1,2,5,10,20], # number of iterations
+             'exp':range(5), # this is a stochastic algorithm, so runs multiple times the same experiments each
+             'l2':[0,0.0001,0.001]
+             }),
+        rule='cat ${SRC[1].abspath()} | xargs vw ${SRC[0].abspath()} --l2 ${l2} --sgd --loss_function hinge -c --passes ${pass} -f ${TGT} --oaa')
+
+    # the evaluation process of two experiments are almost the same, so we can extract
+    # the procedure in a function
+    evaluate(exp, prefix, 'news20.t.scale.vw', 'news20.t.scale', 'l2')
+
+    # if you want another graph, you can add in any place (please uncomment this)
+    exp(source='%s.result.average' % prefix,
+        target='%s.iter2prec10.png' % prefix,
+        for_each=[],
+        rule=maflib.plot.plot_line(
+            x={'key': 'pass'},
+            y='10-precision',
+            legend={'key': 'l2'}))
+
+    # experiments comparing different stepsizes of SGD and batch algorithm (L-BFGS)
+    # this example demonstate the use of user-defined class object in parameters;
+    # see vowpal_util.LearningSetting for details
+    prefix = 'alg'
+    exp(source='news20.scale.vw num_classes',
+        target=model_name(prefix),
+        parameters=maflib.util.product(
+            {'pass':[2,5,10,20],
+             'exp':range(1),
+             'learn': [OnlineSetting(t) for t in [0, 0.2, 0.5]] + [BatchSetting()]}),
+        rule=train_vowpal_with_learning_setting)
+
+    # draw a graph of #iteration vs F1 for each 'learn' setting
+    evaluate(exp, prefix, 'news20.t.scale.vw', 'news20.t.scale', 'learn')

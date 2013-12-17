@@ -4,5 +4,4 @@
 .lock*
 .waf*
 maf.py
-wscript
 build/

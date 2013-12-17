@@ -1,11 +1,34 @@
+# Copyright (c) 2013, Preferred Infrastructure, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 """
 A core of maf - an environment for computational experimentations on waf.
 
 This module contains the core functionality of maf that handles parameterized
 tasks and metanodes.
 """
-
-# TODO(beam2d): Decide which license to use and add its description.
 
 import collections
 import copy
@@ -84,26 +107,22 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
-            
+
     def _set_rule_and_dependson(self, call_object):
-        # dependson attribute is a variable or a function, which the change is
-        # automatically traced; this is set by two ways:
+        # dependson attribute is a variable or a function, changes of which
+        # will be automatically traced; this is set by two ways:
         #  1) write dependson attribute in wscript
-        #  2) give rule in Rule object, which is set dependson values
+        #  2) give rule in Rule object having non-empty dependson
         rule = call_object.rule
-        if ('rule' in call_object.__dict__ and not isinstance(rule, str)):
-            dependson = getattr(call_object, 'dependson', [])
-            if _is_callable(rule):
-                rule = Rule(rule, dependson)
-            else:
-                rule.add_dependson(dependson)
-            # Callable object other than function is not allowed as a rule in
-            # waf. Here we relax this restriction.
+        if 'rule' in call_object.__dict__ and not isinstance(rule, str):
+            if not isinstance(rule, Rule):
+                rule = Rule(rule)
+            rule.add_dependson(getattr(call_object, 'dependson', []))
             call_object.rule = lambda task: rule.fun(task)
             call_object.dependson = rule.stred_dependson()
         else:
             call_object.dependson = []
-            
+
     def _generate_tasks(self, call_object):
         if not call_object.source:
             for parameter in call_object.parameters:
@@ -293,15 +312,15 @@ class Parameter(dict):
 class Rule(object):
     """A wrapper object of a rule function with associate values,
     which change is tracked on the experiment.
-    
+
     :param fun: target function of the task.
     :param dependson: list of variable or function, which one wants to track.
         All these variables are later converted to string values, so if
         one wants to pass the variable of user-defined class, that class
         must provide meaningful `__str__` method.
-        
+
     """
-    
+
     def __init__(self, fun, dependson=[]):
         self.fun = fun
         self.dependson = dependson
@@ -345,6 +364,8 @@ class CallObject(object):
         if 'parameters' not in self.__dict__:
             self.parameters = [Parameter()]
             """List of parameters indicated by the taskgen call."""
+        else:
+            self.parameters = [Parameter(p) for p in self.parameters]
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -457,21 +478,44 @@ class ParameterIdGenerator(object):
         """Path to file that the table is dumped to as a human-readable text."""
 
         if os.path.exists(path):
-            with open(path) as f:
-                self._table = pickle.load(f)
+            self._table = self._load_table(path)
         else:
             self._table = {}
 
     def save(self):
         """Serializes the table to the file at self.path."""
+
+        if len(self._table) == 0: return
+
+        parameter_ids = [(param, int(id)) for (param, id) in self._table.items()]
+        parameter_ids.sort(key=lambda param_and_id: param_and_id[1])
+        
         with _create_file(self.path) as f:
-            pickle.dump(self._table, f)
+            # We don't save the self._table, which type is dict(Parameter,int) directly,
+            # instead saves list(dict), which index corresponds to the id of the item.
+            # This is for deserializing parameter->id mappings outside of map, without
+            # maflib and waflib dependencies. Parameter class is defined in maflib,
+            # so user cannot decode original _table object without maflib libraries.
+            # When deserializaing, ``self._table`` is load by ``_load_table``.
+            max_param_id = parameter_ids[-1][1]
+            dict_param_list = [None for i in range(max_param_id + 1)]
+            for (param, id) in parameter_ids:
+                dict_param_list[id] = dict(param)
+            pickle.dump(dict_param_list, f)
 
         with _create_file(self.text_path) as f:
-            parameter_ids = self._table.items()
-            parameter_ids.sort(key=lambda param_and_id: int(param_and_id[1]))
             for parameter, id in parameter_ids:
                 f.write('%s\t%s\n' % (id, parameter))
+
+    def _load_table(self, path):
+        table = {}
+        try:
+            with open(path) as f:
+                dict_param_list = pickle.load(f)
+                for i, dict_param in enumerate(dict_param_list):
+                    if dict_param is not None: table[Parameter(dict_param)] = str(i)
+        except EOFError: pass
+        return table
 
     def get_id(self, parameter):
         """Gets the id of given parameter.
@@ -507,6 +551,10 @@ class ExperimentTask(waflib.Task.Task):
     dep_vars.
 
     """
+
+    shell = True
+    """support pipe style rule str in default"""
+
     def __init__(self, env, generator):
         """Initializes the task.
 
@@ -523,6 +571,56 @@ class ExperimentTask(waflib.Task.Task):
         if not hasattr(self, 'dep_vars'): self.dep_vars = []
         self.dep_vars += self.parameter.keys()
         self.dep_vars += filter(lambda k: k.startswith("dependson"), env.keys())
+
+        self.inputs = [ExperimentNode(s) for s in self.inputs]
+        self.outputs = [ExperimentNode(s) for s in self.outputs]
+
+
+class ExperimentNode(object):
+    """A wrapper of Node object used in ExperimentTasks for replacement of
+    input/output Nodes.
+
+    The main motivation of this class is to make it easy to write unit-tests
+    for user-defined rules. In maf, a user can define his own rule by writing
+    a function that receives the task object as an argument, then reads
+    (writes) an input (output) Node object by accessing like
+    ``task.inputs[0].read``. A user has to write a mock-object which mimics
+    the behavior of Task object to test these functions, because the
+    received ``task`` is generated by maf internally. This is tedious.
+    ExperimentNode relieves this problem.
+
+    This Node wrapper behaves in two different ways: At an ordinary Task
+    (the usual case), this is a mere wrapper of a Node object given in the
+    constructor. The commonly used methods ``read``, ``write``, and ``abspath``
+    behave in the same ways as those of the ordinary Node object. At the test
+    time, a user can get a *dummy* Node object using this class with no argument
+    to the constructor. In that case, this class creates a temporary file and
+    preserves internally. ``read`` and ``write`` methods are called to this
+    temporary file, which saves some labors to define dummy Node objects for
+    each rule. This class abstracts away the difference of these two cases.
+
+    Example usages of this class at test cases are found at, for example,
+    tests/test_rule.py. See also :py:func:`test.TestTask`.
+
+    """
+    def __init__(self, waflib_node = None):
+        if waflib_node:
+            self.node = waflib_node
+            self.abspath_ = self.node.abspath()
+        else:
+            import tempfile
+            self.tmpfile = tempfile.NamedTemporaryFile()
+            self.abspath_ = self.tmpfile.name
+
+    def read(self):
+        return ''.join([line for line in open(self.abspath_)])
+
+    def write(self, s):
+        with open(self.abspath_, 'w') as o: o.write(s)
+
+    def abspath(self):
+        return self.abspath_
+
 
 @feature('experiment')
 @before_method('process_rule')
@@ -575,7 +673,7 @@ def register_experiment_task_with_rule(self):
     # define ExperimentTask with a user-defined rule (string or function)
     cls = type(waflib.Task.Task)(self.name, (ExperimentTask,), params)
     waflib.Task.classes[self.name] = cls
-    
+
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
 
 
@@ -584,17 +682,10 @@ def _create_file(path):
     necessary.
 
     """
-    prefixes = []
-    cur_dir = path
-    while cur_dir:
-        cur_dir = os.path.dirname(cur_dir)
-        prefixes.append(cur_dir)
-    prefixes.reverse()
-
-    for prefix in prefixes:
-        if prefix and not os.path.exists(prefix):
-            os.mkdir(prefix)
-
+    
+    dirname = os.path.dirname(path)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     return open(path, 'w')
 
 
