@@ -131,23 +131,17 @@ def min(key):
 
     """
     @maflib.util.aggregator
-    def body(values, output, parameter):
-        scheme = copy.deepcopy(values[0])
-        for key in scheme:
-            try:
-                scheme[key] = sum(
-                    float(v[key]) for v in values) / float(len(values))
-            except:
-                # Some values of scheme may not be json-serializable, which include
-                # user-defined class for parameters.
-                # These are expected to only be used as a "symbol" for a later process,
-                # so we convert these into strings here.
-                # TODO(noji): should we generalize this mechanism in other place ?
-                try:
-                    scheme[key] = json.dumps(scheme[key])
-                except:
-                    scheme[key] = str(scheme[key])
-        return json.dumps(scheme)
+    def body(values, outpath, parameter):
+        if len(values) == 0:
+            return json.dumps({})
+
+        min_value = values[0][key]
+        argmin = values[0]
+        for value in values[1:]:
+            if min_value > value[key]:
+                min_value = value[key]
+                argmin = value
+        return json.dumps(argmin)
 
     return maflib.core.Rule(fun=body, dependson=[min, key])
 

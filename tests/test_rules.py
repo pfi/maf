@@ -21,6 +21,20 @@ class TestAggregationTask(unittest.TestCase):
         result = task.json_output(0)
         self.assertEqual(result, {"param1": 0, "key1": 10, "key2": 20})
 
+    def test_min(self):
+        task = TestTask()
+        task.env.source_parameter = [{"param1":0}, {"param1":1}]
+
+        task.set_input_by_json(0, {"key1":10, "key2":20})
+        task.set_input_by_json(1, {"key1": 5, "key2":30})
+
+        rule = rules.min("key1")
+        rule.fun(task)
+
+        result = task.json_output(0)
+        self.assertEqual(result, {"param1": 1, "key1": 5, "key2": 30})
+
+
 class MulticlassEvaluationTask(object):
     """This is dummy class for the use of a test below.
     
