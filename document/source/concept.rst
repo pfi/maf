@@ -11,13 +11,15 @@ mafの使い方
 -----------
 
 まずは最も簡単なmafスクリプトを書いて、使い方を学びましょう。
-最新版のwafと ``maf.py`` をダウンロードして、同じディレクトリに置きます。
+mafのリポジトリ https://github.com/pfi/maf をcloneして、 ``waf`` と ``maf.py`` を実験用のディレクトリに置きます。
 wafファイルには実行可能フラグを立てておくと良いでしょう。
-
-**TODO: 生成済みのmaf.pyをどこかに置いてリンクを貼る。現状、generate_maf.pyを実行してmaf.pyを自分で生成する必要がある。**
 
 .. code-block:: bash
 
+   $ git clone git@github.com:pfi/maf
+   $ cp maf/waf ./
+   $ cp maf/maf.py ./
+   $ rm -rf maf
    $ chmod +x waf
 
 次に以下の内容の ``wscript`` ファイルを作成します。
@@ -522,3 +524,8 @@ mafにおいてルールには3つの種類があります。
 .. code-block:: python
 
    exp(source='a_b_and_k', target='out.png', rule=my_plot)
+
+その他の例
+----------
+
+mafの使用例は https://github.com/pfi/maf/tree/master/samples にまとまっています。
