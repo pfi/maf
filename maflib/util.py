@@ -87,16 +87,16 @@ def aggregator(callback_body):
 def json_aggregator(callback_body):
     """Create an aggregator specific to output the aggregated result into json.
 
-    The result of aggregator task is often used in a json-format in later tasks,
-    such as py:mod:`maflib.rules.max` and py:mod:`maflib.rules.average`. In
+    Result of aggregator task is often json-formatted for later tasks, such as
+    py:mod:`maflib.rules.max` and py:mod:`maflib.rules.average`. In
     py:mod:`maflib.rules.max`, for example, the parameter setting corresponding
     to the max is necessary in future task, so the parameter must also be dumped
-    to json-format. However, this cause problem when parameter is not
-    json-serializable, e.g., a object of user-defined class. To avoid this problem,
-    this aggregator first converts ``parameter`` to json-serializable one, by
-    converting not json-serializable values of ``parameter`` (``dictionary`` type)
-    into ``string``.  All json-serializable values remains the same, e.g., ``int``
-    values are not converted to ``string``.
+    to json-format. However, this is problematic when parameter is not
+    json-serializable, e.g., an object of user-defined class. To avoid this
+    problem, this aggregator decorator first converts ``parameter`` to
+    json-serializable one by converting not json-serializable values of
+    ``parameter`` (``dict`` type) into string. All json-serializable values
+    remain the same, e.g., ``int`` values are not converted to string.
     
     :param callback_body: A function or a callable object that takes the same
         arguments as that of ``aggregator``, but return an object, which is
@@ -112,8 +112,11 @@ def json_aggregator(callback_body):
     @aggregator
     def callback(values, abspath, parameter):
         def to_jsonable(v):
-            try: json.dumps(v); return v
-            except: return str(v)
+            try:
+                json.dumps(v)
+                return v
+            except:
+                return str(v)
         parameter = dict([(k, to_jsonable(parameter[k])) for k in parameter])
         result = callback_body(values, abspath, parameter)
         return json.dumps(result)

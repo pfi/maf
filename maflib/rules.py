@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import bz2
-from collections import defaultdict
+import collections
 import copy
 import gzip
 import json
@@ -32,7 +32,6 @@ import os.path
 import tempfile
 import urllib
 import zlib
-from collections import defaultdict
 
 import maflib.core
 import maflib.util
@@ -166,7 +165,7 @@ def average(values, output, parameter):
         except:
             pass
     return scheme
-    
+
 
 def convert_libsvm_accuracy(task):
     """Rule that converts message output by svm-predict into json file.
@@ -177,14 +176,11 @@ def convert_libsvm_accuracy(task):
 
     :param task: waf task.
     :type task: :py:class:`waflib.Task.Task`
-    :return: Zero.
-    :rtype: ``int``
 
     """
     content = task.inputs[0].read()
     j = {'accuracy': float(content.split(' ')[2][:-1])}
     task.outputs[0].write(json.dumps(j))
-    return 0
 
 
 def create_label_result_libsvm(task):
@@ -202,23 +198,15 @@ is not consistent with the one of test file (%s)." % (predict_f, test_f))
     for i in range(len(predict)):
         instances.append({"p": predict[i], "c": correct[i]})
     task.outputs[0].write(json.dumps(instances))
-    return 0
 
-def _weighted_average(num_examples, values):
-    s = sum(num_examples)
-    label_weight = map(lambda a: float(a) / s, num_examples)
-    return sum([w * v for (w, v) in zip(label_weight, values)])
-
-def _macro_average(values):
-    return float(sum(values)) / len(values)
 
 def calculate_stats_multiclass_classification(task):
-    """Calculates various performance measure for multi-class classification.
+    """Calculates various performance measures for multi-class classification.
 
-    The "source" of this task is assumed to a json of a list, in which each
-    item is a dictionary of the form ``{"p": 3, "c": 5}`` where ``"p"``
-    indicates predict label, while "c" indicates the correct label. If you use
-    libsvm, ``create_label_result_libsvm`` converts the results to this format.
+    The source of this task is assumed to be a json array each item of which
+    is a dictionary of the form ``{"p": 3, "c": 5}`` where ``"p"`` indicates the
+    predict label, while "c" indicates the correct label. If you use libsvm,
+    ``create_label_result_libsvm`` converts the results to this format.
 
     The output measures is summarized as follows, most of which are cited from (*):
 
@@ -228,10 +216,11 @@ def calculate_stats_multiclass_classification(task):
       Precision, Recall, F1, Specifity and AUC
     are calculated for each label.
 
-    In terms of precision, Recall and F1, averaged results are also calculated.
-    There are two different type of averaging: micro and macro.
-    Micro average is calculated using global count of true positive, false positive, etc,
-    while macro average is calculated naively by dividing the number of labels.
+    In terms of Precision, Recall and F1, averaged results are also calculated.
+    There are two different types of averaging: micro and macro.
+    Micro average is calculated using global counts of true positive, false
+    positive, etc, while macro average is calculated naively by dividing the
+    number of labels.
 
     The output of this task is one json file, like
 
@@ -255,11 +244,12 @@ def calculate_stats_multiclass_classification(task):
       }
 
     where accuracy, average_accuracy and error_rate corresponds to Accuracy,
-    AverageAccuracy and ErrorRate respectively. Average is macro average of
+    AverageAccuracy and ErrorRate respectively. Average is the macro average of
     all data, which is consistent with the output of e.g., svm-predict.
     Other results (e.g. 1-precision) are calculated for each label and represented
     as a pair of "label" and "measure" combined with a hyphen. For example,
-    1-precision is precision for the label 1, while 3-F1 is F1 for the label 3.
+    1-precision is the precision for the label 1, while 3-F1 is F1 for the label
+    3.
 
     (*) Marina Sokolova, Guy Lapalme
     A systematic analysis of performance measures for classification tasks
@@ -312,11 +302,14 @@ def calculate_stats_multiclass_classification(task):
     labelset = set([e["p"] for e in predict_correct_labels] \
                        + [e["c"] for e in predict_correct_labels])
 
-    labelstats = defaultdict(labelstat)
+    labelstats = collections.defaultdict(labelstat)
     for e in predict_correct_labels:
         p, c = e["p"], e["c"]
         for label in labelset:
             labelstats[label].add_count(p == label, c == label)
+
+    def _macro_average(values):
+        return float(sum(values)) / len(values)
 
     results = {}
     results["accuracy"] = \
@@ -344,6 +337,7 @@ def calculate_stats_multiclass_classification(task):
     results["F1-micro"] = F1(results["precision-micro"], results["recall-micro"])
 
     task.outputs[0].write(json.dumps(results))
+
 
 def segment_by_line(num_folds, parameter_name='fold'):
     """Creates a rule that splits a line-by-line dataset to the k-th fold train
@@ -399,7 +393,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
 
 def segment_without_label_bias(weights, extract_label = (lambda line: line[:line.find(' ')])):
     """Segments an example per line data into k-fold where k is the length of param weights.
-    
+
     This method consider the label-bias when segmentation:
     In machine learning experiments, we often want to prepare training or testing examples
     in equal proportions for each label for the correct evaluation.
@@ -419,7 +413,7 @@ def segment_without_label_bias(weights, extract_label = (lambda line: line[:line
 
     The input is assumed to be the format of an example per line, such as libsvm or vowpal format.
     The param ``extract_label`` specifies the way to extract the label from each line, so you can handle other format by customizing this function as far as it follows the one example per line format.
-    
+
     :param weights: list of floats specifing the weight by which data are segmented
     :param extract_label: function extracting the label from an input line
 
@@ -435,12 +429,12 @@ def segment_without_label_bias(weights, extract_label = (lambda line: line[:line
         accumulate[len(accumulate)-1] = 1.0
         endpoints = [0] + map(lambda w: int(len(data) * w), accumulate)
         return [data[endpoints[i]:endpoints[i+1]] for i in range(len(endpoints)-1)]
-    
+
     def body(task):
         if len(weights) != len(task.outputs):
             raise maflib.core.InvalidMafArgumentException("lengths of weights must be the same as the number of target")
 
-        label2examples = defaultdict(list)
+        label2examples = collections.defaultdict(list)
         for line in open(task.inputs[0].abspath()): label2examples[extract_label(line)].append(line)
         label2segmented_examples = dict([(k, _segment_data_with_weights(v)) \
                                    for k,v in label2examples.items()])
