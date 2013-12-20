@@ -1,5 +1,5 @@
-mafの使い方、諸概念、ユーティリティ
-===================================
+mafの使い方
+===========
 
 本章ではmafの諸概念を紹介したあと、具体例を通して便利な機能を紹介していきます。
 読者には以下の知識を仮定します。
@@ -7,19 +7,17 @@ mafの使い方、諸概念、ユーティリティ
 - Pythonの基本的な使い方
 - wafの基本的な使い方
 
-mafの使い方
------------
+実験の始め方
+------------
 
 まずは最も簡単なmafスクリプトを書いて、使い方を学びましょう。
-mafのリポジトリ https://github.com/pfi/maf をcloneして、 ``waf`` と ``maf.py`` を実験用のディレクトリに置きます。
+mafのリポジトリ https://github.com/pfi/maf から ``waf`` と ``maf.py`` をダウンロードして、実験用のディレクトリに置きます。
 wafファイルには実行可能フラグを立てておくと良いでしょう。
 
 .. code-block:: bash
 
-   $ git clone git@github.com:pfi/maf
-   $ cp maf/waf ./
-   $ cp maf/maf.py ./
-   $ rm -rf maf
+   $ wget https://github.com/pfi/maf/raw/master/waf
+   $ wget https://github.com/pfi/maf/raw/master/maf.py
    $ chmod +x waf
 
 次に以下の内容の ``wscript`` ファイルを作成します。
