@@ -48,6 +48,7 @@ def aggregator(callback_body):
     ``abspath``), which is the absolute path to the output node. In this case,
     ``callback_body`` **MUST** return None to suppress the automatic writing.
 
+    This function is often used as a decorator.
     See :py:mod:`maflib.rules` or :py:mod:`maflib.plot` to get
     examples of ``callback_body``.
 
