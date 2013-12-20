@@ -30,7 +30,7 @@ import numpy.random
 import types
 import numpy as np
 
-def create_aggregator(callback_body):
+def aggregator(callback_body):
     """Creates an aggregator using function ``callback_body`` independent from
     waf.
 
@@ -48,6 +48,7 @@ def create_aggregator(callback_body):
     ``abspath``), which is the absolute path to the output node. In this case,
     ``callback_body`` **MUST** return None to suppress the automatic writing.
 
+    This function is often used as a decorator.
     See :py:mod:`maflib.rules` or :py:mod:`maflib.plot` to get
     examples of ``callback_body``.
 
@@ -83,14 +84,45 @@ def create_aggregator(callback_body):
     return callback
 
 
-def aggregator(callback_body):
-    """Alias of :py:func:`maflib.util.create_aggregator` as a decorator.
+def json_aggregator(callback_body):
+    """Create an aggregator specific to output the aggregated result into json.
 
-    See :py:func:`maflib.util.create_aggregator` for detail.
+    Result of aggregator task is often json-formatted for later tasks, such as
+    py:mod:`maflib.rules.max` and py:mod:`maflib.rules.average`. In
+    py:mod:`maflib.rules.max`, for example, the parameter setting corresponding
+    to the max is necessary in future task, so the parameter must also be dumped
+    to json-format. However, this is problematic when parameter is not
+    json-serializable, e.g., an object of user-defined class. To avoid this
+    problem, this aggregator decorator first converts ``parameter`` to
+    json-serializable one by converting not json-serializable values of
+    ``parameter`` (``dict`` type) into string. All json-serializable values
+    remain the same, e.g., ``int`` values are not converted to string.
+    
+    :param callback_body: A function or a callable object that takes the same
+        arguments as that of ``aggregator``, but return an object, which is
+        going to be serialized to json. See :py:mod:`maflib.rules.max` for example.
+    :type callback_body: ``function`` or callable object of signature
+        ``(list, str, parameter)``
+    :return: An aggregator.
+    :rtype: ``function``
+    
     """
-
-    return create_aggregator(callback_body)
-
+    
+    @functools.wraps(callback_body)
+    @aggregator
+    def callback(values, abspath, parameter):
+        def to_jsonable(v):
+            try:
+                json.dumps(v)
+                return v
+            except:
+                return str(v)
+        parameter = dict([(k, to_jsonable(parameter[k])) for k in parameter])
+        result = callback_body(values, abspath, parameter)
+        return json.dumps(result)
+    
+    return callback
+    
 
 def product(parameter):
     """Generates a direct product of given listed parameters.

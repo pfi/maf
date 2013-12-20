@@ -47,7 +47,7 @@ class PlotData:
 
         :param inputs: A list of values to be plotted. The first argument of
             callback body function passed to
-            :py:func:`maflib.util.create_aggregator` can be used for this
+            :py:func:`maflib.util.aggregator` can be used for this
             argument.
 
         """

@@ -1,5 +1,5 @@
-maflib
-======
+maflib リファレンス
+===================
 
 .. toctree::
    :maxdepth: 4
