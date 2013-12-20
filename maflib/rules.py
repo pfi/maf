@@ -106,13 +106,15 @@ def max(key):
     """
     @maflib.util.aggregator
     def body(values, outpath, parameter):
-        max_value = None
-        argmax = None
-        for value in values:
-            if max_value >= value[key]:
-                continue
-            max_value = value[key]
-            argmax = value
+        if len(values) == 0:
+            return json.dumps({})
+
+        max_value = values[0][key]
+        argmax = values[0]
+        for value in values[1:]:
+            if max_value < value[key]:
+                max_value = value[key]
+                argmax = value
         return json.dumps(argmax)
 
     return maflib.core.Rule(fun=body, dependson=[max, key])
