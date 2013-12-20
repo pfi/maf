@@ -1,0 +1,86 @@
+#!/bin/sh
+
+# Copyright (c) 2013 Yuya Unno.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+while getopts :p OPT
+do
+    case $OPT in
+        "p" ) PUSH="TRUE" ;;
+    esac
+done
+
+git checkout master
+
+# generate build directory, that is not in the git repository
+make html || exit 1
+# make latexpdfja || exit 1
+
+# get hash number of the HEAD
+hash=`git log -1 --format=%H --`
+
+git branch | grep gh-pages
+if [ $? -eq 0 ]; then
+    git branch -D gh-pages || exit 1
+fi
+
+git fetch origin || exit 1
+git branch -r | grep origin/gh-pages
+if [ $? -ne 0 ]; then
+    # make gh-pages branch
+    git checkout --orphan gh-pages || exit 1
+    git rm -rf . || exit 1
+else
+    git checkout -b gh-pages origin/gh-pages || exit 1
+fi
+
+# .nojekyll file is required to show sphinx html in github pages
+touch .nojekyll || exit 1
+git add .nojekyll || exit 1
+
+for dir in build/*; do
+    name=${dir#*/}
+    echo "Copy from ${name}"
+    if [ -d ${name} ]; then
+        rm -r ${name} || exit 1
+    fi
+    mv ${dir} . || exit 1
+    git add ${name} || exit 1
+done
+
+git commit -m "Auto generated from ${hash}" || exit 1
+# pdf=`ls latex/*.pdf`
+
+git checkout master || exit 1
+
+echo "Success to update gh-pages branch"
+
+if [ ${PUSH} == "TRUE" ]; then
+    git push origin gh-pages || exit 1
+else
+    echo "Publish the result with the command below:"
+    echo
+    echo "   git push origin gh-pages"
+    echo
+fi
+
+root=`git config --get remote.origin.url | sed -e "s/git@\(.*\):\(.*\/.*\)\.git/https:\/\/\1\/pages\/\2/g"`
+echo " HTML:   ${root}/html/"
+# echo " LaTeX:  ${root}/${pdf}"
