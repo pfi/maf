@@ -104,7 +104,7 @@ def max(key):
     :rtype: :py:class:`maflib.core.Rule`
 
     """
-    @maflib.util.aggregator
+    @maflib.util.json_aggregator
     def body(values, outpath, parameter):
         if len(values) == 0:
             return json.dumps({})
@@ -115,7 +115,7 @@ def max(key):
             if max_value < value[key]:
                 max_value = value[key]
                 argmax = value
-        return json.dumps(argmax)
+        return argmax
 
     return maflib.core.Rule(fun=body, dependson=[max, key])
 
@@ -132,7 +132,7 @@ def min(key):
     :rtype: :py:class:`maflib.core.Rule`
 
     """
-    @maflib.util.aggregator
+    @maflib.util.json_aggregator
     def body(values, outpath, parameter):
         if len(values) == 0:
             return json.dumps({})
@@ -143,12 +143,12 @@ def min(key):
             if min_value > value[key]:
                 min_value = value[key]
                 argmin = value
-        return json.dumps(argmin)
+        return argmin
 
     return maflib.core.Rule(fun=body, dependson=[min, key])
 
 
-@maflib.util.aggregator
+@maflib.util.json_aggregator
 def average(values, output, parameter):
     """Aggregator that calculates the average value for each key.
 
@@ -165,8 +165,8 @@ def average(values, output, parameter):
                 float(v[key]) for v in values) / float(len(values))
         except:
             pass
-    return json.dumps(scheme)
-
+    return scheme
+    
 
 def convert_libsvm_accuracy(task):
     """Rule that converts message output by svm-predict into json file.
