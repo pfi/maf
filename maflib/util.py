@@ -30,7 +30,7 @@ import numpy.random
 import types
 import numpy as np
 
-def create_aggregator(callback_body):
+def aggregator(callback_body):
     """Creates an aggregator using function ``callback_body`` independent from
     waf.
 
@@ -81,15 +81,6 @@ def create_aggregator(callback_body):
             task.outputs[0].write(result)
 
     return callback
-
-
-def aggregator(callback_body):
-    """Alias of :py:func:`maflib.util.create_aggregator` as a decorator.
-
-    See :py:func:`maflib.util.create_aggregator` for detail.
-    """
-
-    return create_aggregator(callback_body)
 
 
 def product(parameter):
