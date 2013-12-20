@@ -140,7 +140,6 @@ productという名前は集合の直積を表します。
 
    maflib.util.product({'method': ['PA2', 'AROW'],
                         'C': [0.1, 1, 10]})
-
    # => [{'method': 'PA2', 'C': 0.1},
    #     {'method': 'PA2', 'C': 1},
    #     {'method': 'PA2', 'C': 10},
