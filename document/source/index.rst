@@ -13,7 +13,7 @@ https://github.com/pfi/maf で開発されています。
    :maxdepth: 3
 
    introduction
-   concept
+   usage
 
 maflib API Document
 ===================
