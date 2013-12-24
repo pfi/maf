@@ -8,15 +8,16 @@ The main target of maf is experiments of machine learning, but it is useful for 
 Usage
 =====
 
-Clone this repository and execute following command. It generates ``maf.py``.
+Copy ``waf`` and ``maf.py`` into your favorite directory where you will write your own experiments, and (optionally) make ``waf`` executable.
 
 ::
 
-  $ python generate_maf.py
+  $ cd <directory-to-write-experiments>
+  $ wget https://github.com/pfi/maf/raw/master/waf
+  $ wget https://github.com/pfi/maf/raw/master/maf.py
+  $ chmod +x waf
 
-Create a directory to run experiments.
-Copy ``waf`` and ``maf.py`` into it.
-Write a file named ``wscript`` that describes procedure of experiments into this directory.
+Write a procedure of experiments and save it as a text file named ``wscript`` into this directory.
 Then run following commands:
 
 ::
@@ -24,11 +25,18 @@ Then run following commands:
   $ ./waf configure
   $ ./waf experiment
 
+You can also build ``maf.py`` from the source code.
+Clone this repository and execute following command. It generates ``maf.py``.
+
+::
+
+  $ python generate_maf.py
+
 More detail
 ===========
 
 More detailed description of usage is in ``document`` directory.
-Currently only Japanese document is available.
+Currently only Japanese document and is available (while API reference is in English).
 
 Acknowledgments
 ===============
