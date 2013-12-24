@@ -1,0 +1,586 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mafの使い方 &mdash; maf 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="maf 0.1 documentation" href="index.html" />
+    <link rel="next" title="maflib Package" href="maflib.html" />
+    <link rel="prev" title="maf入門" href="introduction.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="maflib.html" title="maflib Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="maf入門"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">maf 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">mafの使い方</a><ul>
+<li><a class="reference internal" href="#id1">実験の始め方</a></li>
+<li><a class="reference internal" href="#id2">ノードとメタノードとパラメータ</a><ul>
+<li><a class="reference internal" href="#waf">wafノード</a></li>
+<li><a class="reference internal" href="#id3">メタノード（パラメータ付けられたノード）</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">メタノードに関するより詳しい仕様</a><ul>
+<li><a class="reference internal" href="#id5">複数パラメータの生成</a></li>
+<li><a class="reference internal" href="#id6">メタノードの組合せ</a></li>
+<li><a class="reference internal" href="#id7">メタノードが入力にある場合のパラメータ指定</a></li>
+<li><a class="reference internal" href="#id8">メタノードの集約</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#json">JSON形式の入出力ファイル</a></li>
+<li><a class="reference internal" href="#id9">ルールの書き方</a><ul>
+<li><a class="reference internal" href="#id10">コマンドルール</a></li>
+<li><a class="reference internal" href="#id11">関数ルール</a></li>
+<li><a class="reference internal" href="#maflib-core-rule"><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール</a></li>
+<li><a class="reference internal" href="#id12">集約ルールの書き方</a></li>
+<li><a class="reference internal" href="#id13">プロットを行う集約ルールの書き方</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id14">その他の例</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="introduction.html"
+                        title="previous chapter">maf入門</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="maflib.html"
+                        title="next chapter">maflib Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/usage.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="maf">
+<h1>mafの使い方<a class="headerlink" href="#maf" title="Permalink to this headline">¶</a></h1>
+<p>本章ではmafの諸概念を紹介したあと、具体例を通して便利な機能を紹介していきます。
+読者には以下の知識を仮定します。</p>
+<ul class="simple">
+<li>Pythonの基本的な使い方</li>
+<li>wafの基本的な使い方</li>
+</ul>
+<div class="section" id="id1">
+<h2>実験の始め方<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>まずは最も簡単なmafスクリプトを書いて、使い方を学びましょう。
+mafのリポジトリ <a class="reference external" href="https://github.com/pfi/maf">https://github.com/pfi/maf</a> から <tt class="docutils literal"><span class="pre">waf</span></tt> と <tt class="docutils literal"><span class="pre">maf.py</span></tt> をダウンロードして、実験用のディレクトリに置きます。
+wafファイルには実行可能フラグを立てておくと良いでしょう。</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>wget https://github.com/pfi/maf/raw/master/waf
+<span class="nv">$ </span>wget https://github.com/pfi/maf/raw/master/maf.py
+<span class="nv">$ </span>chmod +x waf
+</pre></div>
+</div>
+<p>次に以下の内容の <tt class="docutils literal"><span class="pre">wscript</span></tt> ファイルを作成します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+
+<span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span>
+    <span class="n">opt</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;maf&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span>
+    <span class="n">conf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;maf&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">experiment</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>この <tt class="docutils literal"><span class="pre">wscript</span></tt> ファイルは何もしません。
+wafをビルドに用いる場合には <tt class="docutils literal"><span class="pre">build</span></tt> 関数を書きましたが、mafで実験を行う場合には代わりに <tt class="docutils literal"><span class="pre">experiment</span></tt> 関数を書きます。
+引数 <tt class="docutils literal"><span class="pre">exp</span></tt> は <tt class="docutils literal"><span class="pre">build</span></tt> 関数の場合の引数にmaf用の拡張を施したものです。</p>
+<p>まずはこのスクリプトを実行できるか試しましょう。
+以下のコマンドを入力します。</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>./waf configure
+<span class="nv">$ </span>./waf experiment
+</pre></div>
+</div>
+<p>wafでビルドする場合には <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">build</span></tt> ないし省略して <tt class="docutils literal"><span class="pre">./waf</span></tt> を実行しますが、mafで実験コードを実行する場合には <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">experiment</span></tt> を実行します。
+以上で「何もしない実験」が実行されます。</p>
+<p>以降、 <tt class="docutils literal"><span class="pre">experiment</span></tt> 関数の中に実験計画を記述していきます。
+mafにおいて利用可能なユーティリティが <tt class="xref py py-mod docutils literal"><span class="pre">maflib</span></tt> モジュール内に用意されていますが、以降ではimport文などは省略します。</p>
+<p>次節ではその書き方に入る前に、まずはmafの最重要概念であるメタノードとパラメータについて解説します。</p>
+</div>
+<div class="section" id="id2">
+<h2>ノードとメタノードとパラメータ<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>本節ではwafにおけるノードの概念の紹介（復習）と、mafにおいてこれをパラメータと結びつけたメタノードという概念を概説します。
+その後、mafにおけるタスクの書き方について、メタノードとパラメータに関わる挙動に焦点を当てて解説します。</p>
+<div class="section" id="waf">
+<h3>wafノード<a class="headerlink" href="#waf" title="Permalink to this headline">¶</a></h3>
+<p>wafにおいて、wscript中で参照するファイルやディレクトリのことを <strong>ノード</strong> と呼びます。
+ノードは基本的にはファイルに対応しますが、これにバージョン情報やハッシュ値などが紐付けられています。
+また、ノードに対応するファイルはビルドディレクトリ（通常は <tt class="docutils literal"><span class="pre">build</span></tt> という名前を持つ）以下にあることもあれば、ソースディレクトリ（通常は <tt class="docutils literal"><span class="pre">waf</span></tt> 自身があるディレクトリ）以下にあることもあります。
+wafはノード間の依存関係を管理して、自動的にビルドに必要なタスクを生成します。
+また、各タスクごとに入力ファイルのバージョン情報やハッシュ値の変化を検出して、再ビルドの際には必要十分な部分だけを再実行します。</p>
+<a class="reference internal image-reference" href="_images/node.png"><img alt="_images/node.png" src="_images/node.png" /></a>
+</div>
+<div class="section" id="id3">
+<h3>メタノード（パラメータ付けられたノード）<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>mafではタスクにパラメータを指定することができます。
+例えば次の例では、パラメータごとに異なる内容のファイルを生成しています。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;my_out&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Taro&#39;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Jiro&#39;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Saburo&#39;</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo ${name} &gt; ${TGT}&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/metanode_1.png"><img alt="_images/metanode_1.png" src="_images/metanode_1.png" /></a>
+<p><tt class="docutils literal"><span class="pre">parameters</span></tt> に辞書の配列を指定することで、タスクにパラメータの集合を設定することができます。
+各辞書のキーと値はともにハッシュ化可能でなければなりません。
+パラメータの内容は <tt class="docutils literal"><span class="pre">rule</span></tt> 内で参照することができます。</p>
+<p>mafは上の関数呼び出しで、3つの異なるwafタスクを生成します。
+これらはパラメータが異なり、出力ファイルも異なります。
+各出力ファイルは <tt class="docutils literal"><span class="pre">build/experiment/my_out</span></tt> ディレクトリ以下に生成されます。
+ノード <tt class="docutils literal"><span class="pre">my_out</span></tt> は異なるパラメータに対応する複数のノードを含んでいます。
+このノード <tt class="docutils literal"><span class="pre">my_out</span></tt> のことを <strong>メタノード</strong> と呼びます。</p>
+<p>mafではメタノードを一つのノードであるかのように扱うことができます。
+例えば <tt class="docutils literal"><span class="pre">my_out</span></tt> の各ファイルの後ろに特定の文字列を加えるタスクは、以下のように書くことができます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;my_out&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;my_name&#39;</span><span class="p">,</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cp ${SRC} ${TGT}; echo Sato &gt;&gt; ${TGT}&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/metanode_2.png"><img alt="_images/metanode_2.png" src="_images/metanode_2.png" /></a>
+<p>この例の場合、入力ノード <tt class="docutils literal"><span class="pre">my_out</span></tt> はメタノードなので、各パラメータごとに別々のタスクが生成されます。
+どんなパラメータがあるかはメタノード <tt class="docutils literal"><span class="pre">my_out</span></tt> に紐付けられているので、改めて記述する必要はありません。
+このとき、出力ノード <tt class="docutils literal"><span class="pre">my_name</span></tt> もメタノードとなり、 <tt class="docutils literal"><span class="pre">my_out</span></tt> に含まれる各ノードに対応するノードがこの中に生成されます。
+<tt class="docutils literal"><span class="pre">my_name</span></tt> 内の各ノードには、 <tt class="docutils literal"><span class="pre">my_out</span></tt> の対応するノードと同じパラメータが紐付けられます。
+mafではこのように、パラメータを明示することなくメタノードに対する処理を書くことができます。</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>メタノードに関するより詳しい仕様<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>メタノードとパラメータ指定にはいくつかのバリエーションがあります。
+また、実験計画を記述する上では、実験結果を集約する操作も必要になります。
+この節ではそれらについて一つずつ解説していきます。</p>
+<div class="section" id="id5">
+<h3>複数パラメータの生成<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>パラメータは辞書の配列で指定しますが、パラメータの種類が多く、それらの様々な組合せを試したいケースは多いです。
+このような場合に、同じ種類のパラメータに対する範囲を何度も書くのはメンテナンスの観点から望ましくありません。
+そこでmafにはパラメータの組合せを生成する便利な関数が2つ用意されています。</p>
+<p>一つ目は <a class="reference internal" href="maflib.html#maflib.util.product" title="maflib.util.product"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.product()</span></tt></a> です。
+各パラメータ名に対するパラメータのリストを指定すると、すべての組合せを生成します。
+productという名前は集合の直積を表します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;PA2&#39;</span><span class="p">,</span> <span class="s">&#39;AROW&#39;</span><span class="p">],</span>
+                     <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]})</span>
+<span class="c"># =&gt; [{&#39;method&#39;: &#39;PA2&#39;, &#39;C&#39;: 0.1},</span>
+<span class="c">#     {&#39;method&#39;: &#39;PA2&#39;, &#39;C&#39;: 1},</span>
+<span class="c">#     {&#39;method&#39;: &#39;PA2&#39;, &#39;C&#39;: 10},</span>
+<span class="c">#     {&#39;method&#39;: &#39;AROW&#39;, &#39;C&#39;: 0.1},</span>
+<span class="c">#     {&#39;method&#39;: &#39;AROW&#39;, &#39;C&#39;: 1},</span>
+<span class="c">#     {&#39;method&#39;: &#39;AROW&#39;, &#39;C&#39;: 10}]</span>
+<span class="c"># (順番が入れ替わる可能性はあります)</span>
+</pre></div>
+</div>
+<p>もう一つは <a class="reference internal" href="maflib.html#maflib.util.sample" title="maflib.util.sample"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.sample()</span></tt></a> です。
+各パラメータ名に対してパラメータを生成する関数を渡すと、それらを用いて指定した数の組合せを生成します。
+関数の代わりに数値の対を渡すとその区間の連続一様分布を用います。
+関数の代わりに値のリストを渡すと、リストから値を選ぶような離散一様分布を用います。
+パラメータの最適化を行う際に、直積集合よりも少ない組合せで効率的に実験を行うのに有効です。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>  <span class="c"># 離散一様分布からサンプリング</span>
+                       <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c"># 連続一様分布からサンプリング</span>
+                       <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>  <span class="c"># サンプリング関数を自分で記述</span>
+                       <span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h3>メタノードの組合せ<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">source</span></tt> として複数のメタノードを指定することもできます。
+この場合、基本的にはそれらが含むノードの全組み合わせが用いられます。
+ただし、組み合わされたノード同士が同じキーで違う値のパラメータを持つ場合、その組合せは無視されます。</p>
+<p>例えば次の例を見てみましょう。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;z&#39;</span><span class="p">,</span>
+    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/combination.png"><img alt="_images/combination.png" src="_images/combination.png" /></a>
+<p>パラメータ <tt class="docutils literal"><span class="pre">A,</span> <span class="pre">B</span></tt> を持つメタノード <tt class="docutils literal"><span class="pre">x</span></tt> と、パラメータ <tt class="docutils literal"><span class="pre">A,</span> <span class="pre">C</span></tt> を持つメタノード <tt class="docutils literal"><span class="pre">y</span></tt> があり、それらを入力としてメタノード <tt class="docutils literal"><span class="pre">z</span></tt> を出力しています。
+この場合、 <tt class="docutils literal"><span class="pre">z</span></tt> を出力するタスクでは <tt class="docutils literal"><span class="pre">x</span></tt> と <tt class="docutils literal"><span class="pre">y</span></tt> のノードの全組合せが試されますが、そのうちパラメータ <tt class="docutils literal"><span class="pre">A</span></tt> の値が食い違っている組合せについてはタスクを実行しません。</p>
+<p>よって <tt class="docutils literal"><span class="pre">z</span></tt> は以下のパラメータに対応するノードの集合となります</p>
+<div class="highlight-python"><pre>{'A': 1, 'B': 1, 'C': -1},
+{'A': 2, 'B': 10, 'C': 0},
+{'A': 3, 'B': 1, 'C': 1}.</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">x</span></tt> も <tt class="docutils literal"><span class="pre">y</span></tt> も3通りのパラメータを持ちますが、 <tt class="docutils literal"><span class="pre">z</span></tt> は3×3=9通りではなく、組合せが正しい3通りのみを持っていることに注目してください。</p>
+</div>
+<div class="section" id="id7">
+<h3>メタノードが入力にある場合のパラメータ指定<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>mafでは <tt class="docutils literal"><span class="pre">parameters</span></tt> を指定することでタスクおよび出力ノードにパラメータを設定できることを見てきました。
+パラメータはさらに、入力ノードにメタノードが含まれる場合にも指定することができます。</p>
+<p>入力ノードにメタノードがあり、かつ <tt class="docutils literal"><span class="pre">parameters</span></tt> にパラメータを指定している場合、メタノードのパラメータと <tt class="docutils literal"><span class="pre">parameters</span></tt> に指定されたパラメータのすべての組合せが試されます。
+このとき、同じキーに対して異なる値が対応する組合せについてはスキップします。
+この挙動は、前項で解説した、複数メタノードを入力に指定した場合と同じです。</p>
+<p>次の例を考えます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]}),</span>
+    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/combination_2.png"><img alt="_images/combination_2.png" src="_images/combination_2.png" /></a>
+<p>この例ではメタノード <tt class="docutils literal"><span class="pre">x</span></tt> を入力とするタスク生成で同時に <tt class="docutils literal"><span class="pre">parameters</span></tt> が指定されています。
+このとき出力メタノード <tt class="docutils literal"><span class="pre">y</span></tt> は以下のパラメータを持つことになります:</p>
+<div class="highlight-python"><pre>{'A': 1, 'B': 1, 'C': -1},
+{'A': 1, 'B': 10, 'C': -1},
+{'A': 2, 'B': 1, 'C': 0},
+{'A': 2, 'B': 10, 'C': 0},
+{'A': 3, 'B': 1, 'C': 1},
+{'A': 3, 'B': 10, 'C': 1}.</pre>
+</div>
+</div>
+<div class="section" id="id8">
+<h3>メタノードの集約<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>実験結果を評価するためには、実験の出力を集約する操作が必要になります。
+たとえばグラフの描画や、複数回の試行に対して平均をとる操作などがこれにあたります。
+mafでは、メタノードが持つ複数のパラメータに対するノード集合に対して一つのノードを出力するようなタスクを <strong>集約タスク</strong> と呼びます。
+集約タスクを用いれば、このような集約操作を書くことができます。</p>
+<a class="reference internal image-reference" href="_images/aggregation_image.png"><img alt="_images/aggregation_image.png" src="_images/aggregation_image.png" /></a>
+<p>タスクを書く際に <tt class="docutils literal"><span class="pre">for_each</span></tt> または <tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を指定した場合に、そのタスクは集約タスクとなります。
+集約する際に、どのパラメータについて集約するかをこれらのキーで選びます。
+これらにはパラメータ名のリストを指定します。
+集約タスクでは必ず入力ノードにメタノードが含まれていなければなりません。</p>
+<p><tt class="docutils literal"><span class="pre">for_each</span></tt> を指定した場合、そこに列挙されたパラメータ名は、出力メタノードに保存されます。
+すなわち、そこに列挙されていないパラメータについて集約を行います。
+たとえば次の例をご覧ください。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo A:${A} B:${B} &gt; ${TGT}&#39;</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;output_for_each_A&#39;</span><span class="p">,</span>
+    <span class="n">for_each</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cat ${SRC} &gt; ${TGT}&#39;</span><span class="p">)</span>
+
+<span class="c"># 注意: ruleに指定した文字列内で ${SRC} と書いた場合、</span>
+<span class="c"># そこには入力ノードすべてのファイル名がスペース区切りで列挙される。</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/aggregation.png"><img alt="_images/aggregation.png" src="_images/aggregation.png" /></a>
+<p>この例の場合、 <tt class="docutils literal"><span class="pre">for_each=['A']</span></tt> の指定により、各 <tt class="docutils literal"><span class="pre">A</span></tt> の値ごとに <tt class="docutils literal"><span class="pre">output_for_each_A</span></tt> のノードを生成するタスクが実行されます。
+すなわち、 <tt class="docutils literal"><span class="pre">A</span></tt> の値が等しくて <tt class="docutils literal"><span class="pre">B</span></tt> の値が異なる3つの入力ノードに対して1つのタスクが作られます。
+<tt class="docutils literal"><span class="pre">for_each</span></tt> を用いた指定は、残すパラメータが少ない場合に便利です。
+すべてのパラメータについて集約を行い、一つのファイルだけを出力したい場合には、 <tt class="docutils literal"><span class="pre">for_each</span></tt> に空リストを指定します（ <tt class="docutils literal"><span class="pre">for_each</span></tt> 自体を省略してしまうと、集約タスクになりません）。</p>
+<p>一方、 <tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を指定した場合、逆にそこに列挙されたパラメータについて集約を行います。
+すなわち、それ以外のパラメータを <tt class="docutils literal"><span class="pre">for_each</span></tt> に指定した場合と同じ挙動をします。
+次の例は、上の例と等価です。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo A:${A} B:${B} &gt; ${TGT}&#39;</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;output_for_each_A&#39;</span><span class="p">,</span>
+    <span class="n">aggregate_by</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cat ${SRC} &gt; ${TGT}&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を用いた指定は、集約するパラメータが少ない場合に便利です。</p>
+<p><tt class="docutils literal"><span class="pre">for_each</span></tt> と <tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を同時に指定することはできません。</p>
+</div>
+</div>
+<div class="section" id="json">
+<h2>JSON形式の入出力ファイル<a class="headerlink" href="#json" title="Permalink to this headline">¶</a></h2>
+<p>mafのいくつかのユーティリティを活用するには、実験結果などをJSON形式で保存する必要があります。
+JSON形式のファイルは、そのまま全体がひとつのJSON値になっているようなテキストファイルです。
+mafのユーティリティで用いられるJSONファイルは、一つのオブジェクトまたはオブジェクトの配列です。
+各オブジェクトは入れ子構造を持たず、文字列のキーと文字列または数値の値のみを持つことを仮定しています。</p>
+<p>たとえば以下のJSONファイルには、mafユーティリティを使って集約やプロット処理を適用できます。</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="o">:</span> <span class="s2">&quot;abc&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+  <span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="o">:</span> <span class="s2">&quot;abc&quot;</span><span class="p">},</span>
+  <span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="o">:</span> <span class="s2">&quot;def&quot;</span><span class="p">},</span>
+  <span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="o">:</span> <span class="s2">&quot;ghi&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>JSON形式のファイルを用いることで、mafのユーティリティを使って以下の様なことができます。</p>
+<ul class="simple">
+<li>特定のキーについて最大値を取ったり、キーごとに平均を取るなどといった集約処理</li>
+<li>グラフ描画用に、特定のキーに関する値の列を取り出す処理</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h2>ルールの書き方<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>タスクの具体的な処理内容は <strong>ルール</strong> に書かれます。
+タスクにおけるルールの指定は <tt class="docutils literal"><span class="pre">rule</span></tt> 引数で行います。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;A&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;B&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>mafにおけるルールの書き方は、基本的にはwafのものと同様ですが、ここではwafに詳しくないユーザーも対象として、またmaf特有の書き方にも触れるために、包括的に解説します。</p>
+<p>mafにおいてルールには3つの種類があります。</p>
+<ul class="simple">
+<li>コマンドルール</li>
+<li>関数ルール</li>
+<li><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール</li>
+</ul>
+<div class="section" id="id10">
+<h3>コマンドルール<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>コマンドルールは処理をコマンドとして文字列で書いたものです。
+このドキュメントでも何度も登場しています。
+例えば入力ファイルを出力ファイルにコピーするタスクは以下のように書くことができます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;A&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;B&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cp ${SRC} ${TGT}&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>コマンドルール内では <tt class="docutils literal"><span class="pre">${式}</span></tt> の形でpython式を展開することができます。
+この式の中では以下のような値を使うことができます。</p>
+<ul>
+<li><p class="first">入力ノード配列 <tt class="docutils literal"><span class="pre">SRC</span></tt> および出力ノード配列 <tt class="docutils literal"><span class="pre">TGT</span></tt> 。
+<tt class="docutils literal"><span class="pre">${SRC}</span></tt> のようにそのまま変数展開した場合、入力ノードのパスを空白区切りでつなげた文字列に展開されます。
+N番目の入力ノードの絶対パスを展開したい場合いは <tt class="docutils literal"><span class="pre">${SRC[N].abspath()}</span></tt> のようにします。</p>
+</li>
+<li><p class="first">タスクのパラメータ。
+タスクのパラメータは、入力ノードがメタノードの場合にはそのパラメータを含み、タスク自体にパラメータが指定されている場合はそれも含みます。
+たとえば以下のように直接パラメータを参照することができます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># メタノードxはパラメータaを持つ</span>
+<span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="s">&#39;...&#39;</span><span class="p">)</span>
+
+<span class="c"># xのパラメータaと、このタスクのパラメータbをコマンドルール内で両方とも参照できる。</span>
+<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="p">{</span><span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;... ${a} ${b} ...&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h3>関数ルール<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>関数ルールはpython関数として書かれたルールです。
+一つのコマンドで書けないような複雑な処理を行いたい場合に使います。</p>
+<p>関数として書かれたルールは、 <strong>タスクオブジェクト</strong> を引数に取ります。
+タスクオブジェクトはwafのものと同様ですが、 <tt class="docutils literal"><span class="pre">parameter</span></tt> メンバーが追加されています。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>タスクオブジェクトのメンバーでよく使うものを以下に列挙します。</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">task.inputs</span></tt></dt>
+<dd>入力ノードのリスト</dd>
+<dt><tt class="docutils literal"><span class="pre">task.outputs</span></tt></dt>
+<dd>出力ノードのリスト</dd>
+<dt><tt class="docutils literal"><span class="pre">task.parameter</span></tt></dt>
+<dd>タスクのパラメータ辞書</dd>
+</dl>
+</div>
+<div class="section" id="maflib-core-rule">
+<h3><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール<a class="headerlink" href="#maflib-core-rule" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> クラスのインスタンスをルールに指定することもできます。
+基本的には関数ルールですが、タスクを再実行するための変化検出の対象とするオブジェクトを追加することができます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="o">...</span><span class="p">,</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Rule</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">my_fun_rule</span><span class="p">,</span> <span class="n">dependson</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>コンストラクタの <tt class="docutils literal"><span class="pre">dependson</span></tt> 引数に追加の依存関係を指定します。
+ここには関数を指定することもできます。
+関数を指定した場合、その関数の定義を書き換えたときにこのタスクを再実行するようになります（つまりその関数の定義をこのタスクの入力の一部と見なすようになります）。</p>
+</div>
+<div class="section" id="id12">
+<h3>集約ルールの書き方<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<p>集約ルールを書く場合には <a class="reference internal" href="maflib.html#maflib.util.aggregator" title="maflib.util.aggregator"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.aggregator()</span></tt></a> デコレータが便利です。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.aggregator</span>
+<span class="k">def</span> <span class="nf">my_aggregator</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>このデコレータを使用するには前述のJSON形式の入力形式を用いる必要があります。
+デコレータに渡す関数には以下の引数が渡されます。</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">values</span></tt></dt>
+<dd>入力ノードに書かれたJSONオブジェクトがすべて入ったリストです。
+一部または全部の入力ノードがJSONオブジェクトのリストの場合、それらを連結したものが入ります。
+このリストの中身が集約の対象となります。</dd>
+<dt><tt class="docutils literal"><span class="pre">outpath</span></tt></dt>
+<dd>出力ノードのパス。</dd>
+<dt><tt class="docutils literal"><span class="pre">parameter</span></tt></dt>
+<dd>このタスクのパラメータ。</dd>
+</dl>
+<p>基本的にはJSONオブジェクトを出力することになります。
+関数の戻り値として文字列を返せば、それが出力ノードに書き込まれます。
+自分で <tt class="docutils literal"><span class="pre">outpath</span></tt> にファイルを作って書き込むことができます。
+その場合 <tt class="docutils literal"><span class="pre">None</span></tt> を返すことでデコレータが出力ノードに書き込むのを抑制します。</p>
+<p>例として最大値を取る <tt class="docutils literal"><span class="pre">maflib.rules.max</span></tt> の定義を以下に載せます。
+この関数は引数 <tt class="docutils literal"><span class="pre">key</span></tt> で指定したキーについて最大値を取るルールを返します。
+<tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> による依存性追加の例にもなっています。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="c"># ルール本体</span>
+    <span class="nd">@maflib.util.aggregator</span>
+    <span class="k">def</span> <span class="nf">body</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
+        <span class="n">max_value</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">argmax</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">max_value</span> <span class="o">&gt;=</span> <span class="n">value</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="n">max_value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">argmax</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">argmax</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">maflib</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Rule</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">dependson</span><span class="o">=</span><span class="p">[</span><span class="nb">max</span><span class="p">,</span> <span class="n">key</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id13">
+<h3>プロットを行う集約ルールの書き方<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<p>集約ルールの中でも結果を可視化するルールを書くのに <tt class="docutils literal"><span class="pre">maflib.plot.plot_by</span></tt> デコレータを使うことができます。
+このデコレータを使うと、上記のJSON形式のデータをmatplotlibでプロットするルールを簡単に書くことができます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
+<span class="k">def</span> <span class="nf">my_plot</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>デコレータに渡す関数には以下の引数が渡されます。</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">figure</span></tt></dt>
+<dd>matplotlibのfigureオブジェクト</dd>
+<dt><tt class="docutils literal"><span class="pre">data</span></tt></dt>
+<dd><a class="reference internal" href="maflib.html#maflib.plot.PlotData" title="maflib.plot.PlotData"><tt class="xref py py-class docutils literal"><span class="pre">maflib.plot.PlotData</span></tt></a> オブジェクト。これを用いてmatplotlibでプロットするためのリストなどを作ることができる。</dd>
+<dt><tt class="docutils literal"><span class="pre">parameter</span></tt></dt>
+<dd>タスクのパラメータ</dd>
+</dl>
+<p><a class="reference internal" href="maflib.html#maflib.plot.PlotData" title="maflib.plot.PlotData"><tt class="xref py py-class docutils literal"><span class="pre">maflib.plot.PlotData</span></tt></a> オブジェクトから2次元プロットを行うには <tt class="docutils literal"><span class="pre">get_data_2d</span></tt> 関数を使います。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
+<span class="k">def</span> <span class="nf">my_plot</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
+    <span class="c"># キー &#39;a&#39;, &#39;b&#39; に対応するリストを取り出す</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get_data_2d</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)</span>
+
+    <span class="c"># これをプロット</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="n">axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">get_data_2d</span></tt> に <tt class="docutils literal"><span class="pre">key</span></tt> 引数を指定すると、指定したキーごとに異なるリストを作ることができます。
+これは一つのグラフに複数のプロットを書いて比較する場合に有用です。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
+<span class="k">def</span> <span class="nf">my_plot</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
+    <span class="c"># キー &#39;k&#39; ごとに &#39;a&#39;, &#39;b&#39; の値のリストを取り出す。</span>
+    <span class="c"># 戻り値は &#39;k&#39; の値から (x, y) への辞書になっている。</span>
+    <span class="n">key_to_xy</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get_data_2d</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">)</span>
+
+    <span class="c"># これを &#39;k&#39; の値ごとにプロット</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">key_to_xy</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">key_to_xy</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>プロットルールの出力ノードには拡張子を付けるのを忘れないで下さい。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;a_b_and_k&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;out.png&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_plot</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id14">
+<h2>その他の例<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<p>mafの使用例は <a class="reference external" href="https://github.com/pfi/maf/tree/master/samples">https://github.com/pfi/maf/tree/master/samples</a> にまとまっています。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="maflib.html" title="maflib Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="maf入門"
+             >previous</a> |</li>
+        <li><a href="index.html">maf 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Preferred Infrastructure, Inc..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

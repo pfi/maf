@@ -1,0 +1,1124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>maflib Package &mdash; maf 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="maf 0.1 documentation" href="index.html" />
+    <link rel="prev" title="mafの使い方" href="usage.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="mafの使い方"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">maf 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">maflib Package</a><ul>
+<li><a class="reference internal" href="#module-maflib.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-maflib.plot"><tt class="docutils literal"><span class="pre">plot</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-maflib.rules"><tt class="docutils literal"><span class="pre">rules</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-maflib.test"><tt class="docutils literal"><span class="pre">test</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-maflib.util"><tt class="docutils literal"><span class="pre">util</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="usage.html"
+                        title="previous chapter">mafの使い方</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/maflib.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="maflib-package">
+<h1>maflib Package<a class="headerlink" href="#maflib-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-maflib.core">
+<span id="core-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">core</span></tt> Module<a class="headerlink" href="#module-maflib.core" title="Permalink to this headline">¶</a></h2>
+<p>A core of maf - an environment for computational experimentations on waf.</p>
+<p>This module contains the core functionality of maf that handles parameterized
+tasks and metanodes.</p>
+<dl class="class">
+<dt id="maflib.core.CallObject">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">CallObject</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.core.CallObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Object representing one call of <tt class="docutils literal"><span class="pre">ExperimentContext.__call__()</span></tt>.</p>
+<dl class="attribute">
+<dt id="maflib.core.CallObject.parameters">
+<tt class="descname">parameters</tt><em class="property"> = None</em><a class="headerlink" href="#maflib.core.CallObject.parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of parameters indicated by the taskgen call.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="maflib.core.CyclicDependencyException">
+<em class="property">exception </em><tt class="descclassname">maflib.core.</tt><tt class="descname">CyclicDependencyException</tt><a class="headerlink" href="#maflib.core.CyclicDependencyException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>Exception raised when experiment graph has a cycle.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.ExperimentContext">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ExperimentContext</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.core.ExperimentContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">waflib.Build.BuildContext</span></tt></p>
+<p>Context class of waf experiment (a.k.a. maf).</p>
+<dl class="attribute">
+<dt id="maflib.core.ExperimentContext.cmd">
+<tt class="descname">cmd</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.ExperimentContext.cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ExperimentContext.fun">
+<tt class="descname">fun</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.ExperimentContext.fun" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ExperimentContext.variant">
+<tt class="descname">variant</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.ExperimentContext.variant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.ExperimentGraph">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ExperimentGraph</tt><a class="headerlink" href="#maflib.core.ExperimentGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Bipartite graph consisting of meta node and call object node.</p>
+<dl class="method">
+<dt id="maflib.core.ExperimentGraph.add_call_object">
+<tt class="descname">add_call_object</tt><big>(</big><em>call_object</em><big>)</big><a class="headerlink" href="#maflib.core.ExperimentGraph.add_call_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds call object node, related meta nodes and edges.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>call_object</strong> (<a class="reference internal" href="#maflib.core.CallObject" title="maflib.core.CallObject"><tt class="xref py py-class docutils literal"><span class="pre">CallObject</span></tt></a>) &#8211; Call object be added.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.ExperimentGraph.get_sorted_call_objects">
+<tt class="descname">get_sorted_call_objects</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ExperimentGraph.get_sorted_call_objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs topological sort on the experiment graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of call objects that topologically sorted.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list of <a class="reference internal" href="#maflib.core.CallObject" title="maflib.core.CallObject"><tt class="xref py py-class docutils literal"><span class="pre">CallObject</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.ExperimentNode">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ExperimentNode</tt><big>(</big><em>waflib_node=None</em><big>)</big><a class="headerlink" href="#maflib.core.ExperimentNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A wrapper of Node object used in ExperimentTasks for replacement of
+input/output Nodes.</p>
+<p>The main motivation of this class is to make it easy to write unit-tests
+for user-defined rules. In maf, a user can define his own rule by writing
+a function that receives the task object as an argument, then reads
+(writes) an input (output) Node object by accessing like
+<tt class="docutils literal"><span class="pre">task.inputs[0].read</span></tt>. A user has to write a mock-object which mimics
+the behavior of Task object to test these functions, because the
+received <tt class="docutils literal"><span class="pre">task</span></tt> is generated by maf internally. This is tedious.
+ExperimentNode relieves this problem.</p>
+<p>This Node wrapper behaves in two different ways: At an ordinary Task
+(the usual case), this is a mere wrapper of a Node object given in the
+constructor. The commonly used methods <tt class="docutils literal"><span class="pre">read</span></tt>, <tt class="docutils literal"><span class="pre">write</span></tt>, and <tt class="docutils literal"><span class="pre">abspath</span></tt>
+behave in the same ways as those of the ordinary Node object. At the test
+time, a user can get a <em>dummy</em> Node object using this class with no argument
+to the constructor. In that case, this class creates a temporary file and
+preserves internally. <tt class="docutils literal"><span class="pre">read</span></tt> and <tt class="docutils literal"><span class="pre">write</span></tt> methods are called to this
+temporary file, which saves some labors to define dummy Node objects for
+each rule. This class abstracts away the difference of these two cases.</p>
+<p>Example usages of this class at test cases are found at, for example,
+tests/test_rule.py. See also <tt class="xref py py-func docutils literal"><span class="pre">test.TestTask()</span></tt>.</p>
+<dl class="method">
+<dt id="maflib.core.ExperimentNode.abspath">
+<tt class="descname">abspath</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ExperimentNode.abspath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.ExperimentNode.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ExperimentNode.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.ExperimentNode.write">
+<tt class="descname">write</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#maflib.core.ExperimentNode.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.ExperimentTask">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ExperimentTask</tt><big>(</big><em>env</em>, <em>generator</em><big>)</big><a class="headerlink" href="#maflib.core.ExperimentTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">waflib.Task.Task</span></tt></p>
+<p>A task class specific for ExperimentContext.</p>
+<p>The purpose of this class is to bring the parameter as an attribute.
+The base class (<tt class="xref py py-class docutils literal"><span class="pre">waflib.Task.Task</span></tt>) doesn&#8217;t bring attributes
+except <tt class="docutils literal"><span class="pre">env</span></tt>, but the env must be a string-valued dictionary, which is
+problematic when we want to use the parameter in an object as it is. For
+example, a float value once converted to string lose some information.</p>
+<p>Another motivation for this task is to control the hash value of a task:
+It is calculated based on the env, in which key is registered in <tt class="docutils literal"><span class="pre">vars</span></tt>
+or <tt class="docutils literal"><span class="pre">dep_vars</span></tt>. In <tt class="docutils literal"><span class="pre">__init__</span></tt>, this task registers necessary keys to
+dep_vars.</p>
+<dl class="attribute">
+<dt id="maflib.core.ExperimentTask.hcode">
+<tt class="descname">hcode</tt><em class="property"> = '\tdef run(self):\n\t\tbld=self.generator.bld\n\t\tif bld.cache_global and not bld.nocache:\n\t\t\tif self.can_retrieve_cache():\n\t\t\t\treturn 0\n\t\treturn m1(self)\n'</em><a class="headerlink" href="#maflib.core.ExperimentTask.hcode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ExperimentTask.parameter">
+<tt class="descname">parameter</tt><em class="property"> = None</em><a class="headerlink" href="#maflib.core.ExperimentTask.parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parameter whose values are not stringized.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.ExperimentTask.post_run">
+<tt class="descname">post_run</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ExperimentTask.post_run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.ExperimentTask.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ExperimentTask.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ExperimentTask.shell">
+<tt class="descname">shell</tt><em class="property"> = True</em><a class="headerlink" href="#maflib.core.ExperimentTask.shell" title="Permalink to this definition">¶</a></dt>
+<dd><p>support pipe style rule str in default</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="maflib.core.InvalidMafArgumentException">
+<em class="property">exception </em><tt class="descclassname">maflib.core.</tt><tt class="descname">InvalidMafArgumentException</tt><a class="headerlink" href="#maflib.core.InvalidMafArgumentException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>Exception raised when arguments of ExperimentContext.__call__ is wrong.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.Parameter">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">Parameter</tt><a class="headerlink" href="#maflib.core.Parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>Parameter of maf task.</p>
+<p>This is a dict with hash(). Be careful to use it with set(); parameter has
+hash(), but is mutable.</p>
+<dl class="method">
+<dt id="maflib.core.Parameter.conflict_with">
+<tt class="descname">conflict_with</tt><big>(</big><em>parameter</em><big>)</big><a class="headerlink" href="#maflib.core.Parameter.conflict_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether the parameter conflicts with given other parameter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if self conflicts with parameter, i.e. contains different
+values corresponding to same key.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.Parameter.to_str_valued_dict">
+<tt class="descname">to_str_valued_dict</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.Parameter.to_str_valued_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets dictionary with stringized values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A dictionary with same key and stringized values.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dict of str key and str value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.ParameterIdGenerator">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ParameterIdGenerator</tt><big>(</big><em>path</em>, <em>text_path</em><big>)</big><a class="headerlink" href="#maflib.core.ParameterIdGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Consistent generator of physical nodes identifier corresponding to
+their parameters.</p>
+<p>Meta node has a path and its own parameters, each of which corresponds to
+one physical waf node named as &#8216;path/N&#8217;, where N is a unique name of the
+parameter. The correspondence between parameter and its name must be
+consistent over multiple execution of waf, so we serializes the table to
+hidden file.</p>
+<p>This class also dumps the correspondence to a human-readable text file.
+The file is tab-separated line for each correspondence: the first element
+is an identifier and the second is a JSON representation of the
+correspondent parameter.</p>
+<p>NOTE: On exception raised during task generation, save() must be called
+to avoid inconsistency on node names that had been generated before the
+exception was raised.</p>
+<dl class="method">
+<dt id="maflib.core.ParameterIdGenerator.get_id">
+<tt class="descname">get_id</tt><big>(</big><em>parameter</em><big>)</big><a class="headerlink" href="#maflib.core.ParameterIdGenerator.get_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the id of given parameter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameter</strong> (<a class="reference internal" href="#maflib.core.Parameter" title="maflib.core.Parameter"><tt class="xref py py-class docutils literal"><span class="pre">Parameter</span></tt></a>) &#8211; Parameter object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Identifier of given parameter. The id may be generated in this
+method if necessary.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ParameterIdGenerator.path">
+<tt class="descname">path</tt><em class="property"> = None</em><a class="headerlink" href="#maflib.core.ParameterIdGenerator.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to file that the table is serialized to.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.ParameterIdGenerator.save">
+<tt class="descname">save</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ParameterIdGenerator.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serializes the table to the file at self.path.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ParameterIdGenerator.text_path">
+<tt class="descname">text_path</tt><em class="property"> = None</em><a class="headerlink" href="#maflib.core.ParameterIdGenerator.text_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to file that the table is dumped to as a human-readable text.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.Rule">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">Rule</tt><big>(</big><em>fun</em>, <em>dependson=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#maflib.core.Rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A wrapper object of a rule function with associate values,
+which change is tracked on the experiment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fun</strong> &#8211; target function of the task.</li>
+<li><strong>dependson</strong> &#8211; list of variable or function, which one wants to track.
+All these variables are later converted to string values, so if
+one wants to pass the variable of user-defined class, that class
+must provide meaningful <cite>__str__</cite> method.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="maflib.core.Rule.add_dependson">
+<tt class="descname">add_dependson</tt><big>(</big><em>dependson</em><big>)</big><a class="headerlink" href="#maflib.core.Rule.add_dependson" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.Rule.stred_dependson">
+<tt class="descname">stred_dependson</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.Rule.stred_dependson" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.core.configure">
+<tt class="descclassname">maflib.core.</tt><tt class="descname">configure</tt><big>(</big><em>conf</em><big>)</big><a class="headerlink" href="#maflib.core.configure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="maflib.core.options">
+<tt class="descclassname">maflib.core.</tt><tt class="descname">options</tt><big>(</big><em>opt</em><big>)</big><a class="headerlink" href="#maflib.core.options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="maflib.core.register_experiment_task_with_rule">
+<tt class="descclassname">maflib.core.</tt><tt class="descname">register_experiment_task_with_rule</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#maflib.core.register_experiment_task_with_rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>A task_gen method called before process_rule.</p>
+<p>WARNING: This method currently strongly connected to the internal of
+<tt class="docutils literal"><span class="pre">process_rule</span></tt> method, which is defined in <tt class="xref py py-class docutils literal"><span class="pre">waflib.TaskGen</span></tt>, so
+may require a modification in future version of waf.</p>
+<p>The role of this method is to create <tt class="docutils literal"><span class="pre">self.bld.cache_rule_attr</span></tt>, which
+is later used in <tt class="docutils literal"><span class="pre">process_rule</span></tt>. It is a dictionary of <tt class="docutils literal"><span class="pre">(task_name,</span> <span class="pre">the</span>
+<span class="pre">rule</span> <span class="pre">of</span> <span class="pre">task)</span></tt> pair to a task class. This task class is a derived class of
+<a class="reference internal" href="#maflib.core.ExperimentTask" title="maflib.core.ExperimentTask"><tt class="xref py py-class docutils literal"><span class="pre">ExperimentTask</span></tt></a> defined above, which override the run method of
+it with the function given by rule attribute written in wscript. This
+process is necessary because the <tt class="docutils literal"><span class="pre">process_rule</span></tt> cannot create a user-
+defined <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt> with a user-defined rule (as in our case).</p>
+<p>In the current implementation of <tt class="docutils literal"><span class="pre">process_rule</span></tt>, the <tt class="docutils literal"><span class="pre">cache_rule_attr</span></tt>
+is used as follows;</p>
+<div class="highlight-py"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bld</span><span class="o">.</span><span class="n">cache_rule_attr</span>
+<span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bld</span><span class="o">.</span><span class="n">cache_rule_attr</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="n">cls</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;cache_rule&#39;</span><span class="p">,</span> <span class="s">&#39;True&#39;</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cls</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">)]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">cls</span><span class="p">:</span>
+    <span class="n">cls</span> <span class="o">=</span> <span class="n">Task</span><span class="o">.</span><span class="n">task_factory</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">,</span>
+    <span class="o">....</span>
+</pre></div>
+</div>
+<p>This snippet search for a task from cache_rule_attr dictionary first,
+so we set that dictionary beforehand.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-maflib.plot">
+<span id="plot-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">plot</span></tt> Module<a class="headerlink" href="#module-maflib.plot" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="maflib.plot.PlotData">
+<em class="property">class </em><tt class="descclassname">maflib.plot.</tt><tt class="descname">PlotData</tt><big>(</big><em>inputs</em><big>)</big><a class="headerlink" href="#maflib.plot.PlotData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result of experimentation collected through a meta node to plot.</p>
+<p>Result of experiments is represented by a meta node consisted by a set of
+physical nodes each of which contains a dictionary or an array of
+dictionaries. This class is used to collect all dictionaries through the
+meta node and to extract point sequences to plot.</p>
+<dl class="method">
+<dt id="maflib.plot.PlotData.get_data_1d">
+<tt class="descname">get_data_1d</tt><big>(</big><em>x</em>, <em>key=None</em>, <em>sort=True</em><big>)</big><a class="headerlink" href="#maflib.plot.PlotData.get_data_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts a sequence of one-dimensional data points.</p>
+<p>This function extracts x coordinate of each result value and creates a
+list of them. If sort == True, then the list is sorted. User can extract
+different sequences for varying values corresponding to given key(s).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key string corresponding to x coordinate.</li>
+<li><strong>key</strong> (None, <tt class="docutils literal"><span class="pre">str</span></tt> or tuple of strings) &#8211; Key strings that define distinct sequences of data points.
+It can be either of None, a string value or a tuple of string
+values.</li>
+<li><strong>sort</strong> (<tt class="docutils literal"><span class="pre">bool</span></tt>) &#8211; Flag for sorting the sequence(s).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">If <tt class="docutils literal"><span class="pre">key</span></tt> is None, then it returns a list of x values.
+Otherwise, it returns a dictionary from key(s) to a sequence of x
+values. Each sequence consists of values matched to the key(s).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">dict</span></tt> or <tt class="docutils literal"><span class="pre">list</span></tt></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.plot.PlotData.get_data_2d">
+<tt class="descname">get_data_2d</tt><big>(</big><em>x</em>, <em>y</em>, <em>key=None</em>, <em>sort=True</em><big>)</big><a class="headerlink" href="#maflib.plot.PlotData.get_data_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts a sequence of two-dimensional data points.</p>
+<p>See get_data_1d for detail. Difference from get_data_2d is that the
+values are represented by pairs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key string corresponding to x (first) coordinate.</li>
+<li><strong>y</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key string corresponding to y (second) coordinate.</li>
+<li><strong>key</strong> (None, <tt class="docutils literal"><span class="pre">str</span></tt> or tuple of strings) &#8211; Key strings that define distinct sequences of data points.
+It can be either of None, a string value or a tuple of string
+values.</li>
+<li><strong>sort</strong> (<tt class="docutils literal"><span class="pre">bool</span></tt>) &#8211; Flag for sorting the sequence(s).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">If <tt class="docutils literal"><span class="pre">key</span></tt> is None, then it returns a pair of x value sequence
+and y value sequence. Otherwise, it returns a dictionary from a key
+to a pair of x value sequence and y value sequence. Each sequence
+consists of values matched to the key(s).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">dict</span></tt> or <tt class="docutils literal"><span class="pre">tuple</span></tt> of two <tt class="docutils literal"><span class="pre">list</span></tt> s</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.plot.PlotData.get_data_3d">
+<tt class="descname">get_data_3d</tt><big>(</big><em>x</em>, <em>y</em>, <em>z</em>, <em>key=None</em>, <em>sort=True</em><big>)</big><a class="headerlink" href="#maflib.plot.PlotData.get_data_3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts a sequence of three-dimensional data points.</p>
+<p>See get_data_1d for detail. Difference from get_data_3d is that the
+values are represented by triples.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key string corresponding to x (first) coordinate.</li>
+<li><strong>y</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key string corresponding to y (second) coordinate.</li>
+<li><strong>z</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key string corresponding to z (third) coordinate.</li>
+<li><strong>key</strong> (None, <tt class="docutils literal"><span class="pre">str</span></tt> or tuple of strings) &#8211; Key strings that define distinct sequences of data points.
+It can be either of None, a string value or a tuple of string
+values.</li>
+<li><strong>sort</strong> (<tt class="docutils literal"><span class="pre">bool</span></tt>) &#8211; Flag for sorting the sequence(s).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">If <tt class="docutils literal"><span class="pre">key</span></tt> is None, then it returns a triple of x value
+sequence, y value sequence and z value sequence. Otherwise, it
+returns a dictionary from a key to a triple of x value sequence, y
+value sequence and z value sequence. Each sequence consists of
+values matched to the key(s).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">dict</span></tt> or <tt class="docutils literal"><span class="pre">tuple</span></tt> of three <tt class="docutils literal"><span class="pre">list</span></tt> s.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.plot.plot_by">
+<tt class="descclassname">maflib.plot.</tt><tt class="descname">plot_by</tt><big>(</big><em>callback_body</em><big>)</big><a class="headerlink" href="#maflib.plot.plot_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an aggregator to plot data using matplotlib and PlotData.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback_body</strong> (<tt class="docutils literal"><span class="pre">function</span></tt> or callable object, whose signature is
+(<tt class="xref py py-class docutils literal"><span class="pre">matplotlib.figure.Figure</span></tt>, <a class="reference internal" href="#maflib.plot.PlotData" title="maflib.plot.PlotData"><tt class="xref py py-class docutils literal"><span class="pre">PlotData</span></tt></a>).) &#8211; Callable object or function that plots data. It takes
+three parameters: <tt class="xref py py-class docutils literal"><span class="pre">matplotlib.figure.Figure</span></tt> object,
+<a class="reference internal" href="#maflib.plot.PlotData" title="maflib.plot.PlotData"><tt class="xref py py-class docutils literal"><span class="pre">maflib.plot.PlotData</span></tt></a> object and a parameter of class
+<a class="reference internal" href="#maflib.core.Parameter" title="maflib.core.Parameter"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.Parameter</span></tt></a>. User must define a callback function
+that plots given data to given figure.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.plot.plot_line">
+<tt class="descclassname">maflib.plot.</tt><tt class="descname">plot_line</tt><big>(</big><em>x</em>, <em>y</em>, <em>legend=None</em><big>)</big><a class="headerlink" href="#maflib.plot.plot_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an aggregator that draw a line plot.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-maflib.rules">
+<span id="rules-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rules</span></tt> Module<a class="headerlink" href="#module-maflib.rules" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="maflib.rules.average">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">average</tt><big>(</big><em>task</em><big>)</big><a class="headerlink" href="#maflib.rules.average" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregator that calculates the average value for each key.</p>
+<p>The result contains all keys that some inputs contain. Each value is an
+average value of the corresponding key through all the inputs. If there
+is a value that cannot be passed to <tt class="docutils literal"><span class="pre">float()</span></tt>, it omits the corresponding
+key from the result.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.calculate_stats_multiclass_classification">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">calculate_stats_multiclass_classification</tt><big>(</big><em>task</em><big>)</big><a class="headerlink" href="#maflib.rules.calculate_stats_multiclass_classification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates various performance measures for multi-class classification.</p>
+<p>The source of this task is assumed to be a json array each item of which
+is a dictionary of the form <tt class="docutils literal"><span class="pre">{&quot;p&quot;:</span> <span class="pre">3,</span> <span class="pre">&quot;c&quot;:</span> <span class="pre">5}</span></tt> where <tt class="docutils literal"><span class="pre">&quot;p&quot;</span></tt> indicates the
+predict label, while &#8220;c&#8221; indicates the correct label. If you use libsvm,
+<tt class="docutils literal"><span class="pre">create_label_result_libsvm</span></tt> converts the results to this format.</p>
+<p>The output measures is summarized as follows, most of which are cited from (*):</p>
+<p>Accuracy, AverageAccuray, ErrorRate</p>
+<dl class="docutils">
+<dt>Other measures:</dt>
+<dd>Precision, Recall, F1, Specifity and AUC</dd>
+</dl>
+<p>are calculated for each label.</p>
+<p>In terms of Precision, Recall and F1, averaged results are also calculated.
+There are two different types of averaging: micro and macro.
+Micro average is calculated using global counts of true positive, false
+positive, etc, while macro average is calculated naively by dividing the
+number of labels.</p>
+<p>The output of this task is one json file, like</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;accuracy&quot;</span><span class="o">:</span> <span class="mf">0.7</span><span class="p">,</span>
+  <span class="s2">&quot;average_accuracy&quot;</span><span class="o">:</span> <span class="mf">0.8</span><span class="p">,</span>
+  <span class="s2">&quot;error_rate&quot;</span><span class="o">:</span> <span class="mf">0.12</span><span class="p">,</span>
+  <span class="s2">&quot;1-precision&quot;</span><span class="o">:</span> <span class="mf">0.5</span><span class="p">,</span>
+  <span class="s2">&quot;1-recall&quot;</span><span class="o">:</span> <span class="mf">0.8</span><span class="p">,</span>
+  <span class="s2">&quot;1-F1&quot;</span><span class="o">:</span> <span class="mf">0.6</span><span class="p">,</span>
+  <span class="s2">&quot;1-specifity&quot;</span><span class="o">:</span> <span class="mf">0.6</span><span class="p">,</span>
+  <span class="s2">&quot;1-AUC&quot;</span><span class="o">:</span> <span class="mf">0.7</span><span class="p">,</span>
+  <span class="s2">&quot;precision-micro&quot;</span><span class="o">:</span><span class="mf">0.7</span>
+  <span class="s2">&quot;precision-macro&quot;</span><span class="o">:</span><span class="mf">0.6</span>
+  <span class="p">...</span>
+  <span class="s2">&quot;2-precision&quot;</span><span class="o">:</span> <span class="mf">0.6</span><span class="p">,</span>
+  <span class="s2">&quot;2-recall&quot;</span><span class="o">:</span> <span class="mf">0.7</span><span class="p">,</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where accuracy, average_accuracy and error_rate corresponds to Accuracy,
+AverageAccuracy and ErrorRate respectively. Average is the macro average of
+all data, which is consistent with the output of e.g., svm-predict.
+Other results (e.g. 1-precision) are calculated for each label and represented
+as a pair of &#8220;label&#8221; and &#8220;measure&#8221; combined with a hyphen. For example,
+1-precision is the precision for the label 1, while 3-F1 is F1 for the label
+3.</p>
+<p>(*) Marina Sokolova, Guy Lapalme
+A systematic analysis of performance measures for classification tasks
+Information Processing and Management 45 (2009) 427-437</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.convert_libsvm_accuracy">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">convert_libsvm_accuracy</tt><big>(</big><em>task</em><big>)</big><a class="headerlink" href="#maflib.rules.convert_libsvm_accuracy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rule that converts message output by svm-predict into json file.</p>
+<p>This rule can be used to parse the output messsage of svm-predict command
+of LIBSVM, which contains an accuracy of prediction. The output is
+formatted like <tt class="docutils literal"><span class="pre">{&quot;accuracy&quot;:</span> <span class="pre">&lt;value&gt;}</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>task</strong> (<tt class="xref py py-class docutils literal"><span class="pre">waflib.Task.Task</span></tt>) &#8211; waf task.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.create_label_result_libsvm">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">create_label_result_libsvm</tt><big>(</big><em>task</em><big>)</big><a class="headerlink" href="#maflib.rules.create_label_result_libsvm" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO(noji) write document.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.decompress">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">decompress</tt><big>(</big><em>filetype='auto'</em><big>)</big><a class="headerlink" href="#maflib.rules.decompress" title="Permalink to this definition">¶</a></dt>
+<dd><p>A rule to decompress an input file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filetype</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; <p>Type of compressed file. Following values are available.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">'auto'</span></tt>: Use automatically detected type from the extension of the
+input file name.</li>
+<li><tt class="docutils literal"><span class="pre">'bz2'</span></tt>: bzip2 file.</li>
+<li><tt class="docutils literal"><span class="pre">'gz'</span></tt>: gzip file.</li>
+<li><tt class="docutils literal"><span class="pre">'zip'</span></tt>: zip file.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A rule.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#maflib.core.Rule" title="maflib.core.Rule"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.Rule</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.download">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">download</tt><big>(</big><em>url</em>, <em>decompress_as=''</em><big>)</big><a class="headerlink" href="#maflib.rules.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a rule to download a file from given URL.</p>
+<p>It stores the file to the target node. If <tt class="docutils literal"><span class="pre">decompress_as</span></tt> is given, then
+it automatically decompresses the downloaded file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>url</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; URL string of the file to be downloaded.</li>
+<li><strong>decompress_as</strong> &#8211; Decompression method of downloaded file. If an empty
+string is given, then this function does not do decompression.
+<tt class="docutils literal"><span class="pre">'bz2'</span></tt>, <tt class="docutils literal"><span class="pre">'gz'</span></tt> or <tt class="docutils literal"><span class="pre">'zip'</span></tt> is available.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A rule.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#maflib.core.Rule" title="maflib.core.Rule"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.Rule</span></tt></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.max">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">max</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#maflib.rules.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an aggregator to select the max value of given key.</p>
+<p>The created aggregator chooses the result with the maximum value of
+<tt class="docutils literal"><span class="pre">key</span></tt>, and writes the JSON object to the output node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key to be used for selection of maximum value.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An aggregator.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#maflib.core.Rule" title="maflib.core.Rule"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.Rule</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.min">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">min</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#maflib.rules.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an aggregator to select the minimum value of given key.</p>
+<p>The created aggregator chooses the result with the minimum value of
+<tt class="docutils literal"><span class="pre">key</span></tt>, and writes the JSON object to the output node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> (<tt class="docutils literal"><span class="pre">str</span></tt>) &#8211; A key to be used for selection of minimum value.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An aggregator.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#maflib.core.Rule" title="maflib.core.Rule"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.Rule</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.segment_by_line">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">segment_by_line</tt><big>(</big><em>num_folds</em>, <em>parameter_name='fold'</em><big>)</big><a class="headerlink" href="#maflib.rules.segment_by_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a rule that splits a line-by-line dataset to the k-th fold train
+and validation subsets for n-fold cross validation.</p>
+<p>Assume the input dataset is a text file where each sample is written in a
+distinct line. This task splits this dataset to given number of folds,
+extracts the n-th fold as a validation set (where n is specified by the
+parameter of given key), the others as a training set, and then writes
+these subsets to output nodes. This is a usual workflow of cross validation
+in machine learning.</p>
+<p>Note that this task does not shuffle the input dataset. If the order causes
+imbalancy of each fold, then user should add a task for shuffling the
+dataset before this task.</p>
+<p>This task requires a parameter indicating an index of the fold. The
+parameter name is specified by <tt class="docutils literal"><span class="pre">parameter_name</span></tt>. The index must be a
+non-negative integer less than <tt class="docutils literal"><span class="pre">num_folds</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_folds</strong> &#8211; Number of folds for splitting. Inverse of this value is
+the ratio of validation set size compared to the input dataset size. As
+noted above, the fold parameter must be less than <tt class="docutils literal"><span class="pre">num_folds</span></tt>.</li>
+<li><strong>parameter_name</strong> &#8211; Name of the parameter indicating the number of
+folds.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A rule.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">function</span></tt></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.rules.segment_without_label_bias">
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">segment_without_label_bias</tt><big>(</big><em>weights</em>, <em>extract_label=&lt;function &lt;lambda&gt; at 0x1072b8f50&gt;</em><big>)</big><a class="headerlink" href="#maflib.rules.segment_without_label_bias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Segments an example per line data into k-fold where k is the length of param weights.</p>
+<p>This method consider the label-bias when segmentation:
+In machine learning experiments, we often want to prepare training or testing examples
+in equal proportions for each label for the correct evaluation.
+<tt class="docutils literal"><span class="pre">weights</span></tt> specifies the proportion of examples in the k-th fold for each label.</p>
+<p>A typical usage of this task is as follows:</p>
+<div class="highlight-py"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;news20.scale&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;train dev test&#39;</span><span class="p">,</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">segment_without_label_bias</span><span class="p">([</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>This exp segment data news20.scale into 3-fold for train/develop/test.
+For each label, train contains 80% of the examples of that label, while dev/test contains
+10% of examples of the one.</p>
+<p>The input is assumed to be the format of an example per line, such as libsvm or vowpal format.
+The param <tt class="docutils literal"><span class="pre">extract_label</span></tt> specifies the way to extract the label from each line, so you can handle other format by customizing this function as far as it follows the one example per line format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>weights</strong> &#8211; list of floats specifing the weight by which data are segmented</li>
+<li><strong>extract_label</strong> &#8211; function extracting the label from an input line</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-maflib.test">
+<span id="test-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test</span></tt> Module<a class="headerlink" href="#module-maflib.test" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="maflib.test.ExpTestContext">
+<em class="property">class </em><tt class="descclassname">maflib.test.</tt><tt class="descname">ExpTestContext</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">waflib.Context.Context</span></tt></p>
+<p>A context class for executing unittests of maf.</p>
+<dl class="method">
+<dt id="maflib.test.ExpTestContext.add">
+<tt class="descname">add</tt><big>(</big><em>tests_list</em><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds executing tests.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tests_list</strong> &#8211; Tests to add, specified in the following way:</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>file name (ends with .py): find all test classes in that file</li>
+<li>directory name: find all test classes in files in the directory</li>
+<li>class name: add tests defined in the class</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.ExpTestContext.add_test_in_class">
+<tt class="descname">add_test_in_class</tt><big>(</big><em>cls</em><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext.add_test_in_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.ExpTestContext.add_test_in_dir">
+<tt class="descname">add_test_in_dir</tt><big>(</big><em>dir_path</em><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext.add_test_in_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.ExpTestContext.add_test_in_path">
+<tt class="descname">add_test_in_path</tt><big>(</big><em>test_path</em><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext.add_test_in_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.test.ExpTestContext.cmd">
+<tt class="descname">cmd</tt><em class="property"> = 'exptest'</em><a class="headerlink" href="#maflib.test.ExpTestContext.cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.ExpTestContext.execute">
+<tt class="descname">execute</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <tt class="xref py py-func docutils literal"><span class="pre">waflib.Context.Context.execute()</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.test.ExpTestContext.fun">
+<tt class="descname">fun</tt><em class="property"> = 'exptest'</em><a class="headerlink" href="#maflib.test.ExpTestContext.fun" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.ExpTestContext.unique_">
+<tt class="descname">unique_</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#maflib.test.ExpTestContext.unique_" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.test.TestTask">
+<em class="property">class </em><tt class="descclassname">maflib.test.</tt><tt class="descname">TestTask</tt><a class="headerlink" href="#maflib.test.TestTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A task object making it easy to write unittest for rules.</p>
+<p>This class mimics the behavior of task object by having dummy Node objects internally.
+These node objects are <a class="reference internal" href="#maflib.core.ExperimentNode" title="maflib.core.ExperimentNode"><tt class="xref py py-func docutils literal"><span class="pre">maflib.core.ExperimentNode()</span></tt></a>.</p>
+<p>Example usages of this task can be found on test_rules.py.</p>
+<dl class="class">
+<dt id="maflib.test.TestTask.ExperimentNodeList">
+<em class="property">class </em><tt class="descname">ExperimentNodeList</tt><a class="headerlink" href="#maflib.test.TestTask.ExperimentNodeList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.test.TestTask.env">
+<tt class="descclassname">TestTask.</tt><tt class="descname">env</tt><em class="property"> = None</em><a class="headerlink" href="#maflib.test.TestTask.env" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ConfigSet to store any attributes.</p>
+<p>ConfigSet is a class defined by waflib which is used as a dictionary to
+store any attributes. Its values can be accessed both by attributes or
+by keys;</p>
+<div class="highlight-py"><div class="highlight"><pre><span class="n">task</span> <span class="o">=</span> <span class="n">TestTask</span><span class="p">()</span>
+<span class="n">task</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">FOO</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
+<span class="n">task</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s">&#39;FOO&#39;</span><span class="p">]</span> <span class="c"># =&gt; &#39;test&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.TestTask.json_output">
+<tt class="descclassname">TestTask.</tt><tt class="descname">json_output</tt><big>(</big><em>index</em><big>)</big><a class="headerlink" href="#maflib.test.TestTask.json_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.TestTask.set_input">
+<tt class="descclassname">TestTask.</tt><tt class="descname">set_input</tt><big>(</big><em>index</em>, <em>s</em><big>)</big><a class="headerlink" href="#maflib.test.TestTask.set_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.test.TestTask.set_input_by_json">
+<tt class="descclassname">TestTask.</tt><tt class="descname">set_input_by_json</tt><big>(</big><em>index</em>, <em>obj</em><big>)</big><a class="headerlink" href="#maflib.test.TestTask.set_input_by_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-maflib.util">
+<span id="util-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">util</span></tt> Module<a class="headerlink" href="#module-maflib.util" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="maflib.util.aggregator">
+<tt class="descclassname">maflib.util.</tt><tt class="descname">aggregator</tt><big>(</big><em>callback_body</em><big>)</big><a class="headerlink" href="#maflib.util.aggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an aggregator using function <tt class="docutils literal"><span class="pre">callback_body</span></tt> independent from
+waf.</p>
+<p>This function creates a wrapper of given callback function that behaves as
+a rule of an aggregation task. It supposes that input files are represented
+by JSON files each of which is a flat JSON object (i.e. an object that does
+not contain any objects) or a JSON array of flat objects. The created rule
+first combines these JSON objects into an array of Python dictionaries, and
+then passes it to the user-defined callback body.</p>
+<p>There are two ways to write the result to the output node. First is to let
+<tt class="docutils literal"><span class="pre">callback_body</span></tt> return the content string to be written to the output
+node; then the rule automatically writes it to the output node. Second is
+to let <tt class="docutils literal"><span class="pre">callback_body</span></tt> write it using its second argument (called
+<tt class="docutils literal"><span class="pre">abspath</span></tt>), which is the absolute path to the output node. In this case,
+<tt class="docutils literal"><span class="pre">callback_body</span></tt> <strong>MUST</strong> return None to suppress the automatic writing.</p>
+<p>This function is often used as a decorator.
+See <a class="reference internal" href="#module-maflib.rules" title="maflib.rules"><tt class="xref py py-mod docutils literal"><span class="pre">maflib.rules</span></tt></a> or <a class="reference internal" href="#module-maflib.plot" title="maflib.plot"><tt class="xref py py-mod docutils literal"><span class="pre">maflib.plot</span></tt></a> to get
+examples of <tt class="docutils literal"><span class="pre">callback_body</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback_body</strong> (<tt class="docutils literal"><span class="pre">function</span></tt> or callble object of signature
+<tt class="docutils literal"><span class="pre">(list,</span> <span class="pre">str)</span></tt>.) &#8211; A function or a callable object that takes three
+arguments: <tt class="docutils literal"><span class="pre">values</span></tt>, <tt class="docutils literal"><span class="pre">abspath</span></tt>, and <tt class="docutils literal"><span class="pre">parameter</span></tt>. <tt class="docutils literal"><span class="pre">values</span></tt> is an
+array of dictionaries that represents the content of input files.
+<tt class="docutils literal"><span class="pre">abspath</span></tt> is an absolute path to the output node. <tt class="docutils literal"><span class="pre">parameter</span></tt> is
+the parameter of the output node, i.e. the parameter of this task. This
+function should return str or None.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An aggregator function that calls <tt class="docutils literal"><span class="pre">callback_body</span></tt>.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><tt class="docutils literal"><span class="pre">function</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.util.json_aggregator">
+<tt class="descclassname">maflib.util.</tt><tt class="descname">json_aggregator</tt><big>(</big><em>callback_body</em><big>)</big><a class="headerlink" href="#maflib.util.json_aggregator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an aggregator specific to output the aggregated result into json.</p>
+<p>Result of aggregator task is often json-formatted for later tasks, such as
+py:mod:<cite>maflib.rules.max</cite> and py:mod:<cite>maflib.rules.average</cite>. In
+py:mod:<cite>maflib.rules.max</cite>, for example, the parameter setting corresponding
+to the max is necessary in future task, so the parameter must also be dumped
+to json-format. However, this is problematic when parameter is not
+json-serializable, e.g., an object of user-defined class. To avoid this
+problem, this aggregator decorator first converts <tt class="docutils literal"><span class="pre">parameter</span></tt> to
+json-serializable one by converting not json-serializable values of
+<tt class="docutils literal"><span class="pre">parameter</span></tt> (<tt class="docutils literal"><span class="pre">dict</span></tt> type) into string. All json-serializable values
+remain the same, e.g., <tt class="docutils literal"><span class="pre">int</span></tt> values are not converted to string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback_body</strong> (<tt class="docutils literal"><span class="pre">function</span></tt> or callable object of signature
+<tt class="docutils literal"><span class="pre">(list,</span> <span class="pre">str,</span> <span class="pre">parameter)</span></tt>) &#8211; A function or a callable object that takes the same
+arguments as that of <tt class="docutils literal"><span class="pre">aggregator</span></tt>, but return an object, which is
+going to be serialized to json. See <a class="reference internal" href="#maflib.rules.max" title="maflib.rules.max"><tt class="xref py py-mod docutils literal"><span class="pre">maflib.rules.max</span></tt></a> for example.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An aggregator.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><tt class="docutils literal"><span class="pre">function</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.util.product">
+<tt class="descclassname">maflib.util.</tt><tt class="descname">product</tt><big>(</big><em>parameter</em><big>)</big><a class="headerlink" href="#maflib.util.product" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a direct product of given listed parameters.</p>
+<p>Here is an example.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;x&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s">&#39;y&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="c"># =&gt; [{&#39;x&#39;: 0, &#39;y&#39;: 1}, {&#39;x&#39;: 0, &#39;y&#39;: 3}, {&#39;x&#39;: 0, &#39;y&#39;: 5},</span>
+<span class="c">#     {&#39;x&#39;: 1, &#39;y&#39;: 1}, {&#39;x&#39;: 1, &#39;y&#39;: 3}, {&#39;x&#39;: 1, &#39;y&#39;: 5},</span>
+<span class="c">#     {&#39;x&#39;: 2, &#39;y&#39;: 1}, {&#39;x&#39;: 2, &#39;y&#39;: 3}, {&#39;x&#39;: 2, &#39;y&#39;: 5}]</span>
+<span class="c"># (the order of parameters may be different)</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameter</strong> (<tt class="docutils literal"><span class="pre">dict</span></tt> from <tt class="docutils literal"><span class="pre">str</span></tt> to <tt class="docutils literal"><span class="pre">list</span></tt>.) &#8211; A dictionary that represents a set of parameters. Its
+values are lists of values to be enumerated.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A direct product of a set of parameters.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><tt class="docutils literal"><span class="pre">list</span></tt> of <tt class="docutils literal"><span class="pre">dict</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.util.sample">
+<tt class="descclassname">maflib.util.</tt><tt class="descname">sample</tt><big>(</big><em>num_samples</em>, <em>distribution</em><big>)</big><a class="headerlink" href="#maflib.util.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomly samples parameters from given distributions.</p>
+<p>This function samples parameter combinations each of which is a dictionary
+from key to value sampled from a distribution corresponding to the key.
+It is useful for hyper-parameter optimization compared to using <tt class="docutils literal"><span class="pre">product</span></tt>,
+since every instance can be different on all dimensions for each other.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_samples</strong> (<tt class="docutils literal"><span class="pre">int</span></tt>) &#8211; Number of samples. Resulting meta node contains this
+number of physical nodes for each input parameter set.</li>
+<li><strong>distribution</strong> &#8211; <p>Dictionary from parameter names to values specifying
+distributions to sample from. Acceptable values are following:</p>
+<dl class="docutils">
+<dt><strong>Pair of numbers</strong></dt>
+<dd><tt class="docutils literal"><span class="pre">(a,</span> <span class="pre">b)</span></tt> specifies a uniform distribution on the continuous
+interval [a, b).</dd>
+<dt><strong>List of values</strong></dt>
+<dd>This specifies a uniform distribution on the descrete set of
+values.</dd>
+<dt><strong>Callable object or function</strong></dt>
+<dd><tt class="docutils literal"><span class="pre">f</span></tt> can be used for an arbitrary generator of values. Multiple
+calls of <tt class="docutils literal"><span class="pre">f()</span></tt> should generate random samples of user-defined
+distribution.</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of sampled parameters.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">list</span></tt> of <tt class="docutils literal"><span class="pre">dict</span></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.util.set_random_seed">
+<tt class="descclassname">maflib.util.</tt><tt class="descname">set_random_seed</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#maflib.util.set_random_seed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="mafの使い方"
+             >previous</a> |</li>
+        <li><a href="index.html">maf 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Preferred Infrastructure, Inc..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>
