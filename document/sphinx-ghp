@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2013 Yuya Unno.
+# Copyright (c) 2013 Yuya Unno, Seiya Tokui.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# This is a modified version of Unno's sphinx-ghp for maf documentation.
+# It only generates HTML documents and places it at the top directory of the
+# gh-pages branch.
+
 while getopts :p OPT
 do
     case $OPT in
@@ -28,10 +32,12 @@ do
 done
 
 git checkout master
+gitroot=`git rev-parse --show-toplevel`
+echo gitroot: $gitroot
 
 # generate build directory, that is not in the git repository
 make html || exit 1
-# make latexpdfja || exit 1
+mv build $gitroot/build
 
 # get hash number of the HEAD
 hash=`git log -1 --format=%H --`
@@ -46,27 +52,24 @@ git branch -r | grep origin/gh-pages
 if [ $? -ne 0 ]; then
     # make gh-pages branch
     git checkout --orphan gh-pages || exit 1
-    git rm -rf . || exit 1
+    git rm -rf $gitroot/. || exit 1
 else
     git checkout -b gh-pages origin/gh-pages || exit 1
 fi
+cd $gitroot
 
 # .nojekyll file is required to show sphinx html in github pages
 touch .nojekyll || exit 1
 git add .nojekyll || exit 1
 
-for dir in build/*; do
-    name=${dir#*/}
-    echo "Copy from ${name}"
-    if [ -d ${name} ]; then
-        rm -r ${name} || exit 1
-    fi
-    mv ${dir} . || exit 1
-    git add ${name} || exit 1
+# Only use HTML documents
+for d in `ls build/html`; do
+    mv build/html/$d . || exit 1
 done
+rm -rf build document maflib .waf*
+git add .
 
 git commit -m "Auto generated from ${hash}" || exit 1
-# pdf=`ls latex/*.pdf`
 
 git checkout master || exit 1
 
@@ -83,4 +86,3 @@ fi
 
 root=`git config --get remote.origin.url | sed -e "s/git@\(.*\):\(.*\/.*\)\.git/https:\/\/\1\/pages\/\2/g"`
 echo " HTML:   ${root}/html/"
-# echo " LaTeX:  ${root}/${pdf}"
