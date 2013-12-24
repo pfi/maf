@@ -32,11 +32,12 @@ Clone this repository and execute following command. It generates ``maf.py``.
 
   $ python generate_maf.py
 
-More detail
-===========
+Documentation
+=============
 
-More detailed description of usage is in ``document`` directory.
-Currently only Japanese document and is available (while API reference is in English).
+Document is available: http://pfi.github.io/maf/ (usage in Japanese and reference in English)
+
+Document source code is in ``document`` directory.
 
 Acknowledgments
 ===============
