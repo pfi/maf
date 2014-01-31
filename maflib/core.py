@@ -261,8 +261,18 @@ class ExperimentContext(waflib.Build.BuildContext):
             node = os.path.join(
                 node, '-'.join([parameter_id, os.path.basename(node)]))
         if node[0] == '/':
-            return self.root.find_resource(node)
-        return self.path.find_or_declare(node)
+            return self.root.find_node(node) # this can find directories (compared to find_resource, which can only find files)
+
+        # Currently, the below contains some tricks for supporting directory metanodes;
+        # Suppose node represent a metanode that is a directory on the filesystem.
+        # When we search this node by ``find_or_declare``, we can get that node object, but ``find_or_declare`` overwrites the sig property of found node with None. This sig property will be used when deciding whether run or not current task, and if sig is set None, the task is always run.
+        # see: http://docs.waf.googlecode.com/git/apidocs_17/_modules/waflib/Node.html#Node.find_or_declare
+        # To avoid this problem, we first run search_node to find directory meta node. If this is failed, normal search with find_or_declare will be run.
+        existing_dir_node = self.path.get_bld().search_node(node)
+        if (existing_dir_node):
+            return existing_dir_node
+        else:
+            return self.path.find_or_declare(node)
 
 
 class CyclicDependencyException(Exception):
@@ -575,6 +585,42 @@ class ExperimentTask(waflib.Task.Task):
         self.inputs = [ExperimentNode(s) for s in self.inputs]
         self.outputs = [ExperimentNode(s) for s in self.outputs]
 
+        
+    def sig_explicit_deps(self):
+        """Calculates the hash value of this task.
+
+        Overriden from waflib.Task.Task to use ``_node_sig`` to calculate
+        the hash value of source/target files.
+        
+        """
+        
+        bld = self.generator.bld
+        upd = self.m.update
+
+        # the inputs
+        for x in self.inputs + self.dep_nodes:
+            upd(_node_sig(x))
+        
+        # manual dependencies, they can slow down the builds
+        if bld.deps_man:
+            additional_deps = bld.deps_man
+            for x in self.inputs + self.outputs:
+                try:
+                    d = additional_deps[id(x)]
+                except KeyError:
+                    continue
+
+                for v in d:
+                    if isinstance(v, bld.root.__class__):
+                        try:
+                            v = v.get_bld_sig()
+                        except AttributeError:
+                            raise Errors.WafError('Missing node signature for %r (required by %r)' % (v, self))
+                    elif hasattr(v, '__call__'):
+                        v = v() # dependency is a function, call it
+                    upd(v)
+        return self.m.digest()
+
 
 class ExperimentNode(object):
     """A wrapper of Node object used in ExperimentTasks for replacement of
@@ -698,3 +744,33 @@ def _let_element_to_be_list(d, key):
 
 def _is_callable(o):
     return isinstance(o, types.FunctionType) or hasattr(o, '__call__')
+
+
+def _node_sig(node):
+    """An extended version of `Node.get_bld_sig`.
+
+    `get_bld_sig` cannot calculate the signature (hash value unique to the file),
+    so we extend here to calculate the signature of directory by reading all
+    files under the directory.
+    
+    """
+    
+    try:
+        return node.cache_sig
+    except AttributeError:
+        pass
+        
+    path = node.abspath()
+
+    if not hasattr(node, 'sig') or node.sig is None or not node.is_bld() or node.ctx.bldnode is node.ctx.srcnode:
+        if os.path.isdir(path):
+            m = waflib.Utils.md5()
+            for child in sorted(os.listdir(path)):
+                m.update(_node_sig(node.make_node(child)))
+            node.sig = m.digest()
+        else:
+            node.sig = waflib.Utils.h_file(path)
+            
+    node.cache_sig = ret = node.sig
+    
+    return ret
