@@ -135,7 +135,7 @@ class ExperimentContext(waflib.Build.BuildContext):
             node_params = self._nodes[node]
             if not node_params:
                 # node is physical. We use empty parameter as a dummy.
-                node_params = {Parameter()}
+                node_params = [Parameter()]
 
             if not parameter_lists:
                 for node_param in node_params:
@@ -603,7 +603,7 @@ class ExperimentNode(object):
     tests/test_rule.py. See also :py:func:`test.TestTask`.
 
     """
-    def __init__(self, waflib_node = None):
+    def __init__(self, waflib_node=None):
         if waflib_node:
             self.node = waflib_node
             self.abspath_ = self.node.abspath()

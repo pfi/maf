@@ -24,7 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from maflib.plot import *
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 class TestPlotData(unittest.TestCase):
     inputs = [

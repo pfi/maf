@@ -26,13 +26,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import unittest
+
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 try:
     import waflib
 except ImportError:
     import glob
-    import sys
     dirs = glob.glob('.waf-1.*')
     if not dirs:
         import subprocess
