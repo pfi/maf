@@ -447,8 +447,9 @@ def segment_without_label_bias(weights, extract_label=(lambda line: line[:line.f
 
 def _decompress(srcpath, dstpath, filetype):
     if filetype == 'bz2':
-        with bz2.BZ2File(srcpath) as f:
-            decompressed_data = f.read()
+        f = bz2.BZ2File(srcpath)
+        decompressed_data = f.read()
+        f.close()
     elif filetype == 'gz':
         with gzip.GzipFile(srcpath) as f:
             decompressed_data = f.read()
