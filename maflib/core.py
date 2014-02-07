@@ -275,7 +275,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         # To avoid this problem, we first run search_node to find directory meta
         # node. If this is failed, normal search with find_or_declare will be run.
         existing_dir_node = self.path.get_bld().search_node(node)
-        if (existing_dir_node):
+        if existing_dir_node:
             return existing_dir_node
         else:
             return self.path.find_or_declare(node)
