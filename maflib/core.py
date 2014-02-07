@@ -621,6 +621,7 @@ class ExperimentTask(waflib.Task.Task):
                         try:
                             v = v.get_bld_sig()
                         except AttributeError:
+                            import waflib.Errors
                             raise waflib.Errors.WafError('Missing node signature for %r (required by %r)' % (v, self))
                     elif hasattr(v, '__call__'):
                         v = v() # dependency is a function, call it
