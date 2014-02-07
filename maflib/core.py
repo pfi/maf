@@ -261,13 +261,19 @@ class ExperimentContext(waflib.Build.BuildContext):
             node = os.path.join(
                 node, '-'.join([parameter_id, os.path.basename(node)]))
         if node[0] == '/':
-            return self.root.find_node(node) # this can find directories (compared to find_resource, which can only find files)
+            # find_node can find directories (compared to find_resource, which can only find files)
+            return self.root.find_node(node) 
 
-        # Currently, the below contains some tricks for supporting directory metanodes;
-        # Suppose node represent a metanode that is a directory on the filesystem.
-        # When we search this node by ``find_or_declare``, we can get that node object, but ``find_or_declare`` overwrites the sig property of found node with None. This sig property will be used when deciding whether run or not current task, and if sig is set None, the task is always run.
-        # see: http://docs.waf.googlecode.com/git/apidocs_17/_modules/waflib/Node.html#Node.find_or_declare
-        # To avoid this problem, we first run search_node to find directory meta node. If this is failed, normal search with find_or_declare will be run.
+        # Currently, the below contains some tricks for supporting directory
+        # metanodes; Suppose node represent a metanode that is a directory on
+        # the filesystem. When we search this node by ``find_or_declare``, we
+        # can get that node object, but ``find_or_declare`` overwrites the sig
+        # property of found node with None. This sig property will be used when
+        # deciding whether run or not current task, and if sig is set None,
+        # the task is always run. See:
+        # http://docs.waf.googlecode.com/git/apidocs_17/_modules/waflib/Node.html#Node.find_or_declare
+        # To avoid this problem, we first run search_node to find directory meta
+        # node. If this is failed, normal search with find_or_declare will be run.
         existing_dir_node = self.path.get_bld().search_node(node)
         if (existing_dir_node):
             return existing_dir_node
