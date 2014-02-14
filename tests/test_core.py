@@ -27,7 +27,11 @@ from maflib.core import *
 import tempfile
 import os
 import shutil
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 import shutil
 
 class TestParameter(unittest.TestCase):

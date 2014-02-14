@@ -2,7 +2,11 @@ from maflib import rules
 #import maflib.rules
 import waflib.Node
 import collections
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 import json
 from maflib.test import TestTask
 import tempfile

@@ -97,8 +97,13 @@ def unpack_maflib(directory):
         with open(TEMPORARY_FILE_NAME, 'wb') as f:
             f.write(content)
 
-        with tarfile.open(TEMPORARY_FILE_NAME) as t:
+        try:
+            t = tarfile.open(TEMPORARY_FILE_NAME)
             t.extractall()
+        except tarfile.TarError:
+            raise Exception('can not open maflib tar file')
+        finally:
+            t.close()
 
         os.remove(TEMPORARY_FILE_NAME)
 

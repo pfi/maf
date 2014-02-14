@@ -25,7 +25,11 @@
 
 from maflib.util import *
 from maflib.core import Parameter
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 class TestProduct(unittest.TestCase):
     def test_empty_input(self):
