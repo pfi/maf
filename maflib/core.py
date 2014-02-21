@@ -74,6 +74,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         """Main method to generate tasks."""
 
         call_object = CallObject(**kw)
+        call_object.wscript = self.cur_script  # The directory containing current wscript
         self._experiment_graph.add_call_object(call_object)
 
     def _process_call_objects(self):
@@ -99,6 +100,9 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
+        # Pretend recursion by manually calling pre_recurse and post_recurse.
+        self.pre_recurse(call_object.wscript)
+
         self._set_rule_and_dependson(call_object)
 
         if hasattr(call_object, 'for_each'):
@@ -107,6 +111,8 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
+
+        self.post_recurse(call_object.wscript)
 
     def _set_rule_and_dependson(self, call_object):
         # dependson attribute is a variable or a function, changes of which
