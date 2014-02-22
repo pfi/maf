@@ -125,6 +125,7 @@ def find_maflib():
     return path
 
 find_maflib()
+from maflib import *
 
 def configure(conf):
     try:
