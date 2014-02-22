@@ -57,10 +57,6 @@ def configure(conf):
 class ExperimentContext(waflib.Build.BuildContext):
     """Context class of waf experiment (a.k.a. maf)."""
 
-    cmd = 'experiment'
-    fun = 'experiment'
-    variant = 'experiment'
-
     def __init__(self, **kw):
         super(ExperimentContext, self).__init__(**kw)
         self._experiment_graph = ExperimentGraph()
@@ -689,6 +685,20 @@ class ExperimentNode(object):
 
     def abspath(self):
         return self.abspath_
+
+
+# Forces these commands run under ExperimentContext
+waflib.Build.CleanContext.__bases__ = (ExperimentContext,)
+waflib.Build.InstallContext.__bases__ = (ExperimentContext,)
+waflib.Build.ListContext.__bases__ = (ExperimentContext,)
+waflib.Build.StepContext.__bases__ = (ExperimentContext,)
+waflib.Build.UninstallContext.__bases__ = (ExperimentContext,)
+
+
+# Old command experiment
+class OldExperimentContext(ExperimentContext):
+    cmd = 'experiment'
+    fun = 'experiment'
 
 
 @feature('experiment')
