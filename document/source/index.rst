@@ -11,8 +11,10 @@ https://github.com/pfi/maf で開発されています。
 
 .. toctree::
    :maxdepth: 3
+   :numbered:
 
    introduction
+   tutorial/index
    usage
 
 maflib API Document
