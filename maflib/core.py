@@ -73,8 +73,7 @@ class ExperimentContext(waflib.Build.BuildContext):
     def __call__(self, **kw):
         """Main method to generate tasks."""
 
-        call_object = CallObject(**kw)
-        call_object.wscript = self.cur_script  # The directory containing current wscript
+        call_object = CallObject(wscript=self.cur_script, **kw)
         self._experiment_graph.add_call_object(call_object)
 
     def _process_call_objects(self):
@@ -100,9 +99,6 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._parameter_id_generator.save()
 
     def _process_call_object(self, call_object):
-        # Pretend recursion by manually calling pre_recurse and post_recurse.
-        self.pre_recurse(call_object.wscript)
-
         self._set_rule_and_dependson(call_object)
 
         if hasattr(call_object, 'for_each'):
@@ -111,8 +107,6 @@ class ExperimentContext(waflib.Build.BuildContext):
             self._generate_aggregation_tasks(call_object, 'aggregate_by')
         else:
             self._generate_tasks(call_object)
-
-        self.post_recurse(call_object.wscript)
 
     def _set_rule_and_dependson(self, call_object):
         # dependson attribute is a variable or a function, changes of which
@@ -130,14 +124,14 @@ class ExperimentContext(waflib.Build.BuildContext):
             call_object.dependson = []
 
     def _generate_tasks(self, call_object):
-        if not call_object.source:
+        if not call_object.rel_source:
             for parameter in call_object.parameters:
                 self._generate_task(call_object, [], parameter)
 
         parameter_lists = []
 
         # Generate all valid list of parameters corresponding to source nodes.
-        for node in call_object.source:
+        for node in call_object.rel_source:
             node_params = self._nodes[node]
             if not node_params:
                 # node is physical. We use empty parameter as a dummy.
@@ -173,14 +167,14 @@ class ExperimentContext(waflib.Build.BuildContext):
             target_parameter.update(p)
         target_parameter.update(parameter)
 
-        for node in call_object.target:
+        for node in call_object.rel_target:
             self._nodes[node].add(target_parameter)
 
         # Convert source/target meta nodes to physical nodes.
         physical_source = self._resolve_meta_nodes(
-            call_object.source, source_parameter)
+            call_object.rel_source, source_parameter)
         physical_target = self._resolve_meta_nodes(
-            call_object.target, target_parameter)
+            call_object.rel_target, target_parameter)
 
         # Create arguments of BuildContext.__call__.
         physical_call_object = copy.deepcopy(call_object)
@@ -203,8 +197,8 @@ class ExperimentContext(waflib.Build.BuildContext):
             raise InvalidMafArgumentException(
                 "'target' in aggregation must include only one meta node")
 
-        source_node = call_object.source[0]
-        target_node = call_object.target[0]
+        source_node = call_object.rel_source[0]
+        target_node = call_object.rel_target[0]
 
         source_parameters = self._nodes[source_node]
         # Mapping from target parameter to list of source parameter.
@@ -389,6 +383,12 @@ class CallObject(object):
         else:
             self.parameters = [Parameter(p) for p in self.parameters]
 
+        # Some tests do not support the argument 'wscript'
+        if 'wscript' in kw:
+            relpath = self.wscript.parent.relpath()
+            self.rel_source = [os.path.normpath(os.path.join(relpath, n)) for n in self.source]
+            self.rel_target = [os.path.normpath(os.path.join(relpath, n)) for n in self.target]
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -410,10 +410,10 @@ class ExperimentGraph(object):
         index = len(self._call_objects)
         self._call_objects.append(call_object)
 
-        for in_node in call_object.source:
+        for in_node in call_object.rel_source:
             self._edges[in_node].add(index)
 
-        for out_node in call_object.target:
+        for out_node in call_object.rel_target:
             self._edges[index].add(out_node)
 
     def get_sorted_call_objects(self):
