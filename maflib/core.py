@@ -69,8 +69,13 @@ class ExperimentContext(waflib.Build.BuildContext):
     def __call__(self, **kw):
         """Main method to generate tasks."""
 
-        call_object = CallObject(wscript=self.cur_script, **kw)
-        self._experiment_graph.add_call_object(call_object)
+        if 'rule' not in kw:
+            # Workaround for non-experimental tasks
+            # TODO(beam2d): Integrate non-/experimental tasks
+            super(ExperimentContext, self).__call__(**kw)
+        else:
+            call_object = CallObject(wscript=self.cur_script, **kw)
+            self._experiment_graph.add_call_object(call_object)
 
     def _process_call_objects(self):
         """Callback function called right after all wscripts are executed.
