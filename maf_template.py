@@ -42,7 +42,7 @@ import tarfile
 import waflib.Context
 import waflib.Logs
 
-TEMPORARY_FILE_NAME = 'maflib.tar.bz2'
+TAR_NAME = 'maflib.tar'
 NEW_LINE = '#XXX'.encode()
 CARRIAGE_RETURN = '#YYY'.encode()
 ARCHIVE_BEGIN = '#==>\n'.encode()
@@ -94,18 +94,29 @@ def unpack_maflib(directory):
         os.makedirs(os.path.join(directory, 'maflib'))
         os.chdir(directory)
 
-        with open(TEMPORARY_FILE_NAME, 'wb') as f:
+        bz2_name = TAR_NAME + '.bz2'
+        with open(bz2_name, 'wb') as f:
             f.write(content)
 
         try:
-            t = tarfile.open(TEMPORARY_FILE_NAME)
+            t = tarfile.open(bz2_name)
+        except:
+            try:
+                os.system('bunzip2 ' + bz2_name)
+                t = tarfile.open(TAR_NAME)
+            except:
+                raise Exception('Cannot extract maflib. Check that python bz2 module or bunzip2 command is available.')
+
+        try:
             t.extractall()
-        except tarfile.TarError:
-            raise Exception('can not open maflib tar file')
         finally:
             t.close()
 
-        os.remove(TEMPORARY_FILE_NAME)
+        try:
+            os.remove(bz2_name)
+            os.remove(TAR_NAME)
+        except:
+            pass
 
         maflib_path = os.path.abspath(os.getcwd())
         # sys.path[:0] = [maflib_path]
