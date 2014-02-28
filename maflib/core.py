@@ -256,6 +256,13 @@ class ExperimentContext(waflib.Build.BuildContext):
         return physical_nodes
 
     def _resolve_meta_node(self, node, parameter):
+        def _not_deleted_any_files_in(n):
+            children = getattr(n, 'children', {})
+            if not children:
+                return os.path.exists(n.abspath())
+            else:
+                return all([_not_deleted_any_files_in(c) for c in n.children.values()])
+                    
         if parameter:
             parameter_id = self._parameter_id_generator.get_id(parameter)
             node = os.path.join(
@@ -275,7 +282,11 @@ class ExperimentContext(waflib.Build.BuildContext):
         # To avoid this problem, we first run search_node to find directory meta
         # node. If this is failed, normal search with find_or_declare will be run.
         existing_dir_node = self.path.get_bld().search_node(node)
-        if existing_dir_node:
+
+        # search_node doesn't look on filesystem, so cannot detect manual changes on
+        # the directory; e.g., sometimes one may delete an output directory or figure
+        # manually. `_not_deleted_any_files_in` check the consistency on the filesystem.
+        if existing_dir_node and _not_deleted_any_files_in(existing_dir_node):
             return existing_dir_node
         else:
             return self.path.find_or_declare(node)
