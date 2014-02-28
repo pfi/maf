@@ -119,7 +119,6 @@ def unpack_maflib(directory):
             pass
 
         maflib_path = os.path.abspath(os.getcwd())
-        # sys.path[:0] = [maflib_path]
         return maflib_path
 
 def test_maflib(directory):
