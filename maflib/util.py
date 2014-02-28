@@ -28,7 +28,6 @@ import itertools
 import json
 import numpy.random
 import types
-import numpy as np
 
 def aggregator(callback_body):
     """Creates an aggregator using function ``callback_body`` independent from
@@ -215,7 +214,7 @@ def sample(num_samples, distribution):
     return sampled
 
 def set_random_seed(x):
-    np.random.seed(x)
+    numpy.random.seed(x)
 
 # Set the random seed of numpy to a fixed value.
 # Without this, util.sample method generate different random numbers in each
