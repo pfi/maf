@@ -23,15 +23,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import bz2
 import collections
 import copy
-import gzip
 import json
 import os.path
 import tempfile
 import urllib
-import zlib
 from contextlib import nested
 
 import maflib.core
@@ -447,16 +444,19 @@ def segment_without_label_bias(weights, extract_label=(lambda line: line[:line.f
 
 def _decompress(srcpath, dstpath, filetype):
     if filetype == 'bz2':
+        import bz2
         f = bz2.BZ2File(srcpath)
         decompressed_data = f.read()
         f.close()
     elif filetype == 'gz':
+        import gzip
         with gzip.GzipFile(srcpath) as f:
             decompressed_data = f.read()
     elif filetype == 'zip':
+        import zlib
         with open(srcpath) as f:
             compressed_data = f.read()
-        decompressed_data = zlip.decompress(compressed_data)
+        decompressed_data = zlib.decompress(compressed_data)
     else:
         return False
 
