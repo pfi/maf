@@ -86,10 +86,9 @@ class ExperimentContext(waflib.Build.BuildContext):
         # Run topological sort on dependency graph.
         call_objects = self._experiment_graph.get_sorted_call_objects()
 
-        # TODO(beam2d): Remove this stub file name.
+        table_path = os.path.join(self.variant_dir, '.maf_id_table')
         self._parameter_id_generator = ParameterIdGenerator(
-            'build/experiment/.maf_id_table',
-            'build/experiment/.maf_id_table.tsv')
+            table_path, table_path + '.tsv')
         self._nodes = collections.defaultdict(set)
 
         try:
