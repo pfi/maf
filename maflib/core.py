@@ -296,27 +296,6 @@ class ExperimentContext(waflib.Build.BuildContext):
 class GraphContext(ExperimentContext):
     cmd = 'graph'
 
-    @staticmethod
-    def _escape(s):
-        escape_chars = set(['.',':', '{', '}', '-'])
-        escaped = ""
-        for c in s:
-            if c in escape_chars:
-                escaped += c
-            else:
-                escaped += c
-        return '"' + escaped + '"'
-
-    @staticmethod
-    def _extract_meta_node(node):
-        if node.is_bld():
-            found_meta = re.findall(r'\d+-(.+)', node.name)
-            if found_meta:
-                return found_meta[0]
-            else:
-                return node.name
-        return node.abspath()
-
     class NodeIndexer(object):
         def __init__(self):
             self.path2id = {}
@@ -344,14 +323,23 @@ class GraphContext(ExperimentContext):
             meta = GraphContext._extract_meta_node(node)
             self.table[meta].add(id)
 
-        def render_graphviz(self):
+        def render_graphviz(self, node_indexer, parameter_id_generator):
+            def parameter_str(node_id):
+                node = node_indexer.get(node_id)
+                parameter_id = GraphContext._extract_parameter_id(node)
+                if parameter_id == -1:
+                    return '""'
+                parameter = parameter_id_generator.get(parameter_id)
+                return '"%s"' % '\n'.join(
+                    ['%s: %s' % (k, v) for (k, v) in parameter.items()])
+            
             lines = []
             
             for i, (meta_sig, node_ids) in enumerate(self.table.items()):
                 lines.append("subgraph cluster_meta_node" + str(i) + " {")
                 lines.append("label=" + GraphContext._escape(meta_sig))
                 for node_id in node_ids:
-                    lines.append("node" + str(node_id))
+                    lines.append("node%s[label=%s]", (node_id, parameter_str(node_id)))
                 lines.append("}")
                 
             return "\n".join(lines)
@@ -417,7 +405,7 @@ class GraphContext(ExperimentContext):
 
         print "digraph G {"
         print "size=\"20,20\";"
-        print meta_nodes.render_graphviz()
+        print meta_nodes.render_graphviz(node_indexer, self._parameter_id_generator)
         print meta_tasks.render_graphviz()
         for link in links:
             print link[0], "->", link[1], "[arrowsize=0.3]"
@@ -430,7 +418,36 @@ class GraphContext(ExperimentContext):
         for node in nodes:
             abspath2nodes[node.abspath()] = node
         return [item[1] for item in abspath2nodes.items()]
-    
+
+    @staticmethod
+    def _escape(s):
+        escape_chars = set(['.',':', '{', '}', '-'])
+        escaped = ""
+        for c in s:
+            if c in escape_chars:
+                escaped += c
+            else:
+                escaped += c
+        return '"' + escaped + '"'
+
+    @staticmethod
+    def _extract_meta_node(node):
+        if node.is_bld():
+            found_meta = re.findall(r'\d+-([^/]+)', node.name)
+            if found_meta:
+                return found_meta[0]
+            else:
+                return node.name
+        return node.abspath()
+
+    @staticmethod
+    def _extract_parameter_id(node):
+        if node.is_bld():
+            found_id = re.findall(r'(\d+)-[^/].+', node.name)
+            if found_id:
+                return found_id[0]
+        return -1
+        
 
 class CyclicDependencyException(Exception):
     """Exception raised when experiment graph has a cycle."""
