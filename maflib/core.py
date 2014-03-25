@@ -577,7 +577,7 @@ class ParameterIdGenerator(object):
         :rtype: :py:class:`Parameter`
 
         """
-        return parameteres[parameter_id]
+        return self._parameteres[parameter_id]
 
 
 class ExperimentTask(waflib.Task.Task):
