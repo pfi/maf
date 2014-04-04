@@ -56,7 +56,7 @@ def exptest(test):
     
     test.add("vowpal_util_test.py")
     
-def experiment(exp):
+def build(exp):
     """maf example that evaluates algorithms implemented on LIBLINEAR using
     20 Newsgroup dataset.
 
