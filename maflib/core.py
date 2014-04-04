@@ -511,44 +511,43 @@ class ParameterIdGenerator(object):
         """Path to file that the table is dumped to as a human-readable text."""
 
         if os.path.exists(path):
-            self._table = self._load_table(path)
+            self._parameters, self._table = self._load_table(path)
         else:
-            self._table = {}
+            self._parameters = []
+            self._table = {} # Parameter -> id
 
     def save(self):
         """Serializes the table to the file at self.path."""
 
         if len(self._table) == 0: return
 
-        parameter_ids = [(param, int(id)) for (param, id) in self._table.items()]
-        parameter_ids.sort(key=lambda param_and_id: param_and_id[1])
-        
         with _create_file(self.path) as f:
-            # We don't save the self._table, which type is dict(Parameter,int) directly,
-            # instead saves list(dict), which index corresponds to the id of the item.
-            # This is for deserializing parameter->id mappings outside of map, without
+            # We only save a modified `self._parameters`, which is obtained by converting
+            # each element of `self._parameters` into a dictionary object.
+            # This is for deserializing parameter->id mappings outside without
             # maflib and waflib dependencies. Parameter class is defined in maflib,
-            # so user cannot decode original _table object without maflib libraries.
-            # When deserializaing, ``self._table`` is load by ``_load_table``.
-            max_param_id = parameter_ids[-1][1]
-            dict_param_list = [None for i in range(max_param_id + 1)]
-            for (param, id) in parameter_ids:
-                dict_param_list[id] = dict(param)
-            pickle.dump(dict_param_list, f)
+            # so user cannot decode original objects without maflib libraries.
+            dicted_params = [dict(param) for param in self._parameters]
+            
+            pickle.dump(dicted_params, f)
 
         with _create_file(self.text_path) as f:
-            for parameter, id in parameter_ids:
+            for i, parameter in enumerate(self._parameters):
                 f.write('%s\t%s\n' % (id, parameter))
 
     def _load_table(self, path):
-        table = {}
+        dicted_params = []
         try:
             with open(path) as f:
-                dict_param_list = pickle.load(f)
-                for i, dict_param in enumerate(dict_param_list):
-                    if dict_param is not None: table[Parameter(dict_param)] = str(i)
+                dicted_params = pickle.load(f)
         except EOFError: pass
-        return table
+
+        parameters = [Parameter(param) for param in dicted_params]
+        table = {}
+        for i, param in enumerate(parameters):
+            if param is not None: table[param] = str(i)
+
+        return (parameters, table)
 
     def get_id(self, parameter):
         """Gets the id of given parameter.
@@ -563,10 +562,22 @@ class ParameterIdGenerator(object):
         if parameter in self._table:
             return self._table[parameter]
 
-        new_id = str(len(self._table))
+        new_id = str(len(self._parameters))
         self._table[parameter] = new_id
+        self._parameters.append(parameter)
 
         return new_id
+
+    def get(self, parameter_id):
+        """Gets the parameter of a given id.
+
+        :param parameter_id: Id of the parameter
+        :type parameter: int
+        :return: Parameter object of a given id.
+        :rtype: :py:class:`Parameter`
+
+        """
+        return self._parameters[parameter_id]
 
 
 class ExperimentTask(waflib.Task.Task):
