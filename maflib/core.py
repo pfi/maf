@@ -295,6 +295,8 @@ class ExperimentContext(waflib.Build.BuildContext):
 
 
 class GraphContext(ExperimentContext):
+    '''outputs a graph of dependencies between tasks'''
+    
     cmd = 'graph'
 
     def node_label(self, node):
