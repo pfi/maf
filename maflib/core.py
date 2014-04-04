@@ -311,6 +311,14 @@ class GraphContext(ExperimentContext):
             return "\n".join(['%s: %s' % (k, v) for (k, v) in parameter.items()])
 
     class NodeIndexer(object):
+        """Indexer assigning a unique id to each Node instance.
+
+        Because each Node instance has a unique absolute path, Node -> id mappings
+        are managed with a dictionary of type `dict(str, id)` preserving
+        correspondences between a path to an id.
+        
+        """
+        
         def __init__(self):
             self.path2id = {}
             self.nodes = []
@@ -329,6 +337,14 @@ class GraphContext(ExperimentContext):
             return self.nodes[node_id]
             
     class MetaNodes(object):
+        """A collection of meta nodes.
+
+        This class essentially is a hashtable preserving a collection of node ids
+        sharing the same meta node signature. Meta node signature is calculated
+        by :py:func:`GraphContext._extract_meta_node`.
+        
+        """
+        
         def __init__(self, unique_nodes):
             self.table = collections.defaultdict(set) # meta node signature -> node ids
             for i, node in enumerate(unique_nodes):
@@ -352,6 +368,8 @@ class GraphContext(ExperimentContext):
             return "\n".join(lines)
             
     class MetaTasks(object):
+        """A collection of meta classes similar to MetaNodes."""
+        
         def __init__(self, tasks):
             self.table = collections.defaultdict(set) # meta task signature -> task ids
             for i, task in enumerate(tasks):
@@ -454,6 +472,12 @@ class GraphContext(ExperimentContext):
 
         
 class ExpOptionsContext(waflib.Options.OptionsContext):
+    """ExperimentContext specific OptionContext.
+
+    Please extend the `__init__` method below to add new options.
+
+    """
+    
     def __init__(self, **kw):
         super(ExpOptionsContext, self).__init__(**kw)
 
