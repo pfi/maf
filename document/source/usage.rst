@@ -307,6 +307,66 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 
 ``for_each`` と ``aggregate_by`` を同時に指定することはできません。
 
+ディレクトリに対するメタノード
+~~~~~~~~~~~~~~~~
+
+これまでの例は全て、一つのパラメータの組み合わせに対応する入力/出力ノードは一つのファイルに対応し、メタノードはそれらを束ねる役割を持ちました。
+しかしながら、特定の実験では、各パラメータの出力ノードが複数ファイルからなりそれらをまとめて扱いたい場合が存在します。
+例えば画像処理において、データセットが複数の画像からなる場合や、複数の文書からなるコーパスを、各ファイル毎に加工して複数文書からなる新しいデータセットを作る場合などが考えられます。
+またあるソフトは、学習や予測の結果を複数ファイルからなるディレクトリの形で出力する場合も考えられます。
+
+出力ファイルにディレクトリを指定するソフトを用いる場合は特別な変更は必要ありません。
+
+.. code-block:: python
+
+   exp(target='output',
+       parameters=maflib.util.product({'A': [0, 1, 2],
+                                       'B': [-1, 0, 1]}),
+       rule='train -A ${A} -B ${B} -i input_path -o ${TGT}')
+
+ここでの ``train`` は ``-o`` でディレクトリを指定し、各実行毎にディレクトリを作成する仮想的なコマンドです。
+この場合通常のタスクと同じように、 ``build`` 以下には、output/0-output/, output/1-output/ ... といった出力が生成されます。
+
+注意が必要なのは、出力ディレクトリを事前に生成しておかなければならない場合です。
+例えば上記の ``train`` コマンドが、 ``-o`` に指定したディレクトリが存在しない場合に実行に失敗するとします。
+この場合は、次のように明示的にディレクトリを生成する関数ルールを定義し、それを指定する必要があります。
+
+.. code-block:: python
+
+   exp(target='output',
+       parameters=maflib.util.product({'A': [0, 1, 2],
+                                       'B': [-1, 0, 1]}),
+       rule=train 'train -A ${A} -B ${B} -i input_path -o ${TGT}')
+
+   def train(task):
+       task.outputs[0].mkdir()
+       subprocess.check_call(['train', '-A', task.parameter.A, '-B', task.parameter.B,
+                              '-i input_path', '-o', task.outputs[0]])
+
+上記の ``task.outputs[0].mkdir()`` は、出力ノードのパスの位置にディレクトリを生成します。
+これによって、事前にディレクトリが存在することが保証されます。
+
+また、関数ルールの中で出力ノードのディレクトリにファイルを追加したい場合もあるかもしれません。
+その場合は、wafのNodeクラスの ``find_or_declare(path)`` が便利です。
+例えば先ほどのタスクで、出力ディレクトリにタスクの実行時間を計測したログファイルを別に出力する場面を考えます。
+その場合、 ``train`` を以下のように拡張します。
+
+.. code-block:: python
+
+    def train(task):
+       task.outputs[0].mkdir()
+
+       import time
+       begin = time.clock()
+       subprocess.check_call(['train', '-A', task.parameter.A, '-B', task.parameter.B,
+                              '-i input_path', '-o', task.outputs[0]])            
+       sec = time.clock() - begin
+       task.outputs[0].find_or_declare("time").write(str(sec))
+
+``task.outputs[0].find_or_declare("time")`` は、出力ディレクトリ内に time という名前のファイルを作成します。
+そして ``write`` メソッドにより、その中に計測した実行時間を出力します。
+       
+
 JSON形式の入出力ファイル
 ------------------------
 
