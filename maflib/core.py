@@ -38,6 +38,7 @@ import types
 import inspect
 import re
 import tempfile
+import subprocess
 try:
     import cPickle as pickle
 except ImportError:
@@ -428,8 +429,6 @@ class GraphContext(ExperimentContext):
         dot.write("}")
 
         dot.seek(0)
-
-        import subprocess
 
         graphpath = waflib.Options.options.graphpath
         ext = graphpath[graphpath.rfind(".") + 1:]
