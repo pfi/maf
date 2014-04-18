@@ -75,22 +75,31 @@ class ExpTestContext(waflib.Context.Context):
 class TestTask(object):
     """A task object making it easy to write unittest for rules.
 
-    This class mimics the behavior of task object by having dummy Node objects internally.
-    These node objects are :py:func:`maflib.core.ExperimentNode`.
+    This class mimics the behavior of task object by having dummy Node objects
+    internally. These node objects are :py:func:`maflib.core.ExperimentNode`.
 
     Example usages of this task can be found on test_rules.py.
 
+    `inputs` and `outputs` are instances of `ExperimentNodeList`.
+    This class makes easy for accessing input/output node objects by
+    automatically adding new element if necessary.
+    NOTE: You should not add elements to this list manually, e.g., with
+    `task.outputs.append(...)`. Please use instead `setsize(size)` or
+    index accessing like `task.outputs[3]` automatically appends elements up to
+    the index 2.
+
     """
 
-    class ExperimentNodeList(object):
-        def __init__(self):
-            self.list = []
+    class ExperimentNodeList(list):
+        def setsize(self, size):
+            if len(self) <= size:
+                for i in range(size - len(self)):
+                    self.append(maflib.core.ExperimentNode())
 
         def __getitem__(self, index):
-            if index <= len(self.list):
-                for i in range(len(self.list) - index + 1):
-                    self.list.append(maflib.core.ExperimentNode())
-            return self.list[index]
+            if index <= len(self):
+                self.setsize(index + 1)
+            return super(TestTask.ExperimentNodeList, self).__getitem__(index)
 
     def __init__(self):
         self.inputs = TestTask.ExperimentNodeList()
