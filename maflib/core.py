@@ -308,7 +308,7 @@ class GraphContext(ExperimentContext):
             return str(parameter_id)
         else:
             parameter = self._parameter_id_generator.get(parameter_id)
-            return "\n".join(['%s: %s' % (k, v) for (k, v) in parameter.items()])
+            return "\\n".join(['%s: %s' % (k, v) for (k, v) in parameter.items()])
 
     class NodeIndexer(object):
         """Indexer assigning a unique id to each Node instance.
