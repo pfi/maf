@@ -37,6 +37,7 @@ import os.path
 import types
 import inspect
 import re
+import tempfile
 try:
     import cPickle as pickle
 except ImportError:
@@ -416,7 +417,6 @@ class GraphContext(ExperimentContext):
         meta_tasks = self.MetaTasks(tasks)
         links = self._collect_links(node_indexer, tasks)
 
-        import tempfile
         dot = tempfile.NamedTemporaryFile()
 
         dot.write("digraph G {\n")
