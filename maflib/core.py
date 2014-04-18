@@ -36,6 +36,9 @@ import os
 import os.path
 import types
 import inspect
+import re
+import tempfile
+import subprocess
 try:
     import cPickle as pickle
 except ImportError:
@@ -43,6 +46,7 @@ except ImportError:
 
 import waflib.Build
 import waflib.Utils
+import waflib.Options
 from waflib.TaskGen import before_method, feature
 
 
@@ -292,6 +296,201 @@ class ExperimentContext(waflib.Build.BuildContext):
             return self.path.find_or_declare(node)
 
 
+class GraphContext(ExperimentContext):
+    '''outputs a graph of dependencies between tasks'''
+    
+    cmd = 'graph'
+
+    def node_label(self, node):
+        parameter_id = self._extract_parameter_id(node)
+        if parameter_id == -1:
+            return ""
+
+        if waflib.Options.options.simple_param:
+            return str(parameter_id)
+        else:
+            parameter = self._parameter_id_generator.get(parameter_id)
+            return "\\n".join(['%s: %s' % (k, v) for (k, v) in parameter.items()])
+
+    class NodeIndexer(object):
+        """Indexer assigning a unique id to each Node instance.
+
+        Because each Node instance has a unique absolute path, Node -> id mappings
+        are managed with a dictionary of type `dict(str, id)` preserving
+        correspondences between a path to an id.
+        
+        """
+        
+        def __init__(self):
+            self.path2id = {}
+            self.nodes = []
+            
+        def get_id(self, node):
+            path = node.abspath()
+            if path in self.path2id:
+                return self.path2id[path]
+            else:
+                node_id = len(self.nodes)
+                self.path2id[path] = node_id
+                self.nodes.append(node)
+                return node_id
+            
+        def get(self, node_id):
+            return self.nodes[node_id]
+            
+    class MetaNodes(object):
+        """A collection of meta nodes.
+
+        This class essentially is a hashtable preserving a collection of node ids
+        sharing the same meta node signature. Meta node signature is calculated
+        by :py:func:`GraphContext._extract_meta_node`.
+        
+        """
+        
+        def __init__(self, unique_nodes):
+            self.table = collections.defaultdict(set) # meta node signature -> node ids
+            for i, node in enumerate(unique_nodes):
+                self.add_node(node, i)
+            
+        def add_node(self, node, id):
+            meta = GraphContext._extract_meta_node(node)
+            self.table[meta].add(id)
+
+        def render_graphviz(self, node_indexer, ctx):
+            lines = []
+            
+            for i, (meta_sig, node_ids) in enumerate(self.table.items()):
+                lines.append("subgraph cluster_meta_node" + str(i) + " {")
+                lines.append('label="%s"' % meta_sig)
+                for node_id in node_ids:
+                    node = node_indexer.get(node_id)
+                    lines.append('node%s[label="%s"]' % (node_id, ctx.node_label(node)))
+                lines.append("}")
+                
+            return "\n".join(lines)
+            
+    class MetaTasks(object):
+        """A collection of meta classes similar to MetaNodes."""
+        
+        def __init__(self, tasks):
+            self.table = collections.defaultdict(set) # meta task signature -> task ids
+            for i, task in enumerate(tasks):
+                self.add_task(task, i)
+            
+        def add_task(self, task, id):
+            task_sig = "".join([GraphContext._extract_meta_node(n) for n
+                                in _to_list(task.source) + _to_list(task.target)])
+            self.table[task_sig].add(id)
+
+        def render_graphviz(self):
+            lines = []
+
+            for i, (meta_sig, task_ids) in enumerate(self.table.items()):
+                lines.append("subgraph cluster_meta_task" + str(i) + " {")
+                for task_id in task_ids:
+                    lines.append("task" + str(task_id) + '[shape=point,style=filled,color="black"]')
+                lines.append("}")
+                
+            return "\n".join(lines)
+            
+    def execute(self):
+        """
+        See :py:func:`waflib.Context.Context.execute`.
+        """
+        self.restore()
+        if not self.all_envs:
+            self.load_envs()
+
+        self.recurse([self.run_dir])
+        self.pre_build()
+
+        # display the time elapsed in the progress bar
+        self.timer = waflib.Utils.Timer()
+
+        tasks = [t for g in self.groups for t in g]
+
+        node_indexer = self.NodeIndexer()
+        for task in tasks:
+            for node in _to_list(task.source) + _to_list(task.target):
+                node_indexer.get_id(node)
+        
+        meta_nodes = self.MetaNodes(node_indexer.nodes)
+        meta_tasks = self.MetaTasks(tasks)
+        links = self._collect_links(node_indexer, tasks)
+
+        dot = tempfile.NamedTemporaryFile()
+
+        dot.write("digraph G {\n")
+        # dot.write("size=\"50,50\";\n")
+        dot.write(meta_nodes.render_graphviz(node_indexer, self) + "\n")
+        dot.write(meta_tasks.render_graphviz() + "\n")
+        for link in links:
+            dot.write("%s->%s[arrowsize=0.3]\n" % (link[0], link[1]))
+        dot.write("}")
+
+        dot.seek(0)
+
+        graphpath = waflib.Options.options.graphpath
+        ext = graphpath[graphpath.rfind(".") + 1:]
+
+        if ext == "dot":
+            subprocess.check_call(['cp', dot.name, waflib.Options.options.graphpath])
+        else:
+            subprocess.check_call(['dot', '-T'+ext, dot.name,
+                                   '-o', waflib.Options.options.graphpath])
+
+    def _collect_links(self, node_indexer, tasks):
+        links = []
+        for task_id, task in enumerate(tasks):
+            for node_id in [node_indexer.get_id(node) for node in _to_list(task.source)]:
+                links.append(("node" + str(node_id), "task" + str(task_id)))
+            for node_id in [node_indexer.get_id(node) for node in _to_list(task.target)]:
+                links.append(("task" + str(task_id), "node" + str(node_id)))
+        return links
+
+    def _extract_unique_nodes(self, nodes):
+        abspath2nodes = {}
+        for node in nodes:
+            abspath2nodes[node.abspath()] = node
+        return [item[1] for item in abspath2nodes.items()]
+
+    @staticmethod
+    def _extract_meta_node(node):
+        if node.is_bld():
+            found_meta = re.findall(r'\d+-([^/]+)', node.name)
+            if found_meta:
+                return found_meta[0]
+            else:
+                return node.name
+        return node.abspath()
+
+    @staticmethod
+    def _extract_parameter_id(node):
+        if node.is_bld():
+            found_id = re.findall(r'(\d+)-[^/].+', node.name)
+            if found_id:
+                return int(found_id[0])
+        return -1
+
+        
+class ExpOptionsContext(waflib.Options.OptionsContext):
+    """ExperimentContext specific OptionContext.
+
+    Please extend the `__init__` method below to add new options.
+
+    """
+    
+    def __init__(self, **kw):
+        super(ExpOptionsContext, self).__init__(**kw)
+
+        default_path = 'graph.pdf'
+        gr = self.add_option_group('graph options')
+        gr.add_option('--graphpath', action = 'store', default = default_path,
+                      help = 'path to the output of graph [default: %s]' % default_path)
+        gr.add_option('--simple_param', action = 'store_true', default = False,
+                      help = 'outputs parameter ids instead of specific values')
+        
+        
 class CyclicDependencyException(Exception):
     """Exception raised when experiment graph has a cycle."""
     pass
@@ -789,6 +988,13 @@ def _let_element_to_be_list(d, key):
         d[key] = []
     if isinstance(d[key], str):
         d[key] = waflib.Utils.to_list(d[key])
+
+
+def _to_list(objs):
+    if isinstance(objs, list):
+        return objs
+    else:
+        return [objs]
 
 
 def _is_callable(o):
