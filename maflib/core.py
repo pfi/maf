@@ -433,9 +433,12 @@ class GraphContext(ExperimentContext):
 
         graphpath = waflib.Options.options.graphpath
         ext = graphpath[graphpath.rfind(".") + 1:]
-        
-        subprocess.check_call(['dot', '-T'+ext, dot.name,
-                               '-o', waflib.Options.options.graphpath])
+
+        if ext == "dot":
+            subprocess.check_call(['cp', dot.name, waflib.Options.options.graphpath])
+        else:
+            subprocess.check_call(['dot', '-T'+ext, dot.name,
+                                   '-o', waflib.Options.options.graphpath])
 
     def _collect_links(self, node_indexer, tasks):
         links = []
