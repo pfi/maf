@@ -336,7 +336,7 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
    exp(target='output',
        parameters=maflib.util.product({'A': [0, 1, 2],
                                        'B': [-1, 0, 1]}),
-       rule=train 'train -A ${A} -B ${B} -i input_path -o ${TGT}')
+       rule=train)
 
    def train(task):
        task.outputs[0].mkdir()
@@ -354,18 +354,18 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 .. code-block:: python
 
     def train(task):
-       task.outputs[0].mkdir()
+        task.outputs[0].mkdir()
 
-       import time
-       begin = time.clock()
-       subprocess.check_call(['train', '-A', task.parameter.A, '-B', task.parameter.B,
+        import time
+        begin = time.clock()
+        subprocess.check_call(['train', '-A', task.parameter.A, '-B', task.parameter.B,
                               '-i input_path', '-o', task.outputs[0]])            
-       sec = time.clock() - begin
-       task.outputs[0].find_or_declare("time").write(str(sec))
+        sec = time.clock() - begin
+        task.outputs[0].find_or_declare("time").write(str(sec))
 
 ``task.outputs[0].find_or_declare("time")`` は、出力ディレクトリ内に time という名前のファイルを作成します。
 そして ``write`` メソッドにより、その中に計測した実行時間を出力します。
-       
+
 
 JSON形式の入出力ファイル
 ------------------------
