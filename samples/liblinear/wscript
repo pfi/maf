@@ -37,7 +37,7 @@ def plot(figure, data, parameter):
 
     axes.legend(loc='best')
 
-def experiment(exp):
+def build(exp):
     """maf example that evaluates algorithms implemented on LIBLINEAR using
     20 Newsgroup dataset.
 
