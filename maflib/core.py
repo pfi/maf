@@ -242,13 +242,14 @@ class ExperimentContext(waflib.Build.BuildContext):
     def _call_super(self, call_object, source_parameter, target_parameter):
         taskgen = super(ExperimentContext, self).__call__(
             **call_object.__dict__)
-        taskgen.env.source_parameter = source_parameter
+        taskgen.env.source_parameter = source_parameter  # for backward compatibility
         taskgen.env.update(target_parameter.to_str_valued_dict())
 
         depkeys = [('dependson%d' % i) for i in range(len(call_object.dependson))]
         taskgen.env.update(dict(zip(depkeys, call_object.dependson)))
 
         taskgen.parameter = target_parameter
+        taskgen.source_parameter = source_parameter
 
     def _resolve_meta_nodes(self, nodes, parameters):
         if not isinstance(parameters, list):
@@ -810,6 +811,10 @@ class ExperimentTask(waflib.Task.Task):
 
         self.parameter = generator.parameter
         """Parameter whose values are not stringized."""
+
+        self.source_parameters = generator.source_parameter
+        """List of parameters each of which is the parameter of the
+        corresponding input node."""
 
         if not hasattr(self, 'dep_vars'): self.dep_vars = []
         self.dep_vars += self.parameter.keys()

@@ -121,6 +121,7 @@ class TestTask(object):
         """
 
         self.parameter = {}
+        self.source_parameters = []
 
     def set_input(self, index, s):
         self.inputs[index].write(s)

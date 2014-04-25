@@ -14,7 +14,7 @@ import tempfile
 class TestAggregationTask(unittest.TestCase):
     def test_max(self):
         task = TestTask()
-        task.env.source_parameter = [({"param1":0}), {"param1":1}]
+        task.source_parameters = [({"param1":0}), {"param1":1}]
 
         task.set_input_by_json(0, {"key1":10, "key2":20})
         task.set_input_by_json(1, {"key1": 5, "key2":30})
@@ -27,7 +27,7 @@ class TestAggregationTask(unittest.TestCase):
 
     def test_min(self):
         task = TestTask()
-        task.env.source_parameter = [{"param1":0}, {"param1":1}]
+        task.source_parameters = [{"param1":0}, {"param1":1}]
 
         task.set_input_by_json(0, {"key1":10, "key2":20})
         task.set_input_by_json(1, {"key1": 5, "key2":30})

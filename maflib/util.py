@@ -66,7 +66,7 @@ def aggregator(callback_body):
     @functools.wraps(callback_body)
     def callback(task):
         values = []
-        for node, parameter in zip(task.inputs, task.env.source_parameter):
+        for node, parameter in zip(task.inputs, task.source_parameters):
             content = json.loads(node.read())
             if not isinstance(content, list):
                 content = [content]
