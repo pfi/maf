@@ -206,7 +206,7 @@ class ExperimentContext(waflib.Build.BuildContext):
 
         source_parameters = self._nodes[source_node]
         # Mapping from target parameter to list of source parameter.
-        target_to_source = collections.defaultdict(set)
+        target_to_source = collections.defaultdict(list)
 
         for source_parameter in source_parameters:
             target_parameter = Parameter()
