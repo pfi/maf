@@ -167,13 +167,13 @@ mafを用いた実験例
 
 .. code-block:: python
 
-   def experiment(exp):
-       exp(source='input.txt',
+   def build(bld):
+       bld(source='input.txt',
            target='output',
            parameters=[{'parameter': i} for i in range(1, 6)],
            rule='do_experiment ${SRC} ${parameter} > ${TGT}')
 
-       exp(source='output',
+       bld(source='output',
            target='plot.png',
            for_each=[],
            rule=plot)
@@ -183,7 +183,6 @@ mafを用いた実験例
 
 wafの場合とは以下の点で異なっています。
 
-- 実験内容をbuild関数ではなく ``experiment`` 関数に書きます（これは些細な違いです）。
 - ``for`` 文の位置が変わりました。
   ``bld`` をパラメータの数だけ呼び出すのではなく、パラメータを並べた配列を ``exp`` に渡します。
   このように書くだけで、各パラメータごとに別々の依存関係を作り出し、同じ数の出力ファイルができます。
