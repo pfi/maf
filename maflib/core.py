@@ -914,6 +914,7 @@ waflib.Build.UninstallContext.__bases__ = (ExperimentContext,)
 class OldExperimentContext(ExperimentContext):
     cmd = 'experiment'
     fun = 'experiment'
+    variant = 'experiment'
 
 
 @feature('experiment')
