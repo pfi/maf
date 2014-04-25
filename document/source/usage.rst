@@ -587,6 +587,99 @@ mafにおいてルールには3つの種類があります。
 
    exp(source='a_b_and_k', target='out.png', rule=my_plot)
 
+実験の検証方法
+--------------
+
+自分で定義したタスクが想定通りに動くかどうかを確かめるための方法として、mafでは二つの異なる機能を提供します。
+一つはtestモジュールで、各タスクが想定通りに動くかどうかを確かめるためのユニットテストを書きやすくします。
+また、wscriptに定義した各実験の依存関係が想定されたものであるかを確認するために、依存関係を描画する機能が存在します。
+
+ユニットテスト
+~~~~~~~~~~~~~~~
+
+``maflib.test`` モジュールは、mafの実験に関連したユニットテストを書きやすくするための機能を提供します。
+
+次の自作のルールは、二つの入力ファイルを読み込み、それらを多クラス分類器の結果として精度を出力する関数ルールです。
+
+.. code-block:: python
+
+   def multiclass_accuracy(task):
+       gold_labels = [l for l in open(task.inputs[0].abspath())]
+       pred_labels = [l for l in open(task.inputs[1].abspath())]
+       # Comparing gold_labels and pred_lables
+       num_correct = len(filter(lambda x: x[0] == x[1], zip(gold_labels, pred_labels)))
+       task.outputs[0].write(str(float(num_correct) / len(gold_labels)))
+
+しかしながら、この関数の入力は ``waflib.Task.Task`` クラスのインスタンスであるため、wafからの呼び出しではなくこの関数を切り離して動作をテストすることが困難です。
+:py:class:`maflib.test.TestTask` はこの問題を緩和するためのクラスです。
+次に具体例を示します。
+
+.. code-block:: python
+
+   import unittest
+   class TestMyRule(unittest.TestCase):
+       def test_multiclass_accuracy(self):
+           task = maflib.test.TestTask()
+           task.set_input(0, "0\n1\n1\n2\n") # gold labels:      [0, 1, 1, 2]
+           task.set_input(1, "0\n2\n1\n2\n") # predicted labels: [0, 2, 1, 2]
+
+           multiclass_accuracy(task) # execute the task
+
+           self.assertEqual(task.outputs[0].read(), "0.75")
+
+``unittest.TestCase`` はpythonの `unittestモジュール <http://docs.python.jp/2/library/unittest.html>`_ のクラスで、これを継承することで自作のユニットテストを定義することができます。
+``test_multiclass_accuracy()`` が実際のテストの定義です。
+この関数は基本的に、 ``multiclass_accuracy(task)`` に渡すための変数 ``task`` を最初に準備し、関数ルールを実行し、望む出力が得られるかをチェックします。
+この ``task`` 変数は :py:class:`maflib.test.TestTask` クラスのインスタンスになっており、これが自作の関数ルールをwafから切り離してテストするための機能を提供します。
+例えば ``TestTask.set_input(i, str)`` は引数に与えた文字列 ``str`` を ``task.inputs[i].abspath()`` に対応するファイルに出力するので、テストしたい関数への入力を自由に設定することができます。
+
+このようにテストを定義したとして、これをどのように実行すれば良いでしょうか。
+:py:class:`maflib.test.ExpTestContext` はテストの実行を簡単にするための機能を提供します。
+wscriptに以下を追加してください。
+
+.. code-block:: python
+
+   import maflib.test
+   def exptest(test):
+       test.add(TestMyRule)
+
+そして以下のコマンドを実行します。
+
+.. code-block:: bash
+
+   $ ./waf exptest
+   test_multiclass_accuracy (wscript.TestMyRule) ... ok
+
+   ----------------------------------------------------------------------
+   Ran 1 test in 0.008s
+
+   OK
+
+wscriptに ``exptest()`` が定義されていれば、 ``./waf exptest`` によってテストを実行することができます。
+テストの追加には様々な方法があります。
+ここではクラス名を指定することでテストを追加する方法を示しました。
+その他に、ファイル名、もしくはディレクトリ名を指定することができます。
+
+例として、mafの `レポジトリ <https://github.com/pfi/maf>`_ に含まれている一連のテストを実行してみましょう。
+
+.. code-block:: bash
+
+   $ git clone https://github.com/pfi/maf.git
+   $ cd maf
+
+次のwscriptを用意します。
+
+.. code-block:: python
+
+   import maf
+   import maflib.test
+   
+   def exptest(test):
+       test.add("tests") # add all tests in this directory
+       test.add("samples/vowpal/vowpal_util_test.py") # add all tests in this file
+
+``./waf exptest`` を実行すると、 ``tests`` ディレクトリ及び、 ``samples/vowpal/vowpal_util_test.py`` に定義されている全てのテストを実行することができます。
+
 その他の例
 ----------
 
