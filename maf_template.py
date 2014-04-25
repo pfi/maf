@@ -136,20 +136,3 @@ def find_maflib():
 
 find_maflib()
 import maflib.core
-
-def configure(conf):
-    try:
-        conf.env.MAFLIB_PATH = find_maflib()
-        conf.msg('Unpacking maflib', 'yes')
-        conf.load('maflib.core')
-    except:
-        conf.msg('Unpacking maflib', 'no')
-        waflib.Logs.error(sys.exc_info()[1])
-
-def options(opt):
-    try:
-        find_maflib()
-        opt.load('maflib.core')
-    except:
-        opt.msg('Unpacking maflib', 'no')
-        waflib.Logs.error(sys.exc_info()[1])

@@ -5,11 +5,7 @@ import maflib.util
 import maflib.test
 from vowpal_util import *
 
-def configure(conf):
-    conf.load('maf')
-
-def build(bld):
-    pass  # for enabling waf-clean
+def configure(conf): pass
 
 def model_name(prefix): return '%s.model' % prefix
 
