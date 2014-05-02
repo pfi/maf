@@ -54,7 +54,7 @@ def exptest(test):
     
     """
     
-    test.add("vowpal_util_test.py")
+    test.add("test_vowpal_util.py")
     
 def experiment(exp):
     """maf example that evaluates algorithms implemented on LIBLINEAR using
