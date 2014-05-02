@@ -683,7 +683,7 @@ wscriptに ``exptest()`` が定義されていれば、 ``./waf exptest`` によ
        test.add("tests") # add all tests in this directory
        test.add("samples/vowpal/test_vowpal_util.py") # add all tests in this file
 
-``./waf exptest`` を実行すると、 `testsディレクトリ <https://github.com/pfi/maf/tree/master/tests>`_ 及び、 `samples/vowpal/vowpal_util_test.py <https://github.com/pfi/maf/blob/master/samples/vowpal/test_vowpal_util.py>`_ に定義されている全てのテストを実行することができます。
+``./waf exptest`` を実行すると、 `testsディレクトリ <https://github.com/pfi/maf/tree/master/tests>`_ 及び、 `samples/vowpal/test_vowpal_util.py <https://github.com/pfi/maf/blob/master/samples/vowpal/test_vowpal_util.py>`_ に定義されている全てのテストを実行することができます。
 
 その他の例
 ----------
