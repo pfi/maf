@@ -4,6 +4,7 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 import json
+import waflib
 import waflib.Context
 from waflib.ConfigSet import ConfigSet
 import maflib.core
@@ -42,12 +43,12 @@ class ExpTestContext(waflib.Context.Context):
         :param tests_list: Tests to add, specified in the following way:
 
         - file name (ends with .py): find all test classes in that file
-        - directory name: find all test classes in files in the directory
+        - directory name: find all test classes in files matching 'test*.py' in the directory
         - class name: add tests defined in the class
 
         """
 
-        if not isinstance(tests_list, dict): tests_list = [tests_list]
+        if not isinstance(tests_list, list): tests_list = waflib.Utils.to_list(tests_list)
         for test in tests_list:
             if isinstance(test, str):
                 if test.endswith(".py"):
@@ -60,13 +61,13 @@ class ExpTestContext(waflib.Context.Context):
     def add_test_in_path(self, test_path):
         last_slash = test_path.rfind("/")
         if last_slash != -1:
-            (dirname, filename) = (test_path[0:last_slash], test_path[last_slash+1:])
+            (dir_path, filename) = (test_path[0:last_slash], test_path[last_slash+1:])
         else:
-            (dirname, filename) = (".", test_path)
-        self.tests += unittest.defaultTestLoader.discover(dirname, pattern=filename)
+            (dir_path, filename) = (".", test_path)
+        self.tests += unittest.defaultTestLoader.discover(dir_path, pattern=filename, top_level_dir=dir_path)
 
     def add_test_in_dir(self, dir_path):
-        self.tests += unittest.defaultTestLoader.discover(dir_path)
+        self.tests += unittest.defaultTestLoader.discover(dir_path, top_level_dir=dir_path)
 
     def add_test_in_class(self, cls):
         self.tests.append(unittest.TestLoader().loadTestsFromTestCase(cls))
