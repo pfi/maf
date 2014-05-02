@@ -663,6 +663,7 @@ wscriptに ``exptest()`` が定義されていれば、 ``./waf exptest`` によ
 テストの追加には様々な方法があります。
 ここではクラス名を指定することでテストを追加する方法を示しました。
 その他に、ファイル名、もしくはディレクトリ名を指定することができます。
+ディレクトリ名を指定する場合、検索対象となるファイルは、先頭が ``test`` から始まるファイルに限定されます（ ``test_rules.py``, ``test_core.py`` など）。
 
 例として、mafの `レポジトリ <https://github.com/pfi/maf>`_ に含まれている一連のテストを実行してみましょう。
 
@@ -680,9 +681,9 @@ wscriptに ``exptest()`` が定義されていれば、 ``./waf exptest`` によ
    
    def exptest(test):
        test.add("tests") # add all tests in this directory
-       test.add("samples/vowpal/vowpal_util_test.py") # add all tests in this file
+       test.add("samples/vowpal/test_vowpal_util.py") # add all tests in this file
 
-``./waf exptest`` を実行すると、 `testsディレクトリ <https://github.com/pfi/maf/tree/master/tests>`_ 及び、 `samples/vowpal/vowpal_util_test.py <https://github.com/pfi/maf/blob/master/samples/vowpal/vowpal_util_test.py>`_ に定義されている全てのテストを実行することができます。
+``./waf exptest`` を実行すると、 `testsディレクトリ <https://github.com/pfi/maf/tree/master/tests>`_ 及び、 `samples/vowpal/vowpal_util_test.py <https://github.com/pfi/maf/blob/master/samples/vowpal/test_vowpal_util.py>`_ に定義されている全てのテストを実行することができます。
 
 その他の例
 ----------
