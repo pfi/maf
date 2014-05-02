@@ -217,7 +217,7 @@ class ExperimentContext(waflib.Build.BuildContext):
                 for key in source_parameter:
                     if key not in call_object.aggregate_by:
                         target_parameter[key] = source_parameter[key]
-            target_to_source[target_parameter].add(source_parameter)
+            target_to_source[target_parameter].append(source_parameter)
 
         for target_parameter in target_to_source:
             source_parameter = target_to_source[target_parameter]
