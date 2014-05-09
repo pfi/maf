@@ -71,20 +71,20 @@ def rule(callback_body):
 
     """
     @functools.wraps(callback_body)
-    def rule_generator(**args):
+    def rule_generator(*args, **kargs):
         # When parens are omitted (i.e. like exp(..., rule=callback_body)),
         # rule_generator function itself is used as a rule function.
-        if len(args) == 1 and isinstance(args[0], maflib.core.ExperimentTask):
-            callback_body(args[0])
+        if args:
+            callback_body(*args)
             return
 
         def impl(task):
             # Note that parameter is overwritten by args when some entries are
             # existing in both.
-            task.parameter.update(args)
+            task.parameter.update(kargs)
             callback_body(task)
 
-        return maflib.core.Rule(impl, [callback_body, args])
+        return maflib.core.Rule(impl, [callback_body, kargs])
 
     return rule_generator
 
