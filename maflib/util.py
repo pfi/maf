@@ -124,6 +124,7 @@ def aggregator(callback_body):
 
     """
     @functools.wraps(callback_body)
+    @rule
     def callback(task):
         values = []
         for node, parameter in zip(task.inputs, task.source_parameters):
