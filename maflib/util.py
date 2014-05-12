@@ -29,6 +29,66 @@ import json
 import numpy.random
 import types
 
+import maflib.core
+
+def rule(callback_body):
+    """Decorator to define a rule function that takes parameters and arguments
+    interchangeably.
+
+    When one defines a rule that takes some parameters or arguments, he/she is
+    recommended to use :py:func:`rule` decorator to define it. The main reason
+    is that it should be decided by users of the rule whether an argument is
+    contained into task parameter or not, since it is decided by the design of
+    his/her experiment, not by the design of the rule.
+
+    usage:
+
+    .. code-block:: python
+
+       @maflib.util.rule
+       def my_rule(task):
+           do something with parameters 'a' and 'b'
+
+       def build(exp):
+           # indicate by argument
+           exp(target='t', rule=my_rule(a=1, b=2))
+
+           # indicate by parameter
+           exp(target='s', parameters=[{'a': 1, 'b': 2}], rule=my_rule())
+
+           # mixed usage
+           exp(target='u', parameters=[{'a': 1}], rule=my_rule(b=2))
+
+           # if no arguments are used, parens can be omitted
+           exp(target='r', parameters=[{'a': 1, 'b': 2}], rule=my_rule)
+
+    :param ``function`` callback_body: A function that receives a task instance
+        and does its own work. It is almost same as a usual task function; the
+        only different thing is that parameter of the given task is expanded by
+        the arguments as the above example.
+    :return: A task generator function.
+    :rtype: ``function``
+
+    """
+    @functools.wraps(callback_body)
+    def rule_generator(*args, **kargs):
+        # When parens are omitted (i.e. like exp(..., rule=callback_body)),
+        # rule_generator function itself is used as a rule function.
+        if args:
+            callback_body(*args)
+            return
+
+        def impl(task):
+            # Note that parameter is overwritten by args when some entries are
+            # existing in both.
+            task.parameter.update(kargs)
+            callback_body(task)
+
+        return maflib.core.Rule(impl, [callback_body, kargs])
+
+    return rule_generator
+
+
 def aggregator(callback_body):
     """Creates an aggregator using function ``callback_body`` independent from
     waf.
@@ -64,6 +124,7 @@ def aggregator(callback_body):
 
     """
     @functools.wraps(callback_body)
+    @rule
     def callback(task):
         values = []
         for node, parameter in zip(task.inputs, task.source_parameters):
