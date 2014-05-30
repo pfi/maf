@@ -551,7 +551,7 @@ class GraphContext(ExperimentContext):
     @staticmethod
     def _extract_parameter_id(node):
         if node.is_bld():
-            found_id = re.findall(r'(\d+)-[^/].+', node.name)
+            found_id = re.findall(r'(\d+)-[^/]+', node.name)
             if found_id:
                 return int(found_id[0])
         return -1
