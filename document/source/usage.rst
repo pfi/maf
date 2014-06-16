@@ -165,6 +165,8 @@ productという名前は集合の直積を表します。
                           'C': lambda: math.pow(10, random.uniform(-1, 1))  # サンプリング関数を自分で記述
                           })
 
+.. _metanode_combination:
+
 メタノードの組合せ
 ~~~~~~~~~~~~~~~~~~
 
@@ -684,6 +686,45 @@ wscriptに ``exptest()`` が定義されていれば、 ``./waf exptest`` によ
        test.add("samples/vowpal/test_vowpal_util.py") # add all tests in this file
 
 ``./waf exptest`` を実行すると、 `testsディレクトリ <https://github.com/pfi/maf/tree/master/tests>`_ 及び、 `samples/vowpal/test_vowpal_util.py <https://github.com/pfi/maf/blob/master/samples/vowpal/test_vowpal_util.py>`_ に定義されている全てのテストを実行することができます。
+
+依存関係の描画
+~~~~~~~~~~~~~~~
+
+wscriptに定義した実験手順が複雑になってくると、実験の流れが正しく定義されているのかを検証することが難しくなってきます。自分で定義した実験の正しさを検証するためのツールとして、mafでは、各実験の依存関係をグラフにして描画する機能を提供します。
+
+例として、 :ref:`metanode_combination` で定義した実験のグラフを描画してみましょう。以下のwscriptで、各ruleは単にパラメータの組み合わせを出力するだけであり、特に意味はありません。
+
+.. code-block:: python
+
+   exp(target='x',
+       parameters=[{'A': 1, 'B': 1},
+                   {'A': 2, 'B': 10},
+                   {'A': 3, 'B': 1}],
+       rule="echo ${A} ${B} > ${TGT}")
+
+   exp(target='y',
+       parameters=[{'A': 1, 'C': -1},
+                   {'A': 2, 'C': 0},
+                   {'A': 3, 'C': 1}],
+       rule="echo ${A} ${C} > ${TGT}")
+
+   exp(source='x y',
+       target='z',
+       rule="echo ${A} ${B} ${C} > ${TGT}")
+
+以下のコマンドを実行することで、graph.pdfというファイルが作られます。
+
+.. code-block:: bash
+
+   $ ./waf graph
+
+これは、以下のように実験に伴う全てのノード間の依存関係を描画したものになっています。黒丸は一つのタスクを表します。これを見ることにより、例えば最後の ``target='z'`` の実験は三つのタスクからなり、 ``x`` と ``y`` の間で ``A`` の値を共有するノードを組み合わせて実験が行われる、ということを、視覚的に確かめることができます。
+
+.. image:: figures/maf_graph_example.png
+   :scale: 75%
+
+現在の問題点として、一つの実験におけるパラメータの組み合わせが膨大であるとき、グラフが非常に複雑になり見づらいという点が挙げられます。例えばsamples/liblinearのwscriptに対して、グラフを描画してみてください。ノード数が膨大になり非常に見づらくなる場合、一つの解決策はパラメータの組み合わせを一時的に減らすようにwscriptを書き換えることです。例えば ``maflib.util.product`` を使っている場合、各パラメータの候補数を減らすことでグラフを見やすくすることができます。
+
 
 その他の例
 ----------
