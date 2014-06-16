@@ -732,7 +732,7 @@ class ParameterIdGenerator(object):
             pickle.dump(dicted_params, f)
 
         with _create_file(self.text_path) as f:
-            for i, parameter in enumerate(self._parameters):
+            for id, parameter in enumerate(self._parameters):
                 f.write('%s\t%s\n' % (id, parameter))
 
     def _load_table(self, path):
