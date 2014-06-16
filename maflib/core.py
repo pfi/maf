@@ -365,15 +365,22 @@ class GraphContext(ExperimentContext):
                 lines.append('label="%s"' % meta_sig)
                 for node_id in node_ids:
                     node = node_indexer.get(node_id)
-                    lines.append('node%s[label="%s"]' % (node_id, ctx.node_label(node)))
+                    lines.append('node%s[label="%s" style=filled fillcolor=white]' %
+                                 (node_id, ctx.node_label(node)))
                 lines.append("}")
                 
             return "\n".join(lines)
             
     class MetaTasks(object):
         """A collection of meta classes similar to MetaNodes."""
+
+        num_invis_around_task = 3
+        max_num_invis = 10      # num of invis nodes does not exceed this
+        num_invis_per_nodes = 3 # num of invis nodes =
+                                #  (sum of input or output nodes) / num_invis_per_nodes
         
         def __init__(self, tasks):
+            self.tasks = list(tasks)
             self.table = collections.defaultdict(set) # meta task signature -> task ids
             for i, task in enumerate(tasks):
                 self.add_task(task, i)
@@ -385,14 +392,87 @@ class GraphContext(ExperimentContext):
 
         def render_graphviz(self):
             lines = []
+            self.invis_i = 0 # used to distinguish all invisible points around a task
+            def add_invis_points():
+                for i in range(self.num_invis_around_task):
+                    lines.append("task_invis%d[style=invis,shape=point]" %
+                                 self.invis_i)
+                    self.invis_i += 1
 
             for i, (meta_sig, task_ids) in enumerate(self.table.items()):
                 lines.append("subgraph cluster_meta_task" + str(i) + " {")
+                lines.append("style=filled;")
+                lines.append("color=lightgrey;")
+                add_invis_points()
                 for task_id in task_ids:
-                    lines.append("task" + str(task_id) + '[shape=point,style=filled,color="black"]')
+                    lines.append("task%d[shape=point,style=filled,color=black]" %
+                                 (task_id))
+                    add_invis_points()
                 lines.append("}")
                 
             return "\n".join(lines)
+
+        def render_invisibles(self, node_indexer):
+            self.invis_i = 0 # used to distinguish all invisible points between nodes
+            
+            def num_in_links(meta):
+                return sum([len(_to_list(self.tasks[task_id].source))
+                            for task_id in self.table[meta]])
+            def num_out_links(meta):
+                return sum([len(_to_list(self.tasks[task_id].target))
+                            for task_id in self.table[meta]])
+
+            def extract_meta_links(meta_task, source=True):
+                links = []
+                existing_meta_nodes = set()
+                for task_id in self.table[meta_task]:
+                    task = self.tasks[task_id]
+                    for node in _to_list(task.source if source else task.target):
+                        meta_node = GraphContext._extract_meta_node(node)
+                        if meta_node in existing_meta_nodes: continue
+                        existing_meta_nodes.add(meta_node)
+
+                        node_id = node_indexer.get_id(node)
+                        node_name = "node%d" % node_id
+                        task_name = "task%d" % task_id
+
+                        if source:
+                            links.append((node_name, task_name))
+                        else:
+                            links.append((task_name, node_name))
+                return links
+
+            def link_lines(num_invis, links):
+                lines = []
+                if num_invis <= 1: return lines
+                for link in links:
+                    invis_names = []
+                    for i in range(num_invis):
+                        invis_names.append("invis_point%d" % self.invis_i)
+                        self.invis_i += 1
+                    for invis_name in invis_names:
+                        lines.append("%s[style=invis shape=point]" % invis_name)
+                        
+                    lines.append("%s->%s->%s[style=invis weight=100];" %
+                                 (link[0], "->".join(invis_names), link[1]))
+                return lines
+
+            lines = []
+            
+            for meta_task in self.table:
+                num_in_invis = min(self.max_num_invis,
+                                   num_in_links(meta_task) / self.num_invis_per_nodes)
+                num_out_invis = min(self.max_num_invis,
+                                    num_out_links(meta_task) / self.num_invis_per_nodes)
+
+                in_links = extract_meta_links(meta_task, True)
+                out_links = extract_meta_links(meta_task, False)
+                
+                lines += link_lines(num_in_invis, in_links)
+                lines += link_lines(num_out_invis, out_links)
+                
+            return "\n".join(lines)
+                
             
     def execute(self):
         """
@@ -422,11 +502,14 @@ class GraphContext(ExperimentContext):
         dot = tempfile.NamedTemporaryFile()
 
         dot.write("digraph G {\n")
-        # dot.write("size=\"50,50\";\n")
+        dot.write("graph [splines=line,outputorder=edgesfirst];")
         dot.write(meta_nodes.render_graphviz(node_indexer, self) + "\n")
         dot.write(meta_tasks.render_graphviz() + "\n")
         for link in links:
-            dot.write("%s->%s[arrowsize=0.3]\n" % (link[0], link[1]))
+            dot.write("%s->%s[color=\"#0000005f\" arrowsize=0.5 arrowhead=open]\n" %
+                      (link[0], link[1]))
+        dot.write(meta_tasks.render_invisibles(node_indexer))
+        
         dot.write("}")
 
         dot.seek(0)
@@ -439,7 +522,7 @@ class GraphContext(ExperimentContext):
         else:
             subprocess.check_call(['dot', '-T'+ext, dot.name,
                                    '-o', waflib.Options.options.graphpath])
-
+            
     def _collect_links(self, node_indexer, tasks):
         links = []
         for task_id, task in enumerate(tasks):
@@ -468,7 +551,7 @@ class GraphContext(ExperimentContext):
     @staticmethod
     def _extract_parameter_id(node):
         if node.is_bld():
-            found_id = re.findall(r'(\d+)-[^/].+', node.name)
+            found_id = re.findall(r'(\d+)-[^/]+', node.name)
             if found_id:
                 return int(found_id[0])
         return -1
