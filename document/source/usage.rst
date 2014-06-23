@@ -26,11 +26,8 @@ wafファイルには実行可能フラグを立てておくと良いでしょ�
 
    import maf
 
-   def options(opt):
-       opt.load('maf')
-
    def configure(conf):
-       conf.load('maf')
+       pass
 
    def build(exp):
        pass
