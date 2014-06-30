@@ -306,68 +306,41 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 
 ``for_each`` と ``aggregate_by`` を同時に指定することはできません。
 
+.. _dir_metanode:
+
 ディレクトリに対するメタノード
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 これまでの例は全て、一つのパラメータの組み合わせに対応する入力/出力ノードは一つのファイルに対応し、メタノードはそれらを束ねる役割を持ちました。
-一方で、異なる種類のファイルを複数含むディレクトリを一つのノードとして扱いたい場合も存在します。
+一方で、異なる種類のファイルを複数含むディレクトリを一つの入力/出力ノードとして扱いたい場合も存在します。
 例えば画像処理において、データセットが複数の画像からなる場合や、言語処理において複数の文書からなるコーパスをまとめて扱いたい場合などが考えられます。
 またあるソフトは、学習や予測の結果を複数ファイルからなるディレクトリの形で出力する場合も考えられます。
 
-出力ファイルにディレクトリを指定するソフトを用いる場合は特別な変更は必要ありません。
+基本的には、タスクの ``input``, ``output`` にファイルではなくディレクトリを指定した場合も、通常のタスクと同じように実行させることができます。
+例えば以下のように、出力ファイルにディレクトリを指定するソフトを用いる場合は特別な変更は必要ありません。
 
 .. code-block:: python
 
    exp(target='output',
        parameters=maflib.util.product({'A': [0, 1, 2],
                                        'B': [-1, 0, 1]}),
-       rule='train -A ${A} -B ${B} -i input_path -o ${TGT}')
+       rule='train -A ${A} -B ${B} -i %s -o ${TGT}' % ('/path/to/input'))
 
 ここでの ``train`` は ``-o`` でディレクトリを指定し、各実行毎にディレクトリを作成する仮想的なコマンドです。
 この場合通常のタスクと同じように、 ``build`` 以下には、output/0-output/, output/1-output/ ... といった出力が生成されます。
 
 注意が必要なのは、出力ディレクトリを事前に生成しておかなければならない場合です。
 例えば上記の ``train`` コマンドが、 ``-o`` に指定したディレクトリが存在しない場合に実行に失敗するとします。
-この場合は、次のように明示的にディレクトリを生成する関数ルールを定義し、それを指定する必要があります。
-関数ルールは実験タスクをより柔軟に定義するための機能です。詳しくは :ref:`function_rule` を参照してください。
+この場合、ディレクトリの生成をルールの中に明示的に記述する必要があります。
 
 .. code-block:: python
 
    exp(target='output',
        parameters=maflib.util.product({'A': [0, 1, 2],
                                        'B': [-1, 0, 1]}),
-       rule=train)
+       rule='mkdir -p ${TGT}; train -A ${A} -B ${B} -i input_path -o ${TGT}')
 
-   @maflib.util.rule
-   def train(task):
-       task.outputs[0].mkdir()
-       subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
-                              '-i input_path', '-o', task.outputs[0]])
-
-上記の ``task.outputs[0].mkdir()`` は、出力ノードのパスの位置にディレクトリを生成します。
-これによって、事前にディレクトリが存在することが保証されます。
-
-また、関数ルールの中で出力ノードのディレクトリにファイルを追加したい場合もあるかもしれません。
-``task.outputs[i]`` はwafの `Nodeクラス <http://docs.waf.googlecode.com/git/apidocs_17/Node.html>`_ のインスタンスになっていて、Nodeクラスに定義されているファイル操作の機能を使うことができます。
-今回のようにディレクトリを指すノードに対してその中に新しいファイルを作成する場合、 ``Node.find_or_declare()`` が便利です。
-例えば先ほどのタスクで、出力ディレクトリにタスクの実行時間を計測したログファイルを別に出力する場面を考えます。
-その場合、 ``train`` を以下のように拡張します。
-
-.. code-block:: python
-
-    @maflib.util.rule
-    def train(task):
-        task.outputs[0].mkdir()
-
-        import time
-        begin = time.clock()
-        subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
-                              '-i input_path', '-o', task.outputs[0]])            
-        sec = time.clock() - begin
-        task.outputs[0].find_or_declare("time").write(str(sec))
-
-``task.outputs[0].find_or_declare("time")`` は、出力ディレクトリ内に time という名前のファイルを作成します。
-そして ``write`` メソッドにより、その中に計測した実行時間を出力します。
+先ほどとの違いは、 ``train`` コマンドの実行前に、出力ディレクトリを ``mkdir`` により生成している点です。出力ノードにディレクトリを指定した場合の他の例は、 :ref:`dir_rule` にもあります。
 
 .. _id_table:
 
@@ -513,7 +486,7 @@ mafにおいてルールには3つの種類があります。
     タスクのパラメータ辞書
 
 ルールへのパラメータの割り当て
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""
 
 :py:func:`maflib.util.rule` デコレータを用いることにより、ルールに紐づいたパラメータの指定方法が柔軟になります。以下にその例を示します。
 
@@ -539,6 +512,55 @@ mafにおいてルールには3つの種類があります。
 ここで、4つの実験はどれも ``my_rule`` というタスクに対し ``a=1,b=2`` という組み合わせで実行されます。 ``@maflib.util.rule`` が書かれていない場合は、最後の例のように ``rule=my_rule`` という書き方しか許されません。ルールの定義にデコレータを追加することで、 ``rule=my_rule(a=1, b=2)`` のように、そのルールで用いられるパラメータを直接指定することができます。組み合わせを考える必要のないパラメータをこのように指定することで記述を簡略化することができます。
 
 advancedな話題として、このように記述することで、全てのパラメータを ``parameters`` に指定した場合に発生する一部の問題を回避することができます。
+
+.. _dir_rule:
+
+具体例：ディレクトリに対する関数ルール
+"""""""""""""""""""""""""""""""""""""""
+
+関数ルールの具体例を一つ取り上げます。これは :ref:`dir_metanode` で説明した、出力ノードにディレクトリを指定した場合の例にもなっています。
+
+:ref:`dir_metanode` において、コマンドの実行前に ``mkdir`` によりディレクトリを生成しておかなければならないことを述べました。
+その際は、二つのコマンドを ``;`` により繋げて実行していましたが、同じことは次のように関数ルールを用いることでも記述できます。
+
+.. code-block:: python
+
+   exp(target='output',
+       parameters=maflib.util.product({'A': [0, 1, 2],
+                                       'B': [-1, 0, 1]}),
+       rule=train)
+
+       @maflib.util.rule
+       def train(task):
+           task.outputs[0].mkdir()
+           subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
+                                  '-i input_path', '-o', task.outputs[0]])
+
+上記の ``task.outputs[0].mkdir()`` は、出力ノードのパスの位置にディレクトリを生成します。
+``task.outputs[i]`` はwafの `Nodeクラス <http://docs.waf.googlecode.com/git/apidocs_17/Node.html>`_ のインスタンスになっていて、Nodeクラスに定義されているファイル操作の機能を使うことができます。
+``Node.mkdir()`` は、Nodeクラスの指すパスに新たにディレクトリを生成するメソッドです。
+
+この発展として、関数ルールの中で、出力ノードのディレクトリにファイルを追加したい場面を考えましょう。
+この場合、 ``Node`` クラスに定義された ``Node.find_or_declare()`` メソッドが便利です。
+これは、ディレクトリを指すノードに対し実行することで、指定した相対パスの位置に新たにファイルを生成します
+例えば先ほどのタスクで、出力ディレクトリにタスクの実行時間を計測したログファイルを別に出力する場面を考えます。
+その場合、 ``train`` を以下のように拡張します。
+
+.. code-block:: python
+
+    @maflib.util.rule
+    def train(task):
+        task.outputs[0].mkdir()
+
+        import time
+        begin = time.clock()
+        subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
+                                 '-i input_path', '-o', task.outputs[0]])            
+        sec = time.clock() - begin
+        task.outputs[0].find_or_declare("time").write(str(sec))
+
+``task.outputs[0].find_or_declare("time")`` は、出力ディレクトリ内に time という名前のファイルを生成します。
+そして ``write`` メソッドにより、その中に計測した実行時間を出力します。
 
 ``maflib.core.Rule`` ルール
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
