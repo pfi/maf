@@ -497,16 +497,16 @@ mafにおいてルールには3つの種類があります。
        task.outputs[0].write("%s %s" % (task.parameter['a'], task.parameter['b']))
 
    def build(exp):
-       # indicate by argument
+       # 関数の引数により指定する場合
        exp(target='t', rule=my_rule(a=1, b=2))
 
-       # indicate by parameter
+       # タスクのパラメータとして指定する場合
        exp(target='s', parameters=[{'a': 1, 'b': 2}], rule=my_rule())
 
-       # mixed usage
+       # 両者の組み合わせ
        exp(target='u', parameters=[{'a': 1}], rule=my_rule(b=2))
 
-       # if no arguments are used, parens can be omitted
+       # 関数に引数を渡さない場合、括弧は省略できます
        exp(target='r', parameters=[{'a': 1, 'b': 2}], rule=my_rule)
 
 ここで、4つの実験はどれも ``my_rule`` というタスクに対し ``a=1,b=2`` という組み合わせで実行されます。 ``@maflib.util.rule`` が書かれていない場合は、最後の例のように ``rule=my_rule`` という書き方しか許されません。ルールの定義にデコレータを追加することで、 ``rule=my_rule(a=1, b=2)`` のように、そのルールで用いられるパラメータを直接指定することができます。組み合わせを考える必要のないパラメータをこのように指定することで記述を簡略化することができます。
