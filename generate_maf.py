@@ -28,17 +28,18 @@
 
 import os
 import tarfile
+import base64
 
 TEMPLATE_FILE_NAME = 'maf_template.py'
 TARGET_FILE_NAME = 'maf.py'
 ARCHIVE_FILE_NAME = 'maflib.tar.bz2'
 MAFLIB_PATH = 'maflib'
 
-NEW_LINE = '#XXX'.encode()
-CARRIAGE_RETURN = '#YYY'.encode()
+NEW_LINE = b'#XXX'
+CARRIAGE_RETURN = b'#YYY'
 
-ARCHIVE_BEGIN = '#==>\n#'.encode()
-ARCHIVE_END = '#<==\n#'.encode()
+ARCHIVE_BEGIN = b'#==>\n#'
+ARCHIVE_END = b'#<==\n#'
 
 if __name__ == '__main__':
     try:
@@ -50,14 +51,16 @@ if __name__ == '__main__':
         archive.close()
    
     with open(TEMPLATE_FILE_NAME) as f:
-        code = f.read()
+        # code = f.read()
+        code = bytes(f.read())
 
     with open(ARCHIVE_FILE_NAME, 'rb') as f:
-        archive = f.read()
+        # archive = f.read()
+        archive = base64.b64encode(f.read())
 
-    code += '#==>\n#'.encode()
-    code += archive.replace('\n'.encode(), NEW_LINE).replace('\r'.encode(), CARRIAGE_RETURN)
-    code += '\n#<==\n'.encode()
+    code += b'#==>\n#'
+    code += archive.replace(b'\n', NEW_LINE).replace(b'\r', CARRIAGE_RETURN)
+    code += b'\n#<==\n'
 
     with open(TARGET_FILE_NAME, 'wb') as f:
         f.write(code)
