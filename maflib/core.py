@@ -596,7 +596,7 @@ class Parameter(dict):
     """
     def __hash__(self):
         # TODO(beam2d): Should we cache this value?
-        return hash(frozenset(self.iteritems()))
+        return hash(frozenset(self.items()))
 
     def conflict_with(self, parameter):
         """Checks whether the parameter conflicts with given other parameter.
