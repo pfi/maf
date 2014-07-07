@@ -296,6 +296,8 @@ def calculate_stats_multiclass_classification(task):
         else: return 2 * prec * recall / (prec + recall)
 
     predict_correct_labels = json.loads(task.inputs[0].read())
+    num_instances = len(predict_correct_labels)
+    
     labelset = set([e["p"] for e in predict_correct_labels] \
                        + [e["c"] for e in predict_correct_labels])
 
@@ -310,7 +312,7 @@ def calculate_stats_multiclass_classification(task):
 
     results = {}
     results["accuracy"] = \
-        float(sum([s.tp for s in labelstats.values()])) / labelstats.values()[0].sum()
+        float(sum([s.tp for s in labelstats.values()])) / float(num_instances)
     results["average_accuracy"] = _macro_average([s.accuracy() for s in labelstats.values()])
     results["error_rate"] = _macro_average([s.error_rate() for s in labelstats.values()])
 
@@ -424,7 +426,7 @@ def segment_without_label_bias(weights, extract_label=(lambda line: line[:line.f
             a += n
             accumulate.append(a)
         accumulate[len(accumulate) - 1] = 1.0
-        endpoints = [0] + map(lambda w: int(len(data) * w), accumulate)
+        endpoints = [0] + list(map(lambda w: int(len(data) * w), accumulate))
         return [data[endpoints[i]:endpoints[i + 1]] for i in range(len(endpoints) - 1)]
 
     def body(task):
