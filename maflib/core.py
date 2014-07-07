@@ -804,7 +804,7 @@ class ParameterIdGenerator(object):
 
         if len(self._table) == 0: return
 
-        with _create_file(self.path) as f:
+        with _create_file(self.path, 'wb') as f:
             # We only save a modified `self._parameters`, which is obtained by converting
             # each element of `self._parameters` into a dictionary object.
             # This is for deserializing parameter->id mappings outside without
@@ -1060,7 +1060,7 @@ def register_experiment_task_with_rule(self):
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
 
 
-def _create_file(path):
+def _create_file(path, mode='w'):
     """Opens file in write mode. It also creates intermediate directories if
     necessary.
 
@@ -1069,7 +1069,7 @@ def _create_file(path):
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    return open(path, 'w')
+    return open(path, mode)
 
 
 def _let_element_to_be_list(d, key):
