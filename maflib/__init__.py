@@ -1,5 +1,2 @@
-import core
-import plot
-import rules
-import test
-import util
+#! /usr/bin/env python
+# encoding: utf-8
