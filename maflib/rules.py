@@ -29,7 +29,6 @@ import json
 import os.path
 import tempfile
 import urllib
-from contextlib import nested
 
 import maflib.core
 import maflib.util
@@ -376,7 +375,8 @@ def segment_by_line(num_folds, parameter_name='fold'):
         test_begin = base * n
         test_end = base * (n + 1)
 
-        with nested(open(task.outputs[0].abspath(), 'w'), open(task.outputs[1].abspath(), 'w')) as (train, test):
+        with open(task.outputs[0].abspath(), 'w') as train,\
+             open(task.outputs[1].abspath(), 'w') as test:
             i = 0
             for line in source:
                 if i < test_begin or i >= test_end:
