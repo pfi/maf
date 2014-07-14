@@ -17,7 +17,7 @@ if __name__ == '__main__':
     os.chdir('samples')
 
     for d in glob.glob('*/'):
-        for dotwaf in glob.glob(os.path.join(d, ".waf-*")):
+        for dotwaf in glob.glob(os.path.join(d, ".waf*")):
             shutil.rmtree(dotwaf)
         for f in '../maf.py', '../waf':
             shutil.copy(f, d)
