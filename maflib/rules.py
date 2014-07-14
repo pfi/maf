@@ -28,7 +28,10 @@ import copy
 import json
 import os.path
 import tempfile
-import urllib
+try:
+    from urllib import urlretrieve
+except ImportError:
+    from urllib.request import urlretrieve
 
 import maflib.core
 import maflib.util
@@ -51,10 +54,10 @@ def download(url, decompress_as=''):
     def body(task):
         if decompress_as != '':
             t = tempfile.NamedTemporaryFile()
-            urllib.urlretrieve(url, t.name)
+            urlretrieve(url, t.name)
             _decompress(t.name, task.outputs[0].abspath(), decompress_as)
         else:
-            urllib.urlretrieve(url, task.outputs[0].abspath())
+            urlretrieve(url, task.outputs[0].abspath())
 
     return maflib.core.Rule(fun=body, dependson=[download, url])
 
@@ -462,7 +465,7 @@ def _decompress(srcpath, dstpath, filetype):
     else:
         return False
 
-    with open(dstpath, 'w') as f:
+    with open(dstpath, 'wb') as f:
         f.write(decompressed_data)
 
     return True

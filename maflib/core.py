@@ -646,7 +646,7 @@ class Rule(object):
                 return inspect.getsource(d)
             else:
                 return str(d)
-        return map(to_str, self.dependson)
+        return list(map(to_str, self.dependson))
 
 
 class CallObject(object):
@@ -900,8 +900,8 @@ class ExperimentTask(waflib.Task.Task):
         corresponding input node."""
 
         if not hasattr(self, 'dep_vars'): self.dep_vars = []
-        self.dep_vars += self.parameter.keys()
-        self.dep_vars += filter(lambda k: k.startswith("dependson"), env.keys())
+        self.dep_vars += sorted(self.parameter.keys())
+        self.dep_vars += sorted(filter(lambda k: k.startswith("dependson"), env.keys()))
 
         self.inputs = [ExperimentNode(s) for s in self.inputs]
         self.outputs = [ExperimentNode(s) for s in self.outputs]
