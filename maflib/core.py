@@ -209,15 +209,18 @@ class ExperimentContext(waflib.Build.BuildContext):
         target_to_source = collections.defaultdict(list)
 
         for source_parameter in source_parameters:
-            target_parameter = Parameter()
+            base_target_parameter = Parameter()
             if key_type == 'for_each':
                 for key in call_object.for_each:
-                    target_parameter[key] = source_parameter[key]
+                    base_target_parameter[key] = source_parameter[key]
             elif key_type == 'aggregate_by':
                 for key in source_parameter:
                     if key not in call_object.aggregate_by:
-                        target_parameter[key] = source_parameter[key]
-            target_to_source[target_parameter].append(source_parameter)
+                        base_target_parameter[key] = source_parameter[key]
+            for parameter in call_object.parameters:
+                target_parameter = Parameter(base_target_parameter)
+                target_parameter.update(parameter)
+                target_to_source[target_parameter].append(source_parameter)
 
         for target_parameter in target_to_source:
             source_parameter = target_to_source[target_parameter]
