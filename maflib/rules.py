@@ -23,15 +23,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import bz2
 import collections
 import copy
-import gzip
 import json
 import os.path
 import tempfile
 import urllib
-import zlib
+from contextlib import nested
 
 import maflib.core
 import maflib.util
@@ -323,13 +321,13 @@ def calculate_stats_multiclass_classification(task):
         results["%s-F1" % label] = F1(prec, recall)
         results["%s-specifity" % label] = s.specifity()
         results["%s-AUC" % label] = s.AUC()
-    results["precision-macro"] = _macro_average([v for (k,v) in results.items() \
+    results["precision-macro"] = _macro_average([v for (k, v) in results.items() \
                                                      if k.endswith("precision")])
     results["precision-micro"] = float(sum([v.precision_numer() for v in labelstats.values()])) \
                                / sum([v.precision_denom() for v in labelstats.values()])
     results["precision-micro-numer"] = sum([v.precision_numer() for v in labelstats.values()])
     results["precision-micro-denom"] = sum([v.precision_denom() for v in labelstats.values()])
-    results["recall-macro"] = _macro_average([v for (k,v) in results.items() \
+    results["recall-macro"] = _macro_average([v for (k, v) in results.items() \
                                                   if k.endswith("recall")])
     results["recall-micro"] = float(sum([v.recall_numer() for v in labelstats.values()])) \
                             / sum([v.recall_denom() for v in labelstats.values()])
@@ -378,8 +376,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
         test_begin = base * n
         test_end = base * (n + 1)
 
-        with open(task.outputs[0].abspath(), 'w') as train, \
-             open(task.outputs[1].abspath(), 'w') as test:
+        with nested(open(task.outputs[0].abspath(), 'w'), open(task.outputs[1].abspath(), 'w')) as (train, test):
             i = 0
             for line in source:
                 if i < test_begin or i >= test_end:
@@ -391,7 +388,7 @@ def segment_by_line(num_folds, parameter_name='fold'):
         source.close()
     return body
 
-def segment_without_label_bias(weights, extract_label = (lambda line: line[:line.find(' ')])):
+def segment_without_label_bias(weights, extract_label=(lambda line: line[:line.find(' ')])):
     """Segments an example per line data into k-fold where k is the length of param weights.
 
     This method consider the label-bias when segmentation:
@@ -426,9 +423,9 @@ def segment_without_label_bias(weights, extract_label = (lambda line: line[:line
         for n in normalized:
             a += n
             accumulate.append(a)
-        accumulate[len(accumulate)-1] = 1.0
+        accumulate[len(accumulate) - 1] = 1.0
         endpoints = [0] + map(lambda w: int(len(data) * w), accumulate)
-        return [data[endpoints[i]:endpoints[i+1]] for i in range(len(endpoints)-1)]
+        return [data[endpoints[i]:endpoints[i + 1]] for i in range(len(endpoints) - 1)]
 
     def body(task):
         if len(weights) != len(task.outputs):
@@ -437,7 +434,7 @@ def segment_without_label_bias(weights, extract_label = (lambda line: line[:line
         label2examples = collections.defaultdict(list)
         for line in open(task.inputs[0].abspath()): label2examples[extract_label(line)].append(line)
         label2segmented_examples = dict([(k, _segment_data_with_weights(v)) \
-                                   for k,v in label2examples.items()])
+                                   for k, v in label2examples.items()])
         for i, o in enumerate(task.outputs):
             with open(o.abspath(), 'w') as f:
                 for examples in label2segmented_examples.values():
@@ -447,15 +444,19 @@ def segment_without_label_bias(weights, extract_label = (lambda line: line[:line
 
 def _decompress(srcpath, dstpath, filetype):
     if filetype == 'bz2':
-        with bz2.BZ2File(srcpath) as f:
-            decompressed_data = f.read()
+        import bz2
+        f = bz2.BZ2File(srcpath)
+        decompressed_data = f.read()
+        f.close()
     elif filetype == 'gz':
+        import gzip
         with gzip.GzipFile(srcpath) as f:
             decompressed_data = f.read()
     elif filetype == 'zip':
+        import zlib
         with open(srcpath) as f:
             compressed_data = f.read()
-        decompressed_data = zlip.decompress(compressed_data)
+        decompressed_data = zlib.decompress(compressed_data)
     else:
         return False
 

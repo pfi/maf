@@ -1,5 +1,10 @@
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 import json
+import waflib
 import waflib.Context
 from waflib.ConfigSet import ConfigSet
 import maflib.core
@@ -38,12 +43,12 @@ class ExpTestContext(waflib.Context.Context):
         :param tests_list: Tests to add, specified in the following way:
 
         - file name (ends with .py): find all test classes in that file
-        - directory name: find all test classes in files in the directory
+        - directory name: find all test classes in files matching 'test*.py' in the directory
         - class name: add tests defined in the class
 
         """
 
-        if not isinstance(tests_list, dict): tests_list = [tests_list]
+        if not isinstance(tests_list, list): tests_list = waflib.Utils.to_list(tests_list)
         for test in tests_list:
             if isinstance(test, str):
                 if test.endswith(".py"):
@@ -56,13 +61,13 @@ class ExpTestContext(waflib.Context.Context):
     def add_test_in_path(self, test_path):
         last_slash = test_path.rfind("/")
         if last_slash != -1:
-            (dirname, filename) = (test_path[0:last_slash], test_path[last_slash+1:])
+            (dir_path, filename) = (test_path[0:last_slash], test_path[last_slash+1:])
         else:
-            (dirname, filename) = (".", test_path)
-        self.tests += unittest.defaultTestLoader.discover(dirname, pattern=filename)
+            (dir_path, filename) = (".", test_path)
+        self.tests += unittest.defaultTestLoader.discover(dir_path, pattern=filename, top_level_dir=dir_path)
 
     def add_test_in_dir(self, dir_path):
-        self.tests += unittest.defaultTestLoader.discover(dir_path)
+        self.tests += unittest.defaultTestLoader.discover(dir_path, top_level_dir=dir_path)
 
     def add_test_in_class(self, cls):
         self.tests.append(unittest.TestLoader().loadTestsFromTestCase(cls))
@@ -71,22 +76,31 @@ class ExpTestContext(waflib.Context.Context):
 class TestTask(object):
     """A task object making it easy to write unittest for rules.
 
-    This class mimics the behavior of task object by having dummy Node objects internally.
-    These node objects are :py:func:`maflib.core.ExperimentNode`.
+    This class mimics the behavior of task object by having dummy Node objects
+    internally. These node objects are :py:func:`maflib.core.ExperimentNode`.
 
     Example usages of this task can be found on test_rules.py.
 
+    `inputs` and `outputs` are instances of `ExperimentNodeList`.
+    This class makes easy for accessing input/output node objects by
+    automatically adding new element if necessary.
+    NOTE: You should not add elements to this list manually, e.g., with
+    `task.outputs.append(...)`. Please use instead `setsize(size)` or
+    index accessing like `task.outputs[3]` automatically appends elements up to
+    the index 2.
+
     """
 
-    class ExperimentNodeList(object):
-        def __init__(self):
-            self.list = []
+    class ExperimentNodeList(list):
+        def setsize(self, size):
+            if len(self) <= size:
+                for i in range(size - len(self)):
+                    self.append(maflib.core.ExperimentNode())
 
         def __getitem__(self, index):
-            if index <= len(self.list):
-                for i in range(len(self.list) - index + 1):
-                    self.list.append(maflib.core.ExperimentNode())
-            return self.list[index]
+            if index <= len(self):
+                self.setsize(index + 1)
+            return super(TestTask.ExperimentNodeList, self).__getitem__(index)
 
     def __init__(self):
         self.inputs = TestTask.ExperimentNodeList()
@@ -108,6 +122,7 @@ class TestTask(object):
         """
 
         self.parameter = {}
+        self.source_parameters = []
 
     def set_input(self, index, s):
         self.inputs[index].write(s)

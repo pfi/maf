@@ -3,11 +3,7 @@ import maflib.plot
 import maflib.rules
 import maflib.util
 
-def configure(conf):
-    conf.load('maf')
-
-def build(bld):
-    pass  # for enabling waf-clean
+def configure(conf): pass
 
 @maflib.plot.plot_by
 def plot(figure, data, parameter):
@@ -37,7 +33,7 @@ def plot(figure, data, parameter):
 
     axes.legend(loc='best')
 
-def experiment(exp):
+def build(exp):
     """maf example that evaluates algorithms implemented on LIBLINEAR using
     20 Newsgroup dataset.
 

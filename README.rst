@@ -23,7 +23,7 @@ Then run following commands:
 ::
 
   $ ./waf configure
-  $ ./waf experiment
+  $ ./waf
 
 You can also build ``maf.py`` from the source code.
 Clone this repository and execute following command. It generates ``maf.py``.

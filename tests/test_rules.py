@@ -2,7 +2,11 @@ from maflib import rules
 #import maflib.rules
 import waflib.Node
 import collections
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 import json
 from maflib.test import TestTask
 import tempfile
@@ -10,7 +14,7 @@ import tempfile
 class TestAggregationTask(unittest.TestCase):
     def test_max(self):
         task = TestTask()
-        task.env.source_parameter = [({"param1":0}), {"param1":1}]
+        task.source_parameters = [({"param1":0}), {"param1":1}]
 
         task.set_input_by_json(0, {"key1":10, "key2":20})
         task.set_input_by_json(1, {"key1": 5, "key2":30})
@@ -23,7 +27,7 @@ class TestAggregationTask(unittest.TestCase):
 
     def test_min(self):
         task = TestTask()
-        task.env.source_parameter = [{"param1":0}, {"param1":1}]
+        task.source_parameters = [{"param1":0}, {"param1":1}]
 
         task.set_input_by_json(0, {"key1":10, "key2":20})
         task.set_input_by_json(1, {"key1": 5, "key2":30})
@@ -34,23 +38,6 @@ class TestAggregationTask(unittest.TestCase):
         result = task.json_output(0)
         self.assertEqual(result, {"param1": 1, "key1": 5, "key2": 30})
 
-
-class MulticlassEvaluationTask(object):
-    """This is dummy class for the use of a test below.
-    
-    When task object is separated from a rule, this class would be unnecessary.
-    
-    """
-    class DummyInput(object):
-        def label(self, (p, c)): return {"p":p, "c":c}
-        def read(self):
-            return json.dumps(map(self.label, [(1,1),(1,2),(2,2),(2,2)]))
-    class DummyOutput(object):
-        def write(self, s): self.body = s
-        def read(self): return self.body
-    def __init__(self):
-        self.inputs = [MulticlassEvaluationTask.DummyInput()]
-        self.outputs = [MulticlassEvaluationTask.DummyOutput()]
 
 class TestMulticlassEvaluation(unittest.TestCase):
     def label(self, (p, c)): return {"p":p, "c":c}
@@ -73,29 +60,7 @@ class TestMulticlassEvaluation(unittest.TestCase):
         self.assertEqual(result["recall-micro"], 3./4)
         self.assertEqual(result["precision-macro"], 3./4)
 
-    def _get_result_json(self):
-        task = MulticlassEvaluationTask()
-        calculate_stats_multiclass_classification(task)
-        return json.loads(task.outputs[0].read())
-
-# TODO(noji): change the test style to use test module after merging
-class SegmentLibsvmTask(object):
-    class Node(object):
-        def __init__(self, f):
-            self.abspath_ = f.name
-        def abspath(self): return self.abspath_
         
-    def _create_dummy_input(self, data):
-        self.f = tempfile.NamedTemporaryFile()
-        for e in data: self.f.write(' '.join([str(x) for x in e]) + '\n')
-        self.f.seek(0)
-        return SegmentLibsvmTask.Node(self.f)
-
-    def __init__(self, data, num_segments):
-        self.inputs = [self._create_dummy_input(data)]
-        self.ofs = [tempfile.NamedTemporaryFile() for i in range(num_segments)]
-        self.outputs = [SegmentLibsvmTask.Node(of) for of in self.ofs]
-
 class TestSegmentLibsvm(unittest.TestCase):
     weights = [0.8, 0.1, 0.1]
     labels = [0, 1]
@@ -108,7 +73,11 @@ class TestSegmentLibsvm(unittest.TestCase):
         return counts
 
     def _process_task(self, data):
-        task = SegmentLibsvmTask(data, len(self.weights))
+        task = TestTask()
+
+        task.set_input(0, '\n'.join([' '.join([str(e) for e in line]) for line in data]) + '\n')
+        task.outputs.setsize(3)
+        
         rule = rules.segment_without_label_bias(self.weights)
         rule.fun(task)
         return task

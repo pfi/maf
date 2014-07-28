@@ -36,6 +36,9 @@ import os
 import os.path
 import types
 import inspect
+import re
+import tempfile
+import subprocess
 try:
     import cPickle as pickle
 except ImportError:
@@ -43,6 +46,7 @@ except ImportError:
 
 import waflib.Build
 import waflib.Utils
+import waflib.Options
 from waflib.TaskGen import before_method, feature
 
 
@@ -57,10 +61,6 @@ def configure(conf):
 class ExperimentContext(waflib.Build.BuildContext):
     """Context class of waf experiment (a.k.a. maf)."""
 
-    cmd = 'experiment'
-    fun = 'experiment'
-    variant = 'experiment'
-
     def __init__(self, **kw):
         super(ExperimentContext, self).__init__(**kw)
         self._experiment_graph = ExperimentGraph()
@@ -73,8 +73,13 @@ class ExperimentContext(waflib.Build.BuildContext):
     def __call__(self, **kw):
         """Main method to generate tasks."""
 
-        call_object = CallObject(**kw)
-        self._experiment_graph.add_call_object(call_object)
+        if 'rule' not in kw:
+            # Workaround for non-experimental tasks
+            # TODO(beam2d): Integrate non-/experimental tasks
+            super(ExperimentContext, self).__call__(**kw)
+        else:
+            call_object = CallObject(wscript=self.cur_script, **kw)
+            self._experiment_graph.add_call_object(call_object)
 
     def _process_call_objects(self):
         """Callback function called right after all wscripts are executed.
@@ -86,10 +91,9 @@ class ExperimentContext(waflib.Build.BuildContext):
         # Run topological sort on dependency graph.
         call_objects = self._experiment_graph.get_sorted_call_objects()
 
-        # TODO(beam2d): Remove this stub file name.
+        table_path = os.path.join(self.variant_dir, '.maf_id_table')
         self._parameter_id_generator = ParameterIdGenerator(
-            'build/experiment/.maf_id_table',
-            'build/experiment/.maf_id_table.tsv')
+            table_path, table_path + '.tsv')
         self._nodes = collections.defaultdict(set)
 
         try:
@@ -124,18 +128,18 @@ class ExperimentContext(waflib.Build.BuildContext):
             call_object.dependson = []
 
     def _generate_tasks(self, call_object):
-        if not call_object.source:
+        if not call_object.rel_source:
             for parameter in call_object.parameters:
                 self._generate_task(call_object, [], parameter)
 
         parameter_lists = []
 
         # Generate all valid list of parameters corresponding to source nodes.
-        for node in call_object.source:
+        for node in call_object.rel_source:
             node_params = self._nodes[node]
             if not node_params:
                 # node is physical. We use empty parameter as a dummy.
-                node_params = {Parameter()}
+                node_params = [Parameter()]
 
             if not parameter_lists:
                 for node_param in node_params:
@@ -167,14 +171,14 @@ class ExperimentContext(waflib.Build.BuildContext):
             target_parameter.update(p)
         target_parameter.update(parameter)
 
-        for node in call_object.target:
+        for node in call_object.rel_target:
             self._nodes[node].add(target_parameter)
 
         # Convert source/target meta nodes to physical nodes.
         physical_source = self._resolve_meta_nodes(
-            call_object.source, source_parameter)
+            call_object.rel_source, source_parameter)
         physical_target = self._resolve_meta_nodes(
-            call_object.target, target_parameter)
+            call_object.rel_target, target_parameter)
 
         # Create arguments of BuildContext.__call__.
         physical_call_object = copy.deepcopy(call_object)
@@ -197,12 +201,12 @@ class ExperimentContext(waflib.Build.BuildContext):
             raise InvalidMafArgumentException(
                 "'target' in aggregation must include only one meta node")
 
-        source_node = call_object.source[0]
-        target_node = call_object.target[0]
+        source_node = call_object.rel_source[0]
+        target_node = call_object.rel_target[0]
 
         source_parameters = self._nodes[source_node]
         # Mapping from target parameter to list of source parameter.
-        target_to_source = collections.defaultdict(set)
+        target_to_source = collections.defaultdict(list)
 
         for source_parameter in source_parameters:
             target_parameter = Parameter()
@@ -213,7 +217,7 @@ class ExperimentContext(waflib.Build.BuildContext):
                 for key in source_parameter:
                     if key not in call_object.aggregate_by:
                         target_parameter[key] = source_parameter[key]
-            target_to_source[target_parameter].add(source_parameter)
+            target_to_source[target_parameter].append(source_parameter)
 
         for target_parameter in target_to_source:
             source_parameter = target_to_source[target_parameter]
@@ -238,13 +242,14 @@ class ExperimentContext(waflib.Build.BuildContext):
     def _call_super(self, call_object, source_parameter, target_parameter):
         taskgen = super(ExperimentContext, self).__call__(
             **call_object.__dict__)
-        taskgen.env.source_parameter = source_parameter
+        taskgen.env.source_parameter = source_parameter  # for backward compatibility
         taskgen.env.update(target_parameter.to_str_valued_dict())
 
         depkeys = [('dependson%d' % i) for i in range(len(call_object.dependson))]
         taskgen.env.update(dict(zip(depkeys, call_object.dependson)))
 
         taskgen.parameter = target_parameter
+        taskgen.source_parameter = source_parameter
 
     def _resolve_meta_nodes(self, nodes, parameters):
         if not isinstance(parameters, list):
@@ -256,15 +261,320 @@ class ExperimentContext(waflib.Build.BuildContext):
         return physical_nodes
 
     def _resolve_meta_node(self, node, parameter):
+        def _not_deleted_any_files_in(n):
+            children = getattr(n, 'children', {})
+            if not children:
+                return os.path.exists(n.abspath())
+            else:
+                return all([_not_deleted_any_files_in(c) for c in n.children.values()])
+                    
         if parameter:
             parameter_id = self._parameter_id_generator.get_id(parameter)
             node = os.path.join(
                 node, '-'.join([parameter_id, os.path.basename(node)]))
         if node[0] == '/':
-            return self.root.find_resource(node)
-        return self.path.find_or_declare(node)
+            # find_node can find directories (compared to find_resource, which can only find files)
+            return self.root.find_node(node) 
+
+        # Currently, the below contains some tricks for supporting directory
+        # metanodes; Suppose node represent a metanode that is a directory on
+        # the filesystem. When we search this node by ``find_or_declare``, we
+        # can get that node object, but ``find_or_declare`` overwrites the sig
+        # property of found node with None. This sig property will be used when
+        # deciding whether run or not current task, and if sig is set None,
+        # the task is always run. See:
+        # http://docs.waf.googlecode.com/git/apidocs_17/_modules/waflib/Node.html#Node.find_or_declare
+        # To avoid this problem, we first run search_node to find directory meta
+        # node. If this is failed, normal search with find_or_declare will be run.
+        existing_dir_node = self.path.get_bld().search_node(node)
+
+        # search_node doesn't look on filesystem, so cannot detect manual changes on
+        # the directory; e.g., sometimes one may delete an output directory or figure
+        # manually. `_not_deleted_any_files_in` check the consistency on the filesystem.
+        if existing_dir_node and _not_deleted_any_files_in(existing_dir_node):
+            return existing_dir_node
+        else:
+            return self.path.find_or_declare(node)
 
 
+class GraphContext(ExperimentContext):
+    '''outputs a graph of dependencies between tasks'''
+    
+    cmd = 'graph'
+
+    def node_label(self, node):
+        parameter_id = self._extract_parameter_id(node)
+        if parameter_id == -1:
+            return ""
+
+        if waflib.Options.options.simple_param:
+            return str(parameter_id)
+        else:
+            parameter = self._parameter_id_generator.get(parameter_id)
+            return "\\n".join(['%s: %s' % (k, v) for (k, v) in parameter.items()])
+
+    class NodeIndexer(object):
+        """Indexer assigning a unique id to each Node instance.
+
+        Because each Node instance has a unique absolute path, Node -> id mappings
+        are managed with a dictionary of type `dict(str, id)` preserving
+        correspondences between a path to an id.
+        
+        """
+        
+        def __init__(self):
+            self.path2id = {}
+            self.nodes = []
+            
+        def get_id(self, node):
+            path = node.abspath()
+            if path in self.path2id:
+                return self.path2id[path]
+            else:
+                node_id = len(self.nodes)
+                self.path2id[path] = node_id
+                self.nodes.append(node)
+                return node_id
+            
+        def get(self, node_id):
+            return self.nodes[node_id]
+            
+    class MetaNodes(object):
+        """A collection of meta nodes.
+
+        This class essentially is a hashtable preserving a collection of node ids
+        sharing the same meta node signature. Meta node signature is calculated
+        by :py:func:`GraphContext._extract_meta_node`.
+        
+        """
+        
+        def __init__(self, unique_nodes):
+            self.table = collections.defaultdict(set) # meta node signature -> node ids
+            for i, node in enumerate(unique_nodes):
+                self.add_node(node, i)
+            
+        def add_node(self, node, id):
+            meta = GraphContext._extract_meta_node(node)
+            self.table[meta].add(id)
+
+        def render_graphviz(self, node_indexer, ctx):
+            lines = []
+            
+            for i, (meta_sig, node_ids) in enumerate(self.table.items()):
+                lines.append("subgraph cluster_meta_node" + str(i) + " {")
+                lines.append('label="%s"' % meta_sig)
+                for node_id in node_ids:
+                    node = node_indexer.get(node_id)
+                    lines.append('node%s[label="%s" style=filled fillcolor=white]' %
+                                 (node_id, ctx.node_label(node)))
+                lines.append("}")
+                
+            return "\n".join(lines)
+            
+    class MetaTasks(object):
+        """A collection of meta classes similar to MetaNodes."""
+
+        num_invis_around_task = 3
+        max_num_invis = 10      # num of invis nodes does not exceed this
+        num_invis_per_nodes = 3 # num of invis nodes =
+                                #  (sum of input or output nodes) / num_invis_per_nodes
+        
+        def __init__(self, tasks):
+            self.tasks = list(tasks)
+            self.table = collections.defaultdict(set) # meta task signature -> task ids
+            for i, task in enumerate(tasks):
+                self.add_task(task, i)
+            
+        def add_task(self, task, id):
+            task_sig = "".join([GraphContext._extract_meta_node(n) for n
+                                in _to_list(task.source) + _to_list(task.target)])
+            self.table[task_sig].add(id)
+
+        def render_graphviz(self):
+            lines = []
+            self.invis_i = 0 # used to distinguish all invisible points around a task
+            def add_invis_points():
+                for i in range(self.num_invis_around_task):
+                    lines.append("task_invis%d[style=invis,shape=point]" %
+                                 self.invis_i)
+                    self.invis_i += 1
+
+            for i, (meta_sig, task_ids) in enumerate(self.table.items()):
+                lines.append("subgraph cluster_meta_task" + str(i) + " {")
+                lines.append("style=filled;")
+                lines.append("color=lightgrey;")
+                add_invis_points()
+                for task_id in task_ids:
+                    lines.append("task%d[shape=point,style=filled,color=black]" %
+                                 (task_id))
+                    add_invis_points()
+                lines.append("}")
+                
+            return "\n".join(lines)
+
+        def render_invisibles(self, node_indexer):
+            self.invis_i = 0 # used to distinguish all invisible points between nodes
+            
+            def num_in_links(meta):
+                return sum([len(_to_list(self.tasks[task_id].source))
+                            for task_id in self.table[meta]])
+            def num_out_links(meta):
+                return sum([len(_to_list(self.tasks[task_id].target))
+                            for task_id in self.table[meta]])
+
+            def extract_meta_links(meta_task, source=True):
+                links = []
+                existing_meta_nodes = set()
+                for task_id in self.table[meta_task]:
+                    task = self.tasks[task_id]
+                    for node in _to_list(task.source if source else task.target):
+                        meta_node = GraphContext._extract_meta_node(node)
+                        if meta_node in existing_meta_nodes: continue
+                        existing_meta_nodes.add(meta_node)
+
+                        node_id = node_indexer.get_id(node)
+                        node_name = "node%d" % node_id
+                        task_name = "task%d" % task_id
+
+                        if source:
+                            links.append((node_name, task_name))
+                        else:
+                            links.append((task_name, node_name))
+                return links
+
+            def link_lines(num_invis, links):
+                lines = []
+                if num_invis <= 1: return lines
+                for link in links:
+                    invis_names = []
+                    for i in range(num_invis):
+                        invis_names.append("invis_point%d" % self.invis_i)
+                        self.invis_i += 1
+                    for invis_name in invis_names:
+                        lines.append("%s[style=invis shape=point]" % invis_name)
+                        
+                    lines.append("%s->%s->%s[style=invis weight=100];" %
+                                 (link[0], "->".join(invis_names), link[1]))
+                return lines
+
+            lines = []
+            
+            for meta_task in self.table:
+                num_in_invis = min(self.max_num_invis,
+                                   num_in_links(meta_task) / self.num_invis_per_nodes)
+                num_out_invis = min(self.max_num_invis,
+                                    num_out_links(meta_task) / self.num_invis_per_nodes)
+
+                in_links = extract_meta_links(meta_task, True)
+                out_links = extract_meta_links(meta_task, False)
+                
+                lines += link_lines(num_in_invis, in_links)
+                lines += link_lines(num_out_invis, out_links)
+                
+            return "\n".join(lines)
+                
+            
+    def execute(self):
+        """
+        See :py:func:`waflib.Context.Context.execute`.
+        """
+        self.restore()
+        if not self.all_envs:
+            self.load_envs()
+
+        self.recurse([self.run_dir])
+        self.pre_build()
+
+        # display the time elapsed in the progress bar
+        self.timer = waflib.Utils.Timer()
+
+        tasks = [t for g in self.groups for t in g]
+
+        node_indexer = self.NodeIndexer()
+        for task in tasks:
+            for node in _to_list(task.source) + _to_list(task.target):
+                node_indexer.get_id(node)
+        
+        meta_nodes = self.MetaNodes(node_indexer.nodes)
+        meta_tasks = self.MetaTasks(tasks)
+        links = self._collect_links(node_indexer, tasks)
+
+        dot = tempfile.NamedTemporaryFile()
+
+        dot.write("digraph G {\n")
+        dot.write("graph [splines=line,outputorder=edgesfirst];")
+        dot.write(meta_nodes.render_graphviz(node_indexer, self) + "\n")
+        dot.write(meta_tasks.render_graphviz() + "\n")
+        for link in links:
+            dot.write("%s->%s[color=\"#0000005f\" arrowsize=0.5 arrowhead=open]\n" %
+                      (link[0], link[1]))
+        dot.write(meta_tasks.render_invisibles(node_indexer))
+        
+        dot.write("}")
+
+        dot.seek(0)
+
+        graphpath = waflib.Options.options.graphpath
+        ext = graphpath[graphpath.rfind(".") + 1:]
+
+        if ext == "dot":
+            subprocess.check_call(['cp', dot.name, waflib.Options.options.graphpath])
+        else:
+            subprocess.check_call(['dot', '-T'+ext, dot.name,
+                                   '-o', waflib.Options.options.graphpath])
+            
+    def _collect_links(self, node_indexer, tasks):
+        links = []
+        for task_id, task in enumerate(tasks):
+            for node_id in [node_indexer.get_id(node) for node in _to_list(task.source)]:
+                links.append(("node" + str(node_id), "task" + str(task_id)))
+            for node_id in [node_indexer.get_id(node) for node in _to_list(task.target)]:
+                links.append(("task" + str(task_id), "node" + str(node_id)))
+        return links
+
+    def _extract_unique_nodes(self, nodes):
+        abspath2nodes = {}
+        for node in nodes:
+            abspath2nodes[node.abspath()] = node
+        return [item[1] for item in abspath2nodes.items()]
+
+    @staticmethod
+    def _extract_meta_node(node):
+        if node.is_bld():
+            found_meta = re.findall(r'\d+-([^/]+)', node.name)
+            if found_meta:
+                return found_meta[0]
+            else:
+                return node.name
+        return node.abspath()
+
+    @staticmethod
+    def _extract_parameter_id(node):
+        if node.is_bld():
+            found_id = re.findall(r'(\d+)-[^/]+', node.name)
+            if found_id:
+                return int(found_id[0])
+        return -1
+
+        
+class ExpOptionsContext(waflib.Options.OptionsContext):
+    """ExperimentContext specific OptionContext.
+
+    Please extend the `__init__` method below to add new options.
+
+    """
+    
+    def __init__(self, **kw):
+        super(ExpOptionsContext, self).__init__(**kw)
+
+        default_path = 'graph.pdf'
+        gr = self.add_option_group('graph options')
+        gr.add_option('--graphpath', action = 'store', default = default_path,
+                      help = 'path to the output of graph [default: %s]' % default_path)
+        gr.add_option('--simple_param', action = 'store_true', default = False,
+                      help = 'outputs parameter ids instead of specific values')
+        
+        
 class CyclicDependencyException(Exception):
     """Exception raised when experiment graph has a cycle."""
     pass
@@ -367,6 +677,12 @@ class CallObject(object):
         else:
             self.parameters = [Parameter(p) for p in self.parameters]
 
+        # Some tests do not support the argument 'wscript'
+        if 'wscript' in kw:
+            relpath = self.wscript.parent.relpath()
+            self.rel_source = [os.path.normpath(os.path.join(relpath, n)) for n in self.source]
+            self.rel_target = [os.path.normpath(os.path.join(relpath, n)) for n in self.target]
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -388,10 +704,10 @@ class ExperimentGraph(object):
         index = len(self._call_objects)
         self._call_objects.append(call_object)
 
-        for in_node in call_object.source:
+        for in_node in call_object.rel_source:
             self._edges[in_node].add(index)
 
-        for out_node in call_object.target:
+        for out_node in call_object.rel_target:
             self._edges[index].add(out_node)
 
     def get_sorted_call_objects(self):
@@ -478,44 +794,43 @@ class ParameterIdGenerator(object):
         """Path to file that the table is dumped to as a human-readable text."""
 
         if os.path.exists(path):
-            self._table = self._load_table(path)
+            self._parameters, self._table = self._load_table(path)
         else:
-            self._table = {}
+            self._parameters = []
+            self._table = {} # Parameter -> id
 
     def save(self):
         """Serializes the table to the file at self.path."""
 
         if len(self._table) == 0: return
 
-        parameter_ids = [(param, int(id)) for (param, id) in self._table.items()]
-        parameter_ids.sort(key=lambda param_and_id: param_and_id[1])
-        
         with _create_file(self.path) as f:
-            # We don't save the self._table, which type is dict(Parameter,int) directly,
-            # instead saves list(dict), which index corresponds to the id of the item.
-            # This is for deserializing parameter->id mappings outside of map, without
+            # We only save a modified `self._parameters`, which is obtained by converting
+            # each element of `self._parameters` into a dictionary object.
+            # This is for deserializing parameter->id mappings outside without
             # maflib and waflib dependencies. Parameter class is defined in maflib,
-            # so user cannot decode original _table object without maflib libraries.
-            # When deserializaing, ``self._table`` is load by ``_load_table``.
-            max_param_id = parameter_ids[-1][1]
-            dict_param_list = [None for i in range(max_param_id + 1)]
-            for (param, id) in parameter_ids:
-                dict_param_list[id] = dict(param)
-            pickle.dump(dict_param_list, f)
+            # so user cannot decode original objects without maflib libraries.
+            dicted_params = [dict(param) for param in self._parameters]
+            
+            pickle.dump(dicted_params, f)
 
         with _create_file(self.text_path) as f:
-            for parameter, id in parameter_ids:
+            for id, parameter in enumerate(self._parameters):
                 f.write('%s\t%s\n' % (id, parameter))
 
     def _load_table(self, path):
-        table = {}
+        dicted_params = []
         try:
             with open(path) as f:
-                dict_param_list = pickle.load(f)
-                for i, dict_param in enumerate(dict_param_list):
-                    if dict_param is not None: table[Parameter(dict_param)] = str(i)
+                dicted_params = pickle.load(f)
         except EOFError: pass
-        return table
+
+        parameters = [Parameter(param) for param in dicted_params]
+        table = {}
+        for i, param in enumerate(parameters):
+            if param is not None: table[param] = str(i)
+
+        return (parameters, table)
 
     def get_id(self, parameter):
         """Gets the id of given parameter.
@@ -530,10 +845,22 @@ class ParameterIdGenerator(object):
         if parameter in self._table:
             return self._table[parameter]
 
-        new_id = str(len(self._table))
+        new_id = str(len(self._parameters))
         self._table[parameter] = new_id
+        self._parameters.append(parameter)
 
         return new_id
+
+    def get(self, parameter_id):
+        """Gets the parameter of a given id.
+
+        :param parameter_id: Id of the parameter
+        :type parameter: int
+        :return: Parameter object of a given id.
+        :rtype: :py:class:`Parameter`
+
+        """
+        return self._parameters[parameter_id]
 
 
 class ExperimentTask(waflib.Task.Task):
@@ -568,12 +895,53 @@ class ExperimentTask(waflib.Task.Task):
         self.parameter = generator.parameter
         """Parameter whose values are not stringized."""
 
+        self.source_parameters = generator.source_parameter
+        """List of parameters each of which is the parameter of the
+        corresponding input node."""
+
         if not hasattr(self, 'dep_vars'): self.dep_vars = []
         self.dep_vars += self.parameter.keys()
         self.dep_vars += filter(lambda k: k.startswith("dependson"), env.keys())
 
         self.inputs = [ExperimentNode(s) for s in self.inputs]
         self.outputs = [ExperimentNode(s) for s in self.outputs]
+
+        
+    def sig_explicit_deps(self):
+        """Calculates the hash value of this task.
+
+        Overriden from waflib.Task.Task to use ``_node_sig`` to calculate
+        the hash value of source/target files.
+        
+        """
+        
+        bld = self.generator.bld
+        upd = self.m.update
+
+        # the inputs
+        for x in self.inputs + self.dep_nodes:
+            upd(_node_sig(x))
+        
+        # manual dependencies, they can slow down the builds
+        if bld.deps_man:
+            additional_deps = bld.deps_man
+            for x in self.inputs + self.outputs:
+                try:
+                    d = additional_deps[id(x)]
+                except KeyError:
+                    continue
+
+                for v in d:
+                    if isinstance(v, bld.root.__class__):
+                        try:
+                            v = v.get_bld_sig()
+                        except AttributeError:
+                            import waflib.Errors
+                            raise waflib.Errors.WafError('Missing node signature for %r (required by %r)' % (v, self))
+                    elif hasattr(v, '__call__'):
+                        v = v() # dependency is a function, call it
+                    upd(v)
+        return self.m.digest()
 
 
 class ExperimentNode(object):
@@ -603,7 +971,7 @@ class ExperimentNode(object):
     tests/test_rule.py. See also :py:func:`test.TestTask`.
 
     """
-    def __init__(self, waflib_node = None):
+    def __init__(self, waflib_node=None):
         if waflib_node:
             self.node = waflib_node
             self.abspath_ = self.node.abspath()
@@ -620,6 +988,21 @@ class ExperimentNode(object):
 
     def abspath(self):
         return self.abspath_
+
+
+# Forces these commands run under ExperimentContext
+waflib.Build.CleanContext.__bases__ = (ExperimentContext,)
+waflib.Build.InstallContext.__bases__ = (ExperimentContext,)
+waflib.Build.ListContext.__bases__ = (ExperimentContext,)
+waflib.Build.StepContext.__bases__ = (ExperimentContext,)
+waflib.Build.UninstallContext.__bases__ = (ExperimentContext,)
+
+
+# Old command experiment
+class OldExperimentContext(ExperimentContext):
+    cmd = 'experiment'
+    fun = 'experiment'
+    variant = 'experiment'
 
 
 @feature('experiment')
@@ -696,5 +1079,42 @@ def _let_element_to_be_list(d, key):
         d[key] = waflib.Utils.to_list(d[key])
 
 
+def _to_list(objs):
+    if isinstance(objs, list):
+        return objs
+    else:
+        return [objs]
+
+
 def _is_callable(o):
     return isinstance(o, types.FunctionType) or hasattr(o, '__call__')
+
+
+def _node_sig(node):
+    """An extended version of `Node.get_bld_sig`.
+
+    `get_bld_sig` cannot calculate the signature (hash value unique to the file),
+    so we extend here to calculate the signature of directory by reading all
+    files under the directory.
+    
+    """
+    
+    try:
+        return node.cache_sig
+    except AttributeError:
+        pass
+        
+    path = node.abspath()
+
+    if not hasattr(node, 'sig') or node.sig is None or not node.is_bld() or node.ctx.bldnode is node.ctx.srcnode:
+        if os.path.isdir(path):
+            m = waflib.Utils.md5()
+            for child in sorted(os.listdir(path)):
+                m.update(_node_sig(node.make_node(child)))
+            node.sig = m.digest()
+        else:
+            node.sig = waflib.Utils.h_file(path)
+            
+    node.cache_sig = ret = node.sig
+    
+    return ret

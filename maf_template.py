@@ -42,7 +42,7 @@ import tarfile
 import waflib.Context
 import waflib.Logs
 
-TEMPORARY_FILE_NAME = 'maflib.tar.bz2'
+TAR_NAME = 'maflib.tar'
 NEW_LINE = '#XXX'.encode()
 CARRIAGE_RETURN = '#YYY'.encode()
 ARCHIVE_BEGIN = '#==>\n'.encode()
@@ -94,16 +94,31 @@ def unpack_maflib(directory):
         os.makedirs(os.path.join(directory, 'maflib'))
         os.chdir(directory)
 
-        with open(TEMPORARY_FILE_NAME, 'wb') as f:
+        bz2_name = TAR_NAME + '.bz2'
+        with open(bz2_name, 'wb') as f:
             f.write(content)
 
-        with tarfile.open(TEMPORARY_FILE_NAME) as t:
-            t.extractall()
+        try:
+            t = tarfile.open(bz2_name)
+        except:
+            try:
+                os.system('bunzip2 ' + bz2_name)
+                t = tarfile.open(TAR_NAME)
+            except:
+                raise Exception('Cannot extract maflib. Check that python bz2 module or bunzip2 command is available.')
 
-        os.remove(TEMPORARY_FILE_NAME)
+        try:
+            t.extractall()
+        finally:
+            t.close()
+
+        try:
+            os.remove(bz2_name)
+            os.remove(TAR_NAME)
+        except:
+            pass
 
         maflib_path = os.path.abspath(os.getcwd())
-        # sys.path[:0] = [maflib_path]
         return maflib_path
 
 def test_maflib(directory):
@@ -120,20 +135,4 @@ def find_maflib():
     return path
 
 find_maflib()
-
-def configure(conf):
-    try:
-        conf.env.MAFLIB_PATH = find_maflib()
-        conf.msg('Unpacking maflib', 'yes')
-        conf.load('maflib.core')
-    except:
-        conf.msg('Unpacking maflib', 'no')
-        waflib.Logs.error(sys.exc_info()[1])
-
-def options(opt):
-    try:
-        find_maflib()
-        opt.load('maflib.core')
-    except:
-        opt.msg('Unpacking maflib', 'no')
-        waflib.Logs.error(sys.exc_info()[1])
+import maflib.core

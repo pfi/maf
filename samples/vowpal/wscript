@@ -5,11 +5,7 @@ import maflib.util
 import maflib.test
 from vowpal_util import *
 
-def configure(conf):
-    conf.load('maf')
-
-def build(bld):
-    pass  # for enabling waf-clean
+def configure(conf): pass
 
 def model_name(prefix): return '%s.model' % prefix
 
@@ -54,9 +50,9 @@ def exptest(test):
     
     """
     
-    test.add("vowpal_util_test.py")
+    test.add("test_vowpal_util.py")
     
-def experiment(exp):
+def build(exp):
     """maf example that evaluates algorithms implemented on LIBLINEAR using
     20 Newsgroup dataset.
 

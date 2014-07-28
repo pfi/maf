@@ -41,9 +41,14 @@ ARCHIVE_BEGIN = '#==>\n#'.encode()
 ARCHIVE_END = '#<==\n#'.encode()
 
 if __name__ == '__main__':
-    with tarfile.open(ARCHIVE_FILE_NAME, 'w:bz2') as archive:
+    try:
+        archive = tarfile.open(ARCHIVE_FILE_NAME, 'w:bz2')
         archive.add(MAFLIB_PATH, exclude=lambda fn: fn.endswith('.pyc'))
-
+    except tarfile.TarError:
+        raise Exception('can not use tar.bz2 file')
+    finally:
+        archive.close()
+   
     with open(TEMPLATE_FILE_NAME) as f:
         code = f.read()
 

@@ -27,8 +27,14 @@ from maflib.core import *
 import tempfile
 import os
 import shutil
-import unittest
+import sys
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 import shutil
+
+from waflib.Node import Node
 
 class TestParameter(unittest.TestCase):
     def test_empty_parameter_does_not_conflict(self):
@@ -234,8 +240,28 @@ class TestExperimentGraph(unittest.TestCase):
                  ('b', 'e')],
                 [])
 
-    def _test_graph(self, edges, order):
-        cos = [CallObject(source=src, target=tgt) for src, tgt in edges]
+    def test_subdir(self):
+        self._test_graph(
+            [('sub/s', 'u'), ('../t', 's'), ('a', 't')],
+            [(1, 0), (2, 1)],
+            [('.', 'wscript'), ('sub', 'sub/wscript'), ('.', 'wscript')])
+
+    def _test_graph(self, edges, order, wscript_at=None):
+        # dummy node
+        class NodeLike:
+            def __init__(self, relpath, parent):
+                self.rp = relpath
+                self.parent = parent
+
+            def relpath(self):
+                return self.rp
+
+        root = NodeLike('.', None)
+        if wscript_at is None:
+            cos = [CallObject(source=src, target=tgt, wscript=NodeLike('', root)) for src, tgt in edges]
+        else:
+            cos = [CallObject(source=src, target=tgt, wscript=NodeLike('', NodeLike(rp, w))) for (src, tgt), (rp, w) in zip(edges, wscript_at)]
+
         g = ExperimentGraph()
         for co in cos:
             g.add_call_object(co)
