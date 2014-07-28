@@ -177,8 +177,9 @@ def json_aggregator(callback_body):
                 return v
             except:
                 return str(v)
-        parameter = dict([(k, to_jsonable(parameter[k])) for k in parameter])
-        result = callback_body(values, abspath, parameter)
+        param = dict([(k, to_jsonable(parameter[k])) for k in parameter])
+        vals = [dict([(k, to_jsonable(v[k])) for k in v]) for v in values]
+        result = callback_body(vals, abspath, param)
         return json.dumps(result)
     
     return callback
