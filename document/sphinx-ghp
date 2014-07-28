@@ -75,7 +75,7 @@ git checkout master || exit 1
 
 echo "Success to update gh-pages branch"
 
-if [ ${PUSH} == "TRUE" ]; then
+if [ "${PUSH}" == "TRUE" ]; then
     git push origin gh-pages || exit 1
 else
     echo "Publish the result with the command below:"
