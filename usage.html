@@ -59,21 +59,32 @@
 </li>
 <li><a class="reference internal" href="#id4">メタノードに関するより詳しい仕様</a><ul>
 <li><a class="reference internal" href="#id5">複数パラメータの生成</a></li>
-<li><a class="reference internal" href="#id6">メタノードの組合せ</a></li>
+<li><a class="reference internal" href="#metanode-combination">メタノードの組合せ</a></li>
 <li><a class="reference internal" href="#id7">メタノードが入力にある場合のパラメータ指定</a></li>
 <li><a class="reference internal" href="#id8">メタノードの集約</a></li>
+<li><a class="reference internal" href="#dir-metanode">ディレクトリに対するメタノード</a></li>
+<li><a class="reference internal" href="#id-table">パラメータに対するid割り当て</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#json">JSON形式の入出力ファイル</a></li>
-<li><a class="reference internal" href="#id9">ルールの書き方</a><ul>
-<li><a class="reference internal" href="#id10">コマンドルール</a></li>
-<li><a class="reference internal" href="#id11">関数ルール</a></li>
-<li><a class="reference internal" href="#maflib-core-rule"><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール</a></li>
-<li><a class="reference internal" href="#id12">集約ルールの書き方</a></li>
-<li><a class="reference internal" href="#id13">プロットを行う集約ルールの書き方</a></li>
+<li><a class="reference internal" href="#id10">ルールの書き方</a><ul>
+<li><a class="reference internal" href="#id11">コマンドルール</a></li>
+<li><a class="reference internal" href="#function-rule">関数ルール</a><ul>
+<li><a class="reference internal" href="#id13">ルールへのパラメータの割り当て</a></li>
+<li><a class="reference internal" href="#dir-rule">具体例：ディレクトリに対する関数ルール</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id14">その他の例</a></li>
+<li><a class="reference internal" href="#maflib-core-rule"><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール</a></li>
+<li><a class="reference internal" href="#id15">集約ルールの書き方</a></li>
+<li><a class="reference internal" href="#id16">プロットを行う集約ルールの書き方</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id17">実験の検証方法</a><ul>
+<li><a class="reference internal" href="#id18">ユニットテスト</a></li>
+<li><a class="reference internal" href="#id20">依存関係の描画</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id21">その他の例</a></li>
 </ul>
 </li>
 </ul>
@@ -131,28 +142,29 @@ wafファイルには実行可能フラグを立てておくと良いでしょ�
 <p>次に以下の内容の <tt class="docutils literal"><span class="pre">wscript</span></tt> ファイルを作成します。</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
 
-<span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span>
-    <span class="n">opt</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;maf&#39;</span><span class="p">)</span>
-
 <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span>
-    <span class="n">conf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&#39;maf&#39;</span><span class="p">)</span>
+    <span class="k">pass</span>
 
-<span class="k">def</span> <span class="nf">experiment</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>
 </div>
 <p>この <tt class="docutils literal"><span class="pre">wscript</span></tt> ファイルは何もしません。
-wafをビルドに用いる場合には <tt class="docutils literal"><span class="pre">build</span></tt> 関数を書きましたが、mafで実験を行う場合には代わりに <tt class="docutils literal"><span class="pre">experiment</span></tt> 関数を書きます。
-引数 <tt class="docutils literal"><span class="pre">exp</span></tt> は <tt class="docutils literal"><span class="pre">build</span></tt> 関数の場合の引数にmaf用の拡張を施したものです。</p>
+通常のwafのビルドと同じように、mafの実験設定も <tt class="docutils literal"><span class="pre">build</span></tt> 関数内に定義します。
+バージョン0.1までは <tt class="docutils literal"><span class="pre">experiment</span></tt> という専用の関数を使用していました。
+現在でも <tt class="docutils literal"><span class="pre">experiment</span></tt> に関数を定義することができますが、これは非推薦となります。
+以降ではこの例のように、 <tt class="docutils literal"><span class="pre">build</span></tt> の引数として実験を意味する <tt class="docutils literal"><span class="pre">exp</span></tt> を用いますが、この名前は任意です。
+<tt class="docutils literal"><span class="pre">build</span></tt> の中には、mafの実験設定とwafのビルドの設定とを混在させることもできますが、以降は実験設定の記述のみを行っていきます。</p>
 <p>まずはこのスクリプトを実行できるか試しましょう。
 以下のコマンドを入力します。</p>
 <div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>./waf configure
-<span class="nv">$ </span>./waf experiment
+<span class="nv">$ </span>./waf
 </pre></div>
 </div>
-<p>wafでビルドする場合には <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">build</span></tt> ないし省略して <tt class="docutils literal"><span class="pre">./waf</span></tt> を実行しますが、mafで実験コードを実行する場合には <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">experiment</span></tt> を実行します。
+<p>これはwafでビルドするときと同じものです。
+<tt class="docutils literal"><span class="pre">build</span></tt> の代わりに <tt class="docutils literal"><span class="pre">experiment</span></tt> に関数を定義した場合、二つ目のコマンドは <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">experiment</span></tt> となります。
 以上で「何もしない実験」が実行されます。</p>
-<p>以降、 <tt class="docutils literal"><span class="pre">experiment</span></tt> 関数の中に実験計画を記述していきます。
+<p>以降、 <tt class="docutils literal"><span class="pre">build</span></tt> 関数の中に実験計画を記述していきます。
 mafにおいて利用可能なユーティリティが <tt class="xref py py-mod docutils literal"><span class="pre">maflib</span></tt> モジュール内に用意されていますが、以降ではimport文などは省略します。</p>
 <p>次節ではその書き方に入る前に、まずはmafの最重要概念であるメタノードとパラメータについて解説します。</p>
 </div>
@@ -186,7 +198,7 @@ wafはノード間の依存関係を管理して、自動的にビルドに必�
 パラメータの内容は <tt class="docutils literal"><span class="pre">rule</span></tt> 内で参照することができます。</p>
 <p>mafは上の関数呼び出しで、3つの異なるwafタスクを生成します。
 これらはパラメータが異なり、出力ファイルも異なります。
-各出力ファイルは <tt class="docutils literal"><span class="pre">build/experiment/my_out</span></tt> ディレクトリ以下に生成されます。
+各出力ファイルは <tt class="docutils literal"><span class="pre">build/my_out</span></tt> ディレクトリ以下に生成されます。
 ノード <tt class="docutils literal"><span class="pre">my_out</span></tt> は異なるパラメータに対応する複数のノードを含んでいます。
 このノード <tt class="docutils literal"><span class="pre">my_out</span></tt> のことを <strong>メタノード</strong> と呼びます。</p>
 <p>mafではメタノードを一つのノードであるかのように扱うことができます。
@@ -230,18 +242,18 @@ productという名前は集合の直積を表します。</p>
 </div>
 <p>もう一つは <a class="reference internal" href="maflib.html#maflib.util.sample" title="maflib.util.sample"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.sample()</span></tt></a> です。
 各パラメータ名に対してパラメータを生成する関数を渡すと、それらを用いて指定した数の組合せを生成します。
-関数の代わりに数値の対を渡すとその区間の連続一様分布を用います。
+関数の代わりに数値の対を渡すとその区間の連続一様分布を用います（始点は含み、終点は含まない）。
 関数の代わりに値のリストを渡すと、リストから値を選ぶような離散一様分布を用います。
 パラメータの最適化を行う際に、直積集合よりも少ない組合せで効率的に実験を行うのに有効です。</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>  <span class="c"># 離散一様分布からサンプリング</span>
-                       <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c"># 連続一様分布からサンプリング</span>
+                       <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c"># [0.0, 1.0) の範囲の連続一様分布からサンプリング</span>
                        <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>  <span class="c"># サンプリング関数を自分で記述</span>
                        <span class="p">})</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="id6">
-<h3>メタノードの組合せ<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="metanode-combination">
+<span id="id6"></span><h3>メタノードの組合せ<a class="headerlink" href="#metanode-combination" title="Permalink to this headline">¶</a></h3>
 <p><tt class="docutils literal"><span class="pre">source</span></tt> として複数のメタノードを指定することもできます。
 この場合、基本的にはそれらが含むノードの全組み合わせが用いられます。
 ただし、組み合わされたノード同士が同じキーで違う値のパラメータを持つ場合、その組合せは無視されます。</p>
@@ -354,6 +366,66 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 <p><tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を用いた指定は、集約するパラメータが少ない場合に便利です。</p>
 <p><tt class="docutils literal"><span class="pre">for_each</span></tt> と <tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を同時に指定することはできません。</p>
 </div>
+<div class="section" id="dir-metanode">
+<span id="id9"></span><h3>ディレクトリに対するメタノード<a class="headerlink" href="#dir-metanode" title="Permalink to this headline">¶</a></h3>
+<p>これまでの例は全て、一つのパラメータの組み合わせに対応する入力/出力ノードは一つのファイルに対応し、メタノードはそれらを束ねる役割を持ちました。
+一方で、異なる種類のファイルを複数含むディレクトリを一つの入力/出力ノードとして扱いたい場合も存在します。
+例えば画像処理において、データセットが複数の画像からなる場合や、言語処理において複数の文書からなるコーパスをまとめて扱いたい場合などが考えられます。
+またあるソフトは、学習や予測の結果を複数ファイルからなるディレクトリの形で出力する場合も考えられます。</p>
+<p>基本的には、タスクの <tt class="docutils literal"><span class="pre">input</span></tt>, <tt class="docutils literal"><span class="pre">output</span></tt> にファイルではなくディレクトリを指定した場合も、通常のタスクと同じように実行させることができます。
+例えば以下のように、出力ファイルにディレクトリを指定するソフトを用いる場合は特別な変更は必要ありません。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;train -A ${A} -B ${B} -i </span><span class="si">%s</span><span class="s"> -o ${TGT}&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;/path/to/input&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>ここでの <tt class="docutils literal"><span class="pre">train</span></tt> は <tt class="docutils literal"><span class="pre">-o</span></tt> でディレクトリを指定し、各実行毎にディレクトリを作成する仮想的なコマンドです。
+この場合通常のタスクと同じように、 <tt class="docutils literal"><span class="pre">build</span></tt> 以下には、output/0-output/, output/1-output/ ... といった出力が生成されます。</p>
+<p>注意が必要なのは、出力ディレクトリを事前に生成しておかなければならない場合です。
+例えば上記の <tt class="docutils literal"><span class="pre">train</span></tt> コマンドが、 <tt class="docutils literal"><span class="pre">-o</span></tt> に指定したディレクトリが存在しない場合に実行に失敗するとします。
+この場合、ディレクトリの生成をルールの中に明示的に記述する必要があります。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;mkdir -p ${TGT}; train -A ${A} -B ${B} -i input_path -o ${TGT}&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>先ほどとの違いは、 <tt class="docutils literal"><span class="pre">train</span></tt> コマンドの実行前に、出力ディレクトリを <tt class="docutils literal"><span class="pre">mkdir</span></tt> により生成している点です。出力ノードにディレクトリを指定した場合の他の例は、 <a class="reference internal" href="#dir-rule"><em>具体例：ディレクトリに対する関数ルール</em></a> にもあります。</p>
+</div>
+<div class="section" id="id-table">
+<span id="id"></span><h3>パラメータに対するid割り当て<a class="headerlink" href="#id-table" title="Permalink to this headline">¶</a></h3>
+<p>mafでは、実行ディレクトリの <tt class="docutils literal"><span class="pre">./build</span></tt> 以下に実験結果が格納されます。例えば、 <a class="reference internal" href="#metanode-combination"><em>メタノードの組合せ</em></a> で取り上げた実験を行った場合、 <tt class="docutils literal"><span class="pre">./build</span></tt> 以下には以下のようなファイルが生成されます。</p>
+<div class="highlight-bash"><div class="highlight"><pre>.
+├── x
+│   ├── 0-x
+│   ├── 1-x
+│   └── 2-x
+├── y
+│   ├── 3-y
+│   ├── 4-y
+│   └── 5-y
+└── z
+    ├── 6-z
+    ├── 7-z
+    └── 8-z
+</pre></div>
+</div>
+<p>このように、mafを実行すると <tt class="docutils literal"><span class="pre">target</span></tt> に指定したメタノードに対応するディレクトリが作られ、その中に、パラメータの組み合わせ毎の結果が格納されます。実験結果の可視化を含めて全ての操作をmaf上で行う場合は、このディレクトリ構成については意識する必要はないのですが、得られた各ファイルを直接目で確認したい場合や、他のプログラムで処理を行いたい場合も存在します。各ディレクトリには、 <tt class="docutils literal"><span class="pre">0-x</span></tt> などのように先頭に数値がついたファイルが生成されますが、この数値は、一つのパラメータの組み合わせに割り当てられたidになっています。そして、このidとパラメータの対応は、./build/.maf_id_table.tsvファイルを参照することにより得ることができます。</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>cat ./build/.maf_id_table.tsv
+0       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 1, <span class="s1">&#39;B&#39;</span>: 1<span class="o">}</span>
+1       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 2, <span class="s1">&#39;B&#39;</span>: 10<span class="o">}</span>
+2       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 3, <span class="s1">&#39;B&#39;</span>: 1<span class="o">}</span>
+3       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 1, <span class="s1">&#39;C&#39;</span>: -1<span class="o">}</span>
+4       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 2, <span class="s1">&#39;C&#39;</span>: 0<span class="o">}</span>
+5       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 3, <span class="s1">&#39;C&#39;</span>: 1<span class="o">}</span>
+6       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 2, <span class="s1">&#39;C&#39;</span>: 0, <span class="s1">&#39;B&#39;</span>: 10<span class="o">}</span>
+7       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 1, <span class="s1">&#39;C&#39;</span>: -1, <span class="s1">&#39;B&#39;</span>: 1<span class="o">}</span>
+8       <span class="o">{</span><span class="s1">&#39;A&#39;</span>: 3, <span class="s1">&#39;C&#39;</span>: 1, <span class="s1">&#39;B&#39;</span>: 1<span class="o">}</span>
+</pre></div>
+</div>
+<p>これにより、例えば <tt class="docutils literal"><span class="pre">0-x</span></tt> は、 <tt class="docutils literal"><span class="pre">{'A':</span> <span class="pre">1,</span> <span class="pre">'B':</span> <span class="pre">1}</span></tt> というパラメータに対応する実験の出力結果であることが分かります。</p>
+</div>
 </div>
 <div class="section" id="json">
 <h2>JSON形式の入出力ファイル<a class="headerlink" href="#json" title="Permalink to this headline">¶</a></h2>
@@ -378,8 +450,8 @@ mafのユーティリティで用いられるJSONファイルは、一つのオ�
 <li>グラフ描画用に、特定のキーに関する値の列を取り出す処理</li>
 </ul>
 </div>
-<div class="section" id="id9">
-<h2>ルールの書き方<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id10">
+<h2>ルールの書き方<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
 <p>タスクの具体的な処理内容は <strong>ルール</strong> に書かれます。
 タスクにおけるルールの指定は <tt class="docutils literal"><span class="pre">rule</span></tt> 引数で行います。</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;A&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;B&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
@@ -392,8 +464,8 @@ mafのユーティリティで用いられるJSONファイルは、一つのオ�
 <li>関数ルール</li>
 <li><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール</li>
 </ul>
-<div class="section" id="id10">
-<h3>コマンドルール<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id11">
+<h3>コマンドルール<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
 <p>コマンドルールは処理をコマンドとして文字列で書いたものです。
 このドキュメントでも何度も登場しています。
 例えば入力ファイルを出力ファイルにコピーするタスクは以下のように書くことができます。</p>
@@ -422,13 +494,15 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 </li>
 </ul>
 </div>
-<div class="section" id="id11">
-<h3>関数ルール<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="function-rule">
+<span id="id12"></span><h3>関数ルール<a class="headerlink" href="#function-rule" title="Permalink to this headline">¶</a></h3>
 <p>関数ルールはpython関数として書かれたルールです。
 一つのコマンドで書けないような複雑な処理を行いたい場合に使います。</p>
 <p>関数として書かれたルールは、 <strong>タスクオブジェクト</strong> を引数に取ります。
-タスクオブジェクトはwafのものと同様ですが、 <tt class="docutils literal"><span class="pre">parameter</span></tt> メンバーが追加されています。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+タスクオブジェクトはwafのものと同様ですが、 <tt class="docutils literal"><span class="pre">parameter</span></tt> メンバーが追加されています。
+以下の例で、先頭行の <tt class="docutils literal"><span class="pre">&#64;maflib.util.rule</span></tt> は必須ではありませんが、書くことが推薦されています。このデコレータの役割については後述します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
 </div>
@@ -441,6 +515,70 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <dt><tt class="docutils literal"><span class="pre">task.parameter</span></tt></dt>
 <dd>タスクのパラメータ辞書</dd>
 </dl>
+<div class="section" id="id13">
+<h4>ルールへのパラメータの割り当て<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference internal" href="maflib.html#maflib.util.rule" title="maflib.util.rule"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.rule()</span></tt></a> デコレータを用いることにより、ルールに紐づいたパラメータの指定方法が柔軟になります。以下にその例を示します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">],</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;b&#39;</span><span class="p">]))</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="c"># 関数の引数により指定する場合</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;t&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c"># タスクのパラメータとして指定する場合</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">())</span>
+
+    <span class="c"># 両者の組み合わせ</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;u&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c"># 関数に引数を渡さない場合、括弧は省略できます</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>ここで、4つの実験はどれも <tt class="docutils literal"><span class="pre">my_rule</span></tt> というタスクに対し <tt class="docutils literal"><span class="pre">a=1,b=2</span></tt> という組み合わせで実行されます。 <tt class="docutils literal"><span class="pre">&#64;maflib.util.rule</span></tt> が書かれていない場合は、最後の例のように <tt class="docutils literal"><span class="pre">rule=my_rule</span></tt> という書き方しか許されません。ルールの定義にデコレータを追加することで、 <tt class="docutils literal"><span class="pre">rule=my_rule(a=1,</span> <span class="pre">b=2)</span></tt> のように、そのルールで用いられるパラメータを直接指定することができます。組み合わせを考える必要のないパラメータをこのように指定することで記述を簡略化することができます。</p>
+<p>advancedな話題として、このように記述することで、全てのパラメータを <tt class="docutils literal"><span class="pre">parameters</span></tt> に指定した場合に発生する一部の問題を回避することができます。</p>
+</div>
+<div class="section" id="dir-rule">
+<span id="id14"></span><h4>具体例：ディレクトリに対する関数ルール<a class="headerlink" href="#dir-rule" title="Permalink to this headline">¶</a></h4>
+<p>関数ルールの具体例を一つ取り上げます。これは <a class="reference internal" href="#dir-metanode"><em>ディレクトリに対するメタノード</em></a> で説明した、出力ノードにディレクトリを指定した場合の例にもなっています。</p>
+<p><a class="reference internal" href="#dir-metanode"><em>ディレクトリに対するメタノード</em></a> において、コマンドの実行前に <tt class="docutils literal"><span class="pre">mkdir</span></tt> によりディレクトリを生成しておかなければならないことを述べました。
+その際は、二つのコマンドを <tt class="docutils literal"><span class="pre">;</span></tt> により繋げて実行していましたが、同じことは次のように関数ルールを用いることでも記述できます。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">train</span><span class="p">)</span>
+
+    <span class="nd">@maflib.util.rule</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&#39;train&#39;</span><span class="p">,</span> <span class="s">&#39;-A&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span> <span class="s">&#39;-B&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
+                               <span class="s">&#39;-i input_path&#39;</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>上記の <tt class="docutils literal"><span class="pre">task.outputs[0].mkdir()</span></tt> は、出力ノードのパスの位置にディレクトリを生成します。
+<tt class="docutils literal"><span class="pre">task.outputs[i]</span></tt> はwafの <a class="reference external" href="http://docs.waf.googlecode.com/git/apidocs_17/Node.html">Nodeクラス</a> のインスタンスになっていて、Nodeクラスに定義されているファイル操作の機能を使うことができます。
+<tt class="docutils literal"><span class="pre">Node.mkdir()</span></tt> は、Nodeクラスの指すパスに新たにディレクトリを生成するメソッドです。</p>
+<p>この発展として、関数ルールの中で、出力ノードのディレクトリにファイルを追加したい場面を考えましょう。
+この場合、 <tt class="docutils literal"><span class="pre">Node</span></tt> クラスに定義された <tt class="docutils literal"><span class="pre">Node.find_or_declare()</span></tt> メソッドが便利です。
+これは、ディレクトリを指すノードに対し実行することで、指定した相対パスの位置に新たにファイルを生成します
+例えば先ほどのタスクで、出力ディレクトリにタスクの実行時間を計測したログファイルを別に出力する場面を考えます。
+その場合、 <tt class="docutils literal"><span class="pre">train</span></tt> を以下のように拡張します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+
+    <span class="kn">import</span> <span class="nn">time</span>
+    <span class="n">begin</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&#39;train&#39;</span><span class="p">,</span> <span class="s">&#39;-A&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span> <span class="s">&#39;-B&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
+                             <span class="s">&#39;-i input_path&#39;</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="n">sec</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">begin</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">find_or_declare</span><span class="p">(</span><span class="s">&quot;time&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sec</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">task.outputs[0].find_or_declare(&quot;time&quot;)</span></tt> は、出力ディレクトリ内に time という名前のファイルを生成します。
+そして <tt class="docutils literal"><span class="pre">write</span></tt> メソッドにより、その中に計測した実行時間を出力します。</p>
+</div>
 </div>
 <div class="section" id="maflib-core-rule">
 <h3><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール<a class="headerlink" href="#maflib-core-rule" title="Permalink to this headline">¶</a></h3>
@@ -454,8 +592,8 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 ここには関数を指定することもできます。
 関数を指定した場合、その関数の定義を書き換えたときにこのタスクを再実行するようになります（つまりその関数の定義をこのタスクの入力の一部と見なすようになります）。</p>
 </div>
-<div class="section" id="id12">
-<h3>集約ルールの書き方<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id15">
+<h3>集約ルールの書き方<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
 <p>集約ルールを書く場合には <a class="reference internal" href="maflib.html#maflib.util.aggregator" title="maflib.util.aggregator"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.aggregator()</span></tt></a> デコレータが便利です。</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.aggregator</span>
 <span class="k">def</span> <span class="nf">my_aggregator</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
@@ -498,8 +636,8 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 </pre></div>
 </div>
 </div>
-<div class="section" id="id13">
-<h3>プロットを行う集約ルールの書き方<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id16">
+<h3>プロットを行う集約ルールの書き方<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
 <p>集約ルールの中でも結果を可視化するルールを書くのに <tt class="docutils literal"><span class="pre">maflib.plot.plot_by</span></tt> デコレータを使うことができます。
 このデコレータを使うと、上記のJSON形式のデータをmatplotlibでプロットするルールを簡単に書くことができます。</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
@@ -548,8 +686,121 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 </div>
 </div>
 </div>
-<div class="section" id="id14">
-<h2>その他の例<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id17">
+<h2>実験の検証方法<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h2>
+<p>自分で定義したタスクが想定通りに動くかどうかを確かめるための方法として、mafでは二つの異なる機能を提供します。
+一つはtestモジュールで、各タスクが想定通りに動くかどうかを確かめるためのユニットテストを書きやすくします。
+また、wscriptに定義した各実験の依存関係が想定されたものであるかを確認するために、依存関係を描画する機能が存在します。</p>
+<div class="section" id="id18">
+<h3>ユニットテスト<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="maflib.html#module-maflib.test" title="maflib.test"><tt class="xref py py-mod docutils literal"><span class="pre">maflib.test</span></tt></a> モジュールは、mafの実験に関連したユニットテストを書きやすくするための機能を提供します。</p>
+<p>次の自作のルールは、二つの入力ファイルを読み込み、それらを多クラス分類器の結果として精度を出力する関数ルールです。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">multiclass_accuracy</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="n">gold_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">abspath</span><span class="p">())]</span>
+    <span class="n">pred_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">abspath</span><span class="p">())]</span>
+    <span class="c"># Comparing gold_labels and pred_lables</span>
+    <span class="n">num_correct</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gold_labels</span><span class="p">,</span> <span class="n">pred_labels</span><span class="p">)))</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">num_correct</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">gold_labels</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>しかしながら、この関数の入力は <tt class="docutils literal"><span class="pre">waflib.Task.Task</span></tt> クラスのインスタンスであるため、wafからの呼び出しではなくこの関数を切り離して動作をテストすることが困難です。
+<a class="reference internal" href="maflib.html#maflib.test.TestTask" title="maflib.test.TestTask"><tt class="xref py py-class docutils literal"><span class="pre">maflib.test.TestTask</span></tt></a> はこの問題を緩和するためのクラスです。
+次に具体例を示します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">unittest</span>
+<span class="k">class</span> <span class="nc">TestMyRule</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">test_multiclass_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">maflib</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">TestTask</span><span class="p">()</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">set_input</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;0</span><span class="se">\n</span><span class="s">1</span><span class="se">\n</span><span class="s">1</span><span class="se">\n</span><span class="s">2</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="c"># gold labels:      [0, 1, 1, 2]</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">set_input</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;0</span><span class="se">\n</span><span class="s">2</span><span class="se">\n</span><span class="s">1</span><span class="se">\n</span><span class="s">2</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="c"># predicted labels: [0, 2, 1, 2]</span>
+
+        <span class="n">multiclass_accuracy</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="c"># execute the task</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="s">&quot;0.75&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> はpythonの <a class="reference external" href="http://docs.python.jp/2/library/unittest.html">unittestモジュール</a> のクラスで、これを継承することで自作のユニットテストを定義することができます。
+<tt class="docutils literal"><span class="pre">test_multiclass_accuracy()</span></tt> が実際のテストの定義です。
+この関数は基本的に、 <tt class="docutils literal"><span class="pre">multiclass_accuracy(task)</span></tt> に渡すための変数 <tt class="docutils literal"><span class="pre">task</span></tt> を最初に準備し、関数ルールを実行し、望む出力が得られるかをチェックします。
+この <tt class="docutils literal"><span class="pre">task</span></tt> 変数は <a class="reference internal" href="maflib.html#maflib.test.TestTask" title="maflib.test.TestTask"><tt class="xref py py-class docutils literal"><span class="pre">maflib.test.TestTask</span></tt></a> クラスのインスタンスになっており、これが自作の関数ルールをwafから切り離してテストするための機能を提供します。
+例えば <tt class="docutils literal"><span class="pre">TestTask.set_input(i,</span> <span class="pre">str)</span></tt> は引数に与えた文字列 <tt class="docutils literal"><span class="pre">str</span></tt> を <tt class="docutils literal"><span class="pre">task.inputs[i].abspath()</span></tt> に対応するファイルに出力するので、テストしたい関数への入力を自由に設定することができます。</p>
+<p>このようにテストを定義したとして、これをどのように実行すれば良いでしょうか。
+<a class="reference internal" href="maflib.html#maflib.test.ExpTestContext" title="maflib.test.ExpTestContext"><tt class="xref py py-class docutils literal"><span class="pre">maflib.test.ExpTestContext</span></tt></a> はテストの実行を簡単にするための機能を提供します。
+wscriptに以下を追加してください。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maflib.test</span>
+<span class="k">def</span> <span class="nf">exptest</span><span class="p">(</span><span class="n">test</span><span class="p">):</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">TestMyRule</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>そして以下のコマンドを実行します。</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>./waf exptest
+test_multiclass_accuracy <span class="o">(</span>wscript.TestMyRule<span class="o">)</span> ... ok
+
+----------------------------------------------------------------------
+Ran 1 <span class="nb">test </span>in 0.008s
+
+OK
+</pre></div>
+</div>
+<p>wscriptに <tt class="docutils literal"><span class="pre">exptest()</span></tt> が定義されていれば、 <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">exptest</span></tt> によってテストを実行することができます。
+テストの追加には様々な方法があります。
+ここではクラス名を指定することでテストを追加する方法を示しました。
+その他に、ファイル名、もしくはディレクトリ名を指定することができます。
+ディレクトリ名を指定する場合、検索対象となるファイルは、先頭が <tt class="docutils literal"><span class="pre">test</span></tt> から始まるファイルに限定されます（ <tt class="docutils literal"><span class="pre">test_rules.py</span></tt>, <tt class="docutils literal"><span class="pre">test_core.py</span></tt> など）。</p>
+<p>例として、mafの <a class="reference external" href="https://github.com/pfi/maf">レポジトリ</a> に含まれている一連のテストを実行してみましょう。</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>git clone https://github.com/pfi/maf.git
+<span class="nv">$ </span><span class="nb">cd </span>maf
+</pre></div>
+</div>
+<p>次のwscriptを用意します。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.test</span>
+
+<span class="k">def</span> <span class="nf">exptest</span><span class="p">(</span><span class="n">test</span><span class="p">):</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;tests&quot;</span><span class="p">)</span> <span class="c"># add all tests in this directory</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;samples/vowpal/test_vowpal_util.py&quot;</span><span class="p">)</span> <span class="c"># add all tests in this file</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">exptest</span></tt> を実行すると、 <a class="reference external" href="https://github.com/pfi/maf/tree/master/tests">testsディレクトリ</a> 及び、 <a class="reference external" href="https://github.com/pfi/maf/blob/master/samples/vowpal/test_vowpal_util.py">samples/vowpal/test_vowpal_util.py</a> に定義されている全てのテストを実行することができます。</p>
+</div>
+<div class="section" id="id20">
+<h3>依存関係の描画<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<p>wscriptに定義した実験手順が複雑になってくると、実験の流れが正しく定義されているのかを検証することが難しくなってきます。自分で定義した実験の正しさを検証するためのツールとして、mafでは、各実験の依存関係をグラフにして描画する機能を提供します。</p>
+<p>例として、 <a class="reference internal" href="#metanode-combination"><em>メタノードの組合せ</em></a> で定義した実験のグラフを描画してみましょう。以下のwscriptで、各ruleは単にパラメータの組み合わせを出力するだけであり、特に意味はありません。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${B} &gt; ${TGT}&quot;</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${C} &gt; ${TGT}&quot;</span><span class="p">)</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s">&#39;z&#39;</span><span class="p">,</span>
+    <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${B} ${C} &gt; ${TGT}&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>以下のコマンドを実行することで、graph.pdfというファイルが作られます。</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">$ </span>./waf graph
+</pre></div>
+</div>
+<p>これは、以下のように実験に伴う全てのノード間の依存関係を描画したものになっています。黒丸は一つのタスクを表します。これを見ることにより、例えば最後の <tt class="docutils literal"><span class="pre">target='z'</span></tt> の実験は三つのタスクからなり、 <tt class="docutils literal"><span class="pre">x</span></tt> と <tt class="docutils literal"><span class="pre">y</span></tt> の間で <tt class="docutils literal"><span class="pre">A</span></tt> の値を共有するノードを組み合わせて実験が行われる、ということを、視覚的に確かめることができます。</p>
+<a class="reference internal image-reference" href="_images/maf_graph_example.png"><img alt="_images/maf_graph_example.png" src="_images/maf_graph_example.png" /></a>
+<p>現在の問題点として、一つの実験におけるパラメータの組み合わせが膨大であるとき、グラフが非常に複雑になり見づらいという点が挙げられます。例えばsamples/liblinearのwscriptに対して、グラフを描画してみてください。ノード数が膨大になり非常に見づらくなる場合、一つの解決策はパラメータの組み合わせを一時的に減らすようにwscriptを書き換えることです。例えば <tt class="docutils literal"><span class="pre">maflib.util.product</span></tt> を使っている場合、各パラメータの候補数を減らすことでグラフを見やすくすることができます。</p>
+<p><tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">graph</span></tt> を実行する際、以下のような引数によりその挙動を変更することができます。</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">--simple_param</span></tt></dt>
+<dd>各ノード上の出力として、パラメータの組み合わせの代わりに、その組み合わせのidが使われます（ <a class="reference internal" href="#metanode-combination"><em>メタノードの組合せ</em></a> を参照）。一つのノードに用いられるパラメータの数が大きい場合には、この機能によりシンプルなグラフを描画することができます。</dd>
+<dt><tt class="docutils literal"><span class="pre">--graphpath=...</span></tt></dt>
+<dd>出力ファイルのパスを指定します。また、拡張子によって出力フォーマットを変更することができます。例えば <tt class="docutils literal"><span class="pre">--graphpath=graph.png</span></tt> とすれば、pdfの代わりに画像ファイルが得られます。また、 <tt class="docutils literal"><span class="pre">graph.dot</span></tt> などのように <tt class="docutils literal"><span class="pre">dot</span></tt> 拡張子を指定した場合、グラフ描画に使われたgraphvizへの入力ファイルを得ることができます。</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="id21">
+<h2>その他の例<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h2>
 <p>mafの使用例は <a class="reference external" href="https://github.com/pfi/maf/tree/master/samples">https://github.com/pfi/maf/tree/master/samples</a> にまとまっています。</p>
 </div>
 </div>

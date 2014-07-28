@@ -113,25 +113,18 @@ tasks and metanodes.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="maflib.core.ExpOptionsContext">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ExpOptionsContext</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.core.ExpOptionsContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">waflib.Options.OptionsContext</span></tt></p>
+<p>ExperimentContext specific OptionContext.</p>
+<p>Please extend the <cite>__init__</cite> method below to add new options.</p>
+</dd></dl>
+
+<dl class="class">
 <dt id="maflib.core.ExperimentContext">
 <em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">ExperimentContext</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.core.ExperimentContext" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">waflib.Build.BuildContext</span></tt></p>
 <p>Context class of waf experiment (a.k.a. maf).</p>
-<dl class="attribute">
-<dt id="maflib.core.ExperimentContext.cmd">
-<tt class="descname">cmd</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.ExperimentContext.cmd" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="maflib.core.ExperimentContext.fun">
-<tt class="descname">fun</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.ExperimentContext.fun" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="maflib.core.ExperimentContext.variant">
-<tt class="descname">variant</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.ExperimentContext.variant" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="class">
@@ -254,6 +247,121 @@ dep_vars.</p>
 <dd><p>support pipe style rule str in default</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="maflib.core.ExperimentTask.sig_explicit_deps">
+<tt class="descname">sig_explicit_deps</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.ExperimentTask.sig_explicit_deps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the hash value of this task.</p>
+<p>Overriden from waflib.Task.Task to use <tt class="docutils literal"><span class="pre">_node_sig</span></tt> to calculate
+the hash value of source/target files.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.ExperimentTask.source_parameters">
+<tt class="descname">source_parameters</tt><em class="property"> = None</em><a class="headerlink" href="#maflib.core.ExperimentTask.source_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of parameters each of which is the parameter of the
+corresponding input node.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.GraphContext">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">GraphContext</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#maflib.core.ExperimentContext" title="maflib.core.ExperimentContext"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.ExperimentContext</span></tt></a></p>
+<p>outputs a graph of dependencies between tasks</p>
+<dl class="class">
+<dt id="maflib.core.GraphContext.MetaNodes">
+<em class="property">class </em><tt class="descname">MetaNodes</tt><big>(</big><em>unique_nodes</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaNodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A collection of meta nodes.</p>
+<p>This class essentially is a hashtable preserving a collection of node ids
+sharing the same meta node signature. Meta node signature is calculated
+by <tt class="xref py py-func docutils literal"><span class="pre">GraphContext._extract_meta_node()</span></tt>.</p>
+<dl class="method">
+<dt id="maflib.core.GraphContext.MetaNodes.add_node">
+<tt class="descname">add_node</tt><big>(</big><em>node</em>, <em>id</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaNodes.add_node" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.GraphContext.MetaNodes.render_graphviz">
+<tt class="descname">render_graphviz</tt><big>(</big><em>node_indexer</em>, <em>ctx</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaNodes.render_graphviz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.GraphContext.MetaTasks">
+<em class="property">class </em><tt class="descclassname">GraphContext.</tt><tt class="descname">MetaTasks</tt><big>(</big><em>tasks</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A collection of meta classes similar to MetaNodes.</p>
+<dl class="method">
+<dt id="maflib.core.GraphContext.MetaTasks.add_task">
+<tt class="descname">add_task</tt><big>(</big><em>task</em>, <em>id</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks.add_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.GraphContext.MetaTasks.max_num_invis">
+<tt class="descname">max_num_invis</tt><em class="property"> = 10</em><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks.max_num_invis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.GraphContext.MetaTasks.num_invis_around_task">
+<tt class="descname">num_invis_around_task</tt><em class="property"> = 3</em><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks.num_invis_around_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.GraphContext.MetaTasks.num_invis_per_nodes">
+<tt class="descname">num_invis_per_nodes</tt><em class="property"> = 3</em><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks.num_invis_per_nodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.GraphContext.MetaTasks.render_graphviz">
+<tt class="descname">render_graphviz</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks.render_graphviz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.GraphContext.MetaTasks.render_invisibles">
+<tt class="descname">render_invisibles</tt><big>(</big><em>node_indexer</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.MetaTasks.render_invisibles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.GraphContext.NodeIndexer">
+<em class="property">class </em><tt class="descclassname">GraphContext.</tt><tt class="descname">NodeIndexer</tt><a class="headerlink" href="#maflib.core.GraphContext.NodeIndexer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Indexer assigning a unique id to each Node instance.</p>
+<p>Because each Node instance has a unique absolute path, Node -&gt; id mappings
+are managed with a dictionary of type <cite>dict(str, id)</cite> preserving
+correspondences between a path to an id.</p>
+<dl class="method">
+<dt id="maflib.core.GraphContext.NodeIndexer.get">
+<tt class="descname">get</tt><big>(</big><em>node_id</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.NodeIndexer.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.GraphContext.NodeIndexer.get_id">
+<tt class="descname">get_id</tt><big>(</big><em>node</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.NodeIndexer.get_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.GraphContext.cmd">
+<tt class="descclassname">GraphContext.</tt><tt class="descname">cmd</tt><em class="property"> = 'graph'</em><a class="headerlink" href="#maflib.core.GraphContext.cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.GraphContext.execute">
+<tt class="descclassname">GraphContext.</tt><tt class="descname">execute</tt><big>(</big><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <tt class="xref py py-func docutils literal"><span class="pre">waflib.Context.Context.execute()</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="maflib.core.GraphContext.node_label">
+<tt class="descclassname">GraphContext.</tt><tt class="descname">node_label</tt><big>(</big><em>node</em><big>)</big><a class="headerlink" href="#maflib.core.GraphContext.node_label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="exception">
@@ -261,6 +369,27 @@ dep_vars.</p>
 <em class="property">exception </em><tt class="descclassname">maflib.core.</tt><tt class="descname">InvalidMafArgumentException</tt><a class="headerlink" href="#maflib.core.InvalidMafArgumentException" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
 <p>Exception raised when arguments of ExperimentContext.__call__ is wrong.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="maflib.core.OldExperimentContext">
+<em class="property">class </em><tt class="descclassname">maflib.core.</tt><tt class="descname">OldExperimentContext</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#maflib.core.OldExperimentContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#maflib.core.ExperimentContext" title="maflib.core.ExperimentContext"><tt class="xref py py-class docutils literal"><span class="pre">maflib.core.ExperimentContext</span></tt></a></p>
+<dl class="attribute">
+<dt id="maflib.core.OldExperimentContext.cmd">
+<tt class="descname">cmd</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.OldExperimentContext.cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.OldExperimentContext.fun">
+<tt class="descname">fun</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.OldExperimentContext.fun" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="maflib.core.OldExperimentContext.variant">
+<tt class="descname">variant</tt><em class="property"> = 'experiment'</em><a class="headerlink" href="#maflib.core.OldExperimentContext.variant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -323,6 +452,24 @@ correspondent parameter.</p>
 <p>NOTE: On exception raised during task generation, save() must be called
 to avoid inconsistency on node names that had been generated before the
 exception was raised.</p>
+<dl class="method">
+<dt id="maflib.core.ParameterIdGenerator.get">
+<tt class="descname">get</tt><big>(</big><em>parameter_id</em><big>)</big><a class="headerlink" href="#maflib.core.ParameterIdGenerator.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the parameter of a given id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameter_id</strong> &#8211; Id of the parameter</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Parameter object of a given id.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#maflib.core.Parameter" title="maflib.core.Parameter"><tt class="xref py py-class docutils literal"><span class="pre">Parameter</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="method">
 <dt id="maflib.core.ParameterIdGenerator.get_id">
 <tt class="descname">get_id</tt><big>(</big><em>parameter</em><big>)</big><a class="headerlink" href="#maflib.core.ParameterIdGenerator.get_id" title="Permalink to this definition">¶</a></dt>
@@ -584,7 +731,7 @@ that plots given data to given figure.</td>
 <span id="rules-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rules</span></tt> Module<a class="headerlink" href="#module-maflib.rules" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="maflib.rules.average">
-<tt class="descclassname">maflib.rules.</tt><tt class="descname">average</tt><big>(</big><em>task</em><big>)</big><a class="headerlink" href="#maflib.rules.average" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">average</tt><big>(</big><em>*args</em>, <em>**kargs</em><big>)</big><a class="headerlink" href="#maflib.rules.average" title="Permalink to this definition">¶</a></dt>
 <dd><p>Aggregator that calculates the average value for each key.</p>
 <p>The result contains all keys that some inputs contain. Each value is an
 average value of the corresponding key through all the inputs. If there
@@ -802,7 +949,7 @@ folds.</li>
 
 <dl class="function">
 <dt id="maflib.rules.segment_without_label_bias">
-<tt class="descclassname">maflib.rules.</tt><tt class="descname">segment_without_label_bias</tt><big>(</big><em>weights</em>, <em>extract_label=&lt;function &lt;lambda&gt; at 0x1072b8f50&gt;</em><big>)</big><a class="headerlink" href="#maflib.rules.segment_without_label_bias" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">maflib.rules.</tt><tt class="descname">segment_without_label_bias</tt><big>(</big><em>weights</em>, <em>extract_label=&lt;function &lt;lambda&gt; at 0x109a51c80&gt;</em><big>)</big><a class="headerlink" href="#maflib.rules.segment_without_label_bias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Segments an example per line data into k-fold where k is the length of param weights.</p>
 <p>This method consider the label-bias when segmentation:
 In machine learning experiments, we often want to prepare training or testing examples
@@ -855,7 +1002,7 @@ The param <tt class="docutils literal"><span class="pre">extract_label</span></t
 </table>
 <ul class="simple">
 <li>file name (ends with .py): find all test classes in that file</li>
-<li>directory name: find all test classes in files in the directory</li>
+<li>directory name: find all test classes in files matching &#8216;test*.py&#8217; in the directory</li>
 <li>class name: add tests defined in the class</li>
 </ul>
 </dd></dl>
@@ -903,13 +1050,25 @@ The param <tt class="docutils literal"><span class="pre">extract_label</span></t
 <em class="property">class </em><tt class="descclassname">maflib.test.</tt><tt class="descname">TestTask</tt><a class="headerlink" href="#maflib.test.TestTask" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>A task object making it easy to write unittest for rules.</p>
-<p>This class mimics the behavior of task object by having dummy Node objects internally.
-These node objects are <a class="reference internal" href="#maflib.core.ExperimentNode" title="maflib.core.ExperimentNode"><tt class="xref py py-func docutils literal"><span class="pre">maflib.core.ExperimentNode()</span></tt></a>.</p>
+<p>This class mimics the behavior of task object by having dummy Node objects
+internally. These node objects are <a class="reference internal" href="#maflib.core.ExperimentNode" title="maflib.core.ExperimentNode"><tt class="xref py py-func docutils literal"><span class="pre">maflib.core.ExperimentNode()</span></tt></a>.</p>
 <p>Example usages of this task can be found on test_rules.py.</p>
+<p><cite>inputs</cite> and <cite>outputs</cite> are instances of <cite>ExperimentNodeList</cite>.
+This class makes easy for accessing input/output node objects by
+automatically adding new element if necessary.
+NOTE: You should not add elements to this list manually, e.g., with
+<cite>task.outputs.append(...)</cite>. Please use instead <cite>setsize(size)</cite> or
+index accessing like <cite>task.outputs[3]</cite> automatically appends elements up to
+the index 2.</p>
 <dl class="class">
 <dt id="maflib.test.TestTask.ExperimentNodeList">
 <em class="property">class </em><tt class="descname">ExperimentNodeList</tt><a class="headerlink" href="#maflib.test.TestTask.ExperimentNodeList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">list</span></tt></p>
+<dl class="method">
+<dt id="maflib.test.TestTask.ExperimentNodeList.setsize">
+<tt class="descname">setsize</tt><big>(</big><em>size</em><big>)</big><a class="headerlink" href="#maflib.test.TestTask.ExperimentNodeList.setsize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="attribute">
@@ -1039,6 +1198,52 @@ values are lists of values to be enumerated.</td>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A direct product of a set of parameters.</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><tt class="docutils literal"><span class="pre">list</span></tt> of <tt class="docutils literal"><span class="pre">dict</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="maflib.util.rule">
+<tt class="descclassname">maflib.util.</tt><tt class="descname">rule</tt><big>(</big><em>callback_body</em><big>)</big><a class="headerlink" href="#maflib.util.rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to define a rule function that takes parameters and arguments
+interchangeably.</p>
+<p>When one defines a rule that takes some parameters or arguments, he/she is
+recommended to use <a class="reference internal" href="#maflib.util.rule" title="maflib.util.rule"><tt class="xref py py-func docutils literal"><span class="pre">rule()</span></tt></a> decorator to define it. The main reason
+is that it should be decided by users of the rule whether an argument is
+contained into task parameter or not, since it is decided by the design of
+his/her experiment, not by the design of the rule.</p>
+<p>usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="n">do</span> <span class="n">something</span> <span class="k">with</span> <span class="n">parameters</span> <span class="s">&#39;a&#39;</span> <span class="ow">and</span> <span class="s">&#39;b&#39;</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="c"># indicate by argument</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;t&#39;</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c"># indicate by parameter</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">())</span>
+
+    <span class="c"># mixed usage</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;u&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="c"># if no arguments are used, parens can be omitted</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="n">my_rule</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback_body</strong> (<em>function</em>) &#8211; A function that receives a task instance
+and does its own work. It is almost same as a usual task function; the
+only different thing is that parameter of the given task is expanded by
+the arguments as the above example.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A task generator function.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><tt class="docutils literal"><span class="pre">function</span></tt></td>
 </tr>
 </tbody>
 </table>

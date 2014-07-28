@@ -225,13 +225,13 @@ wafはPythonが直接記述できるのが特徴で、このようにループ�
 <div class="section" id="id6">
 <h2>mafを用いた実験例<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
 <p>上のwafを用いた例は、mafを用いた場合には以下のように書き換えられます。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">experiment</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
-    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;input.txt&#39;</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">bld</span><span class="p">):</span>
+    <span class="n">bld</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;input.txt&#39;</span><span class="p">,</span>
         <span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
         <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;parameter&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)],</span>
         <span class="n">rule</span><span class="o">=</span><span class="s">&#39;do_experiment ${SRC} ${parameter} &gt; ${TGT}&#39;</span><span class="p">)</span>
 
-    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
+    <span class="n">bld</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
         <span class="n">target</span><span class="o">=</span><span class="s">&#39;plot.png&#39;</span><span class="p">,</span>
         <span class="n">for_each</span><span class="o">=</span><span class="p">[],</span>
         <span class="n">rule</span><span class="o">=</span><span class="n">plot</span><span class="p">)</span>
@@ -242,9 +242,8 @@ wafはPythonが直接記述できるのが特徴で、このようにループ�
 </div>
 <p>wafの場合とは以下の点で異なっています。</p>
 <ul class="simple">
-<li>実験内容をbuild関数ではなく <tt class="docutils literal"><span class="pre">experiment</span></tt> 関数に書きます（これは些細な違いです）。</li>
 <li><tt class="docutils literal"><span class="pre">for</span></tt> 文の位置が変わりました。
-<tt class="docutils literal"><span class="pre">bld</span></tt> をパラメータの数だけ呼び出すのではなく、パラメータを並べた配列を <tt class="docutils literal"><span class="pre">exp</span></tt> に渡します。
+<tt class="docutils literal"><span class="pre">bld</span></tt> をパラメータの数だけ呼び出すのではなく、パラメータを並べた配列を <tt class="docutils literal"><span class="pre">parameters</span></tt> として渡します。
 このように書くだけで、各パラメータごとに別々の依存関係を作り出し、同じ数の出力ファイルができます。
 出力は全体をまとめて <tt class="docutils literal"><span class="pre">output</span></tt> という名前で管理できます。</li>
 <li>プロットの部分が変わりました。
