@@ -64,7 +64,7 @@ git add .nojekyll || exit 1
 
 # Only use HTML documents
 for d in `ls build/html`; do
-    mv build/html/$d . || exit 1
+    cp -rf build/html/$d . || exit 1
 done
 rm -rf build document maflib .waf*
 git add .
