@@ -52,7 +52,7 @@ wafファイルには実行可能フラグを立てておくと良いでしょ�
 以上で「何もしない実験」が実行されます。
 
 以降、 ``build`` 関数の中に実験計画を記述していきます。
-mafにおいて利用可能なユーティリティが :py:mod:`maflib` モジュール内に用意されていますが、以降ではimport文などは省略します。
+スクリプト例が煩雑になるのを避けるために、文脈から明らかな場合には ``build`` 関数の中身だけを書き、他の部分（ ``import maf`` や ``configure`` の定義など）を省略することがあります。
 
 次節ではその書き方に入る前に、まずはmafの最重要概念であるメタノードとパラメータについて解説します。
 
@@ -82,11 +82,16 @@ mafではタスクにパラメータを指定することができます。
 
 .. code-block:: python
 
-   exp(target='my_out',
-       parameters=[{'name': 'Taro'},
-                   {'name': 'Jiro'},
-                   {'name': 'Saburo'}],
-       rule='echo ${name} > ${TGT}')
+   import maf
+
+   def configure(conf): pass
+
+   def build(exp):
+       exp(target='my_out',
+           parameters=[{'name': 'Taro'},
+                       {'name': 'Jiro'},
+                       {'name': 'Saburo'}],
+           rule='echo ${name} > ${TGT}')
 
 .. image:: figures/metanode_1.png
    :scale: 75%
@@ -139,6 +144,9 @@ productという名前は集合の直積を表します。
 
 .. code-block:: python
 
+   import maf
+   import maflib.util
+
    maflib.util.product({'method': ['PA2', 'AROW'],
                         'C': [0.1, 1, 10]})
    # => [{'method': 'PA2', 'C': 0.1},
@@ -156,6 +164,9 @@ productという名前は集合の直積を表します。
 パラメータの最適化を行う際に、直積集合よりも少ない組合せで効率的に実験を行うのに有効です。
 
 .. code-block:: python
+
+   import maf
+   import maflib.util
 
    maflib.util.sample(4, {'A': [1, 2, 3],  # 離散一様分布からサンプリング
                           'B': (0.0, 1.0),  # [0.0, 1.0) の範囲の連続一様分布からサンプリング
@@ -175,21 +186,26 @@ productという名前は集合の直積を表します。
 
 .. code-block:: python
 
-   exp(target='x',
-       parameters=[{'A': 1, 'B': 1},
-                   {'A': 2, 'B': 10},
-                   {'A': 3, 'B': 1}],
-       rule=...)
+   import maf
 
-   exp(target='y',
-       parameters=[{'A': 1, 'C': -1},
-                   {'A': 2, 'C': 0},
-                   {'A': 3, 'C': 1}],
-       rule=...)
+   def configure(conf): pass
 
-   exp(source='x y',
-       target='z',
-       rule=...)
+   def build(exp):
+       exp(target='x',
+           parameters=[{'A': 1, 'B': 1},
+                       {'A': 2, 'B': 10},
+                       {'A': 3, 'B': 1}],
+           rule=...)
+
+       exp(target='y',
+           parameters=[{'A': 1, 'C': -1},
+                       {'A': 2, 'C': 0},
+                       {'A': 3, 'C': 1}],
+           rule=...)
+
+       exp(source='x y',
+           target='z',
+           rule=...)
 
 .. image:: figures/combination.png
    :scale: 75%
@@ -219,16 +235,22 @@ mafでは ``parameters`` を指定することでタスクおよび出力ノー�
 
 .. code-block:: python
 
-   exp(target='x',
-       parameters=maflib.util.product({'A': [1, 2, 3], 'B': [1, 10]}),
-       rule=...)
+   import maf
+   import maflib.util
 
-   exp(source='x',
-       target='y',
-       parameters=[{'A': 1, 'C': -1},
-                   {'A': 2, 'C': 0},
-                   {'A': 3, 'C': 1}],
-       rule=...)
+   def configure(conf): pass
+
+   def build(exp):
+       exp(target='x',
+           parameters=maflib.util.product({'A': [1, 2, 3], 'B': [1, 10]}),
+           rule=...)
+
+       exp(source='x',
+           target='y',
+           parameters=[{'A': 1, 'C': -1},
+                       {'A': 2, 'C': 0},
+                       {'A': 3, 'C': 1}],
+           rule=...)
 
 .. image:: figures/combination_2.png
    :scale: 75%
@@ -265,18 +287,24 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 
 .. code-block:: python
 
-   exp(target='raw_output',
-       parameters=maflib.util.product({'A': [0, 1, 2],
-                                       'B': [-1, 0, 1]}),
-       rule='echo A:${A} B:${B} > ${TGT}')
+   import maf
+   import maflib.util
 
-   exp(source='raw_output',
-       target='output_for_each_A',
-       for_each=['A'],
-       rule='cat ${SRC} > ${TGT}')
+   def configure(conf): pass
 
-   # 注意: ruleに指定した文字列内で ${SRC} と書いた場合、
-   # そこには入力ノードすべてのファイル名がスペース区切りで列挙される。
+   def build(exp):
+       exp(target='raw_output',
+           parameters=maflib.util.product({'A': [0, 1, 2],
+                                           'B': [-1, 0, 1]}),
+           rule='echo A:${A} B:${B} > ${TGT}')
+
+       exp(source='raw_output',
+           target='output_for_each_A',
+           for_each=['A'],
+           rule='cat ${SRC} > ${TGT}')
+
+       # 注意: ruleに指定した文字列内で ${SRC} と書いた場合、
+       # そこには入力ノードすべてのファイル名がスペース区切りで列挙される。
 
 .. image:: figures/aggregation.png
    :scale: 75%
@@ -292,15 +320,21 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 
 .. code-block:: python
 
-   exp(target='raw_output',
-       parameters=maflib.util.product({'A': [0, 1, 2],
-                                       'B': [-1, 0, 1]}),
-       rule='echo A:${A} B:${B} > ${TGT}')
+   import maf
+   import maflib.util
 
-   exp(source='raw_output',
-       target='output_for_each_A',
-       aggregate_by=['B'],
-       rule='cat ${SRC} > ${TGT}')
+   def configure(conf): pass
+
+   def build(exp):
+       exp(target='raw_output',
+           parameters=maflib.util.product({'A': [0, 1, 2],
+                                           'B': [-1, 0, 1]}),
+           rule='echo A:${A} B:${B} > ${TGT}')
+
+       exp(source='raw_output',
+           target='output_for_each_A',
+           aggregate_by=['B'],
+           rule='cat ${SRC} > ${TGT}')
 
 ``aggregate_by`` を用いた指定は、集約するパラメータが少ない場合に便利です。
 
@@ -321,10 +355,16 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 
 .. code-block:: python
 
-   exp(target='output',
-       parameters=maflib.util.product({'A': [0, 1, 2],
-                                       'B': [-1, 0, 1]}),
-       rule='train -A ${A} -B ${B} -i %s -o ${TGT}' % ('/path/to/input'))
+   import maf
+   import maflib.util
+
+   def configure(conf): pass
+
+   def build(exp):
+       exp(target='output',
+           parameters=maflib.util.product({'A': [0, 1, 2],
+                                           'B': [-1, 0, 1]}),
+           rule='train -A ${A} -B ${B} -i %s -o ${TGT}' % ('/path/to/input'))
 
 ここでの ``train`` は ``-o`` でディレクトリを指定し、各実行毎にディレクトリを作成する仮想的なコマンドです。
 この場合通常のタスクと同じように、 ``build`` 以下には、output/0-output/, output/1-output/ ... といった出力が生成されます。
@@ -450,13 +490,18 @@ mafにおいてルールには3つの種類があります。
 
   .. code-block:: python
 
-     # メタノードxはパラメータaを持つ
-     exp(target='x', parameters=[{'a': 1}, {'a': 2}], rule='...')
+     import maf
 
-     # xのパラメータaと、このタスクのパラメータbをコマンドルール内で両方とも参照できる。
-     exp(source='x', target='y',
-         parameters=[{'b': 100}, {'b': 200}],
-         rule='... ${a} ${b} ...')
+     def configure(conf): pass
+
+     def build(exp):
+         # メタノードxはパラメータaを持つ
+         exp(target='x', parameters=[{'a': 1}, {'a': 2}], rule='...')
+
+         # xのパラメータaと、このタスクのパラメータbをコマンドルール内で両方とも参照できる。
+         exp(source='x', target='y',
+             parameters=[{'b': 100}, {'b': 200}],
+             rule='... ${a} ${b} ...')
 
 .. _function_rule:
          
@@ -471,6 +516,9 @@ mafにおいてルールには3つの種類があります。
 以下の例で、先頭行の ``@maflib.util.rule`` は必須ではありませんが、書くことが推薦されています。このデコレータの役割については後述します。
 
 .. code-block:: python
+
+   import maf
+   import maflib.util
 
    @maflib.util.rule
    def my_rule(task):
@@ -491,6 +539,9 @@ mafにおいてルールには3つの種類があります。
 :py:func:`maflib.util.rule` デコレータを用いることにより、ルールに紐づいたパラメータの指定方法が柔軟になります。以下にその例を示します。
 
 .. code-block:: python
+
+   import maf
+   import maflib.util
 
    @maflib.util.rule
    def my_rule(task):
@@ -525,16 +576,20 @@ advancedな話題として、このように記述することで、全てのパ
 
 .. code-block:: python
 
-   exp(target='output',
-       parameters=maflib.util.product({'A': [0, 1, 2],
-                                       'B': [-1, 0, 1]}),
-       rule=train)
+   import maf
+   import maflib.util
 
-       @maflib.util.rule
-       def train(task):
-           task.outputs[0].mkdir()
-           subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
-                                  '-i input_path', '-o', task.outputs[0]])
+   def build(exp):
+       exp(target='output',
+           parameters=maflib.util.product({'A': [0, 1, 2],
+                                       'B': [-1, 0, 1]}),
+           rule=train)
+
+   @maflib.util.rule
+   def train(task):
+       task.outputs[0].mkdir()
+       subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
+                              '-i input_path', '-o', task.outputs[0]])
 
 上記の ``task.outputs[0].mkdir()`` は、出力ノードのパスの位置にディレクトリを生成します。
 ``task.outputs[i]`` はwafの `Nodeクラス <http://docs.waf.googlecode.com/git/apidocs_17/Node.html>`_ のインスタンスになっていて、Nodeクラスに定義されているファイル操作の機能を使うことができます。
@@ -548,16 +603,19 @@ advancedな話題として、このように記述することで、全てのパ
 
 .. code-block:: python
 
-    @maflib.util.rule
-    def train(task):
-        task.outputs[0].mkdir()
+   import maf
+   import maflib.util
 
-        import time
-        begin = time.clock()
-        subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
-                                 '-i input_path', '-o', task.outputs[0]])            
-        sec = time.clock() - begin
-        task.outputs[0].find_or_declare("time").write(str(sec))
+   @maflib.util.rule
+   def train(task):
+       task.outputs[0].mkdir()
+
+       import time
+       begin = time.clock()
+       subprocess.check_call(['train', '-A', task.parameter['A'], '-B', task.parameter['B'],
+                              '-i input_path', '-o', task.outputs[0]])
+       sec = time.clock() - begin
+       task.outputs[0].find_or_declare("time").write(str(sec))
 
 ``task.outputs[0].find_or_declare("time")`` は、出力ディレクトリ内に time という名前のファイルを生成します。
 そして ``write`` メソッドにより、その中に計測した実行時間を出力します。
@@ -569,6 +627,9 @@ advancedな話題として、このように記述することで、全てのパ
 基本的には関数ルールですが、タスクを再実行するための変化検出の対象とするオブジェクトを追加することができます。
 
 .. code-block:: python
+
+   import maf
+   import maflib.core
 
    exp(...,
        rule=maflib.core.Rule(fun=my_fun_rule, dependson=[...]))
@@ -583,6 +644,9 @@ advancedな話題として、このように記述することで、全てのパ
 集約ルールを書く場合には :py:func:`maflib.util.aggregator` デコレータが便利です。
 
 .. code-block:: python
+
+   import maf
+   import maflib.util
 
    @maflib.util.aggregator
    def my_aggregator(values, outpath, parameter):
@@ -611,6 +675,10 @@ advancedな話題として、このように記述することで、全てのパ
 
 .. code-block:: python
 
+   import maf
+   import maflib.core
+   import maflib.util
+
    def max(key):
        # ルール本体
        @maflib.util.aggregator
@@ -634,6 +702,9 @@ advancedな話題として、このように記述することで、全てのパ
 
 .. code-block:: python
 
+   import maf
+   import maflib.plot
+
    @maflib.plot.plot_by
    def my_plot(figure, data, parameter):
        ...
@@ -651,6 +722,9 @@ advancedな話題として、このように記述することで、全てのパ
 
 .. code-block:: python
 
+   import maf
+   import maflib.plot
+
    @maflib.plot.plot_by
    def my_plot(figure, data, parameter):
        # キー 'a', 'b' に対応するリストを取り出す
@@ -664,6 +738,9 @@ advancedな話題として、このように記述することで、全てのパ
 これは一つのグラフに複数のプロットを書いて比較する場合に有用です。
 
 .. code-block:: python
+
+   import maf
+   import maflib.plot
 
    @maflib.plot.plot_by
    def my_plot(figure, data, parameter):
@@ -712,7 +789,12 @@ advancedな話題として、このように記述することで、全てのパ
 
 .. code-block:: python
 
+   import maf
+   import maflib.test
    import unittest
+
+   def configure(conf): pass
+
    class TestMyRule(unittest.TestCase):
        def test_multiclass_accuracy(self):
            task = maflib.test.TestTask()
@@ -735,7 +817,6 @@ wscriptに以下を追加してください。
 
 .. code-block:: python
 
-   import maflib.test
    def exptest(test):
        test.add(TestMyRule)
 
@@ -786,21 +867,26 @@ wscriptに定義した実験手順が複雑になってくると、実験の流�
 
 .. code-block:: python
 
-   exp(target='x',
-       parameters=[{'A': 1, 'B': 1},
-                   {'A': 2, 'B': 10},
-                   {'A': 3, 'B': 1}],
-       rule="echo ${A} ${B} > ${TGT}")
+   import maf
 
-   exp(target='y',
-       parameters=[{'A': 1, 'C': -1},
-                   {'A': 2, 'C': 0},
-                   {'A': 3, 'C': 1}],
-       rule="echo ${A} ${C} > ${TGT}")
+   def configure(conf): pass
 
-   exp(source='x y',
-       target='z',
-       rule="echo ${A} ${B} ${C} > ${TGT}")
+   def build(exp):
+       exp(target='x',
+           parameters=[{'A': 1, 'B': 1},
+                       {'A': 2, 'B': 10},
+                       {'A': 3, 'B': 1}],
+           rule="echo ${A} ${B} > ${TGT}")
+
+       exp(target='y',
+           parameters=[{'A': 1, 'C': -1},
+                       {'A': 2, 'C': 0},
+                       {'A': 3, 'C': 1}],
+           rule="echo ${A} ${C} > ${TGT}")
+
+       exp(source='x y',
+           target='z',
+           rule="echo ${A} ${B} ${C} > ${TGT}")
 
 以下のコマンドを実行することで、graph.pdfというファイルが作られます。
 

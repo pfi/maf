@@ -165,7 +165,7 @@ wafファイルには実行可能フラグを立てておくと良いでしょ�
 <tt class="docutils literal"><span class="pre">build</span></tt> の代わりに <tt class="docutils literal"><span class="pre">experiment</span></tt> に関数を定義した場合、二つ目のコマンドは <tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">experiment</span></tt> となります。
 以上で「何もしない実験」が実行されます。</p>
 <p>以降、 <tt class="docutils literal"><span class="pre">build</span></tt> 関数の中に実験計画を記述していきます。
-mafにおいて利用可能なユーティリティが <tt class="xref py py-mod docutils literal"><span class="pre">maflib</span></tt> モジュール内に用意されていますが、以降ではimport文などは省略します。</p>
+スクリプト例が煩雑になるのを避けるために、文脈から明らかな場合には <tt class="docutils literal"><span class="pre">build</span></tt> 関数の中身だけを書き、他の部分（ <tt class="docutils literal"><span class="pre">import</span> <span class="pre">maf</span></tt> や <tt class="docutils literal"><span class="pre">configure</span></tt> の定義など）を省略することがあります。</p>
 <p>次節ではその書き方に入る前に、まずはmafの最重要概念であるメタノードとパラメータについて解説します。</p>
 </div>
 <div class="section" id="id2">
@@ -185,11 +185,16 @@ wafはノード間の依存関係を管理して、自動的にビルドに必�
 <h3>メタノード（パラメータ付けられたノード）<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>mafではタスクにパラメータを指定することができます。
 例えば次の例では、パラメータごとに異なる内容のファイルを生成しています。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;my_out&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Taro&#39;</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Jiro&#39;</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Saburo&#39;</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo ${name} &gt; ${TGT}&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;my_out&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Taro&#39;</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Jiro&#39;</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;Saburo&#39;</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo ${name} &gt; ${TGT}&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/metanode_1.png"><img alt="_images/metanode_1.png" src="_images/metanode_1.png" /></a>
@@ -229,7 +234,10 @@ mafではこのように、パラメータを明示することなくメタノ�
 <p>一つ目は <a class="reference internal" href="maflib.html#maflib.util.product" title="maflib.util.product"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.product()</span></tt></a> です。
 各パラメータ名に対するパラメータのリストを指定すると、すべての組合せを生成します。
 productという名前は集合の直積を表します。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;PA2&#39;</span><span class="p">,</span> <span class="s">&#39;AROW&#39;</span><span class="p">],</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;PA2&#39;</span><span class="p">,</span> <span class="s">&#39;AROW&#39;</span><span class="p">],</span>
                      <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]})</span>
 <span class="c"># =&gt; [{&#39;method&#39;: &#39;PA2&#39;, &#39;C&#39;: 0.1},</span>
 <span class="c">#     {&#39;method&#39;: &#39;PA2&#39;, &#39;C&#39;: 1},</span>
@@ -245,7 +253,10 @@ productという名前は集合の直積を表します。</p>
 関数の代わりに数値の対を渡すとその区間の連続一様分布を用います（始点は含み、終点は含まない）。
 関数の代わりに値のリストを渡すと、リストから値を選ぶような離散一様分布を用います。
 パラメータの最適化を行う際に、直積集合よりも少ない組合せで効率的に実験を行うのに有効です。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>  <span class="c"># 離散一様分布からサンプリング</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>  <span class="c"># 離散一様分布からサンプリング</span>
                        <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c"># [0.0, 1.0) の範囲の連続一様分布からサンプリング</span>
                        <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>  <span class="c"># サンプリング関数を自分で記述</span>
                        <span class="p">})</span>
@@ -258,21 +269,26 @@ productという名前は集合の直積を表します。</p>
 この場合、基本的にはそれらが含むノードの全組み合わせが用いられます。
 ただし、組み合わされたノード同士が同じキーで違う値のパラメータを持つ場合、その組合せは無視されます。</p>
 <p>例えば次の例を見てみましょう。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
-    <span class="n">target</span><span class="o">=</span><span class="s">&#39;z&#39;</span><span class="p">,</span>
-    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="s">&#39;z&#39;</span><span class="p">,</span>
+        <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/combination.png"><img alt="_images/combination.png" src="_images/combination.png" /></a>
@@ -293,16 +309,22 @@ productという名前は集合の直積を表します。</p>
 このとき、同じキーに対して異なる値が対応する組合せについてはスキップします。
 この挙動は、前項で解説した、複数メタノードを入力に指定した場合と同じです。</p>
 <p>次の例を考えます。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]}),</span>
-    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
-    <span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]}),</span>
+        <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/combination_2.png"><img alt="_images/combination_2.png" src="_images/combination_2.png" /></a>
@@ -330,18 +352,24 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 <p><tt class="docutils literal"><span class="pre">for_each</span></tt> を指定した場合、そこに列挙されたパラメータ名は、出力メタノードに保存されます。
 すなわち、そこに列挙されていないパラメータについて集約を行います。
 たとえば次の例をご覧ください。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo A:${A} B:${B} &gt; ${TGT}&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
-    <span class="n">target</span><span class="o">=</span><span class="s">&#39;output_for_each_A&#39;</span><span class="p">,</span>
-    <span class="n">for_each</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cat ${SRC} &gt; ${TGT}&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
 
-<span class="c"># 注意: ruleに指定した文字列内で ${SRC} と書いた場合、</span>
-<span class="c"># そこには入力ノードすべてのファイル名がスペース区切りで列挙される。</span>
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                        <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo A:${A} B:${B} &gt; ${TGT}&#39;</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="s">&#39;output_for_each_A&#39;</span><span class="p">,</span>
+        <span class="n">for_each</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cat ${SRC} &gt; ${TGT}&#39;</span><span class="p">)</span>
+
+    <span class="c"># 注意: ruleに指定した文字列内で ${SRC} と書いた場合、</span>
+    <span class="c"># そこには入力ノードすべてのファイル名がスペース区切りで列挙される。</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/aggregation.png"><img alt="_images/aggregation.png" src="_images/aggregation.png" /></a>
@@ -352,15 +380,21 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 <p>一方、 <tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を指定した場合、逆にそこに列挙されたパラメータについて集約を行います。
 すなわち、それ以外のパラメータを <tt class="docutils literal"><span class="pre">for_each</span></tt> に指定した場合と同じ挙動をします。
 次の例は、上の例と等価です。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo A:${A} B:${B} &gt; ${TGT}&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
-    <span class="n">target</span><span class="o">=</span><span class="s">&#39;output_for_each_A&#39;</span><span class="p">,</span>
-    <span class="n">aggregate_by</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cat ${SRC} &gt; ${TGT}&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                        <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo A:${A} B:${B} &gt; ${TGT}&#39;</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;raw_output&#39;</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="s">&#39;output_for_each_A&#39;</span><span class="p">,</span>
+        <span class="n">aggregate_by</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cat ${SRC} &gt; ${TGT}&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を用いた指定は、集約するパラメータが少ない場合に便利です。</p>
@@ -374,10 +408,16 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
 またあるソフトは、学習や予測の結果を複数ファイルからなるディレクトリの形で出力する場合も考えられます。</p>
 <p>基本的には、タスクの <tt class="docutils literal"><span class="pre">input</span></tt>, <tt class="docutils literal"><span class="pre">output</span></tt> にファイルではなくディレクトリを指定した場合も、通常のタスクと同じように実行させることができます。
 例えば以下のように、出力ファイルにディレクトリを指定するソフトを用いる場合は特別な変更は必要ありません。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;train -A ${A} -B ${B} -i </span><span class="si">%s</span><span class="s"> -o ${TGT}&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;/path/to/input&#39;</span><span class="p">))</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                        <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;train -A ${A} -B ${B} -i </span><span class="si">%s</span><span class="s"> -o ${TGT}&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;/path/to/input&#39;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>ここでの <tt class="docutils literal"><span class="pre">train</span></tt> は <tt class="docutils literal"><span class="pre">-o</span></tt> でディレクトリを指定し、各実行毎にディレクトリを作成する仮想的なコマンドです。
@@ -482,13 +522,18 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <li><p class="first">タスクのパラメータ。
 タスクのパラメータは、入力ノードがメタノードの場合にはそのパラメータを含み、タスク自体にパラメータが指定されている場合はそれも含みます。
 たとえば以下のように直接パラメータを参照することができます。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># メタノードxはパラメータaを持つ</span>
-<span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="s">&#39;...&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
 
-<span class="c"># xのパラメータaと、このタスクのパラメータbをコマンドルール内で両方とも参照できる。</span>
-<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="p">{</span><span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&#39;... ${a} ${b} ...&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="c"># メタノードxはパラメータaを持つ</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}],</span> <span class="n">rule</span><span class="o">=</span><span class="s">&#39;...&#39;</span><span class="p">)</span>
+
+    <span class="c"># xのパラメータaと、このタスクのパラメータbをコマンドルール内で両方とも参照できる。</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="p">{</span><span class="s">&#39;b&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&#39;... ${a} ${b} ...&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
@@ -501,7 +546,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <p>関数として書かれたルールは、 <strong>タスクオブジェクト</strong> を引数に取ります。
 タスクオブジェクトはwafのものと同様ですが、 <tt class="docutils literal"><span class="pre">parameter</span></tt> メンバーが追加されています。
 以下の例で、先頭行の <tt class="docutils literal"><span class="pre">&#64;maflib.util.rule</span></tt> は必須ではありませんが、書くことが推薦されています。このデコレータの役割については後述します。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="nd">@maflib.util.rule</span>
 <span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -518,7 +566,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <div class="section" id="id13">
 <h4>ルールへのパラメータの割り当て<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
 <p><a class="reference internal" href="maflib.html#maflib.util.rule" title="maflib.util.rule"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.rule()</span></tt></a> デコレータを用いることにより、ルールに紐づいたパラメータの指定方法が柔軟になります。以下にその例を示します。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="nd">@maflib.util.rule</span>
 <span class="k">def</span> <span class="nf">my_rule</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
     <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">],</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;b&#39;</span><span class="p">]))</span>
 
@@ -544,16 +595,20 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <p>関数ルールの具体例を一つ取り上げます。これは <a class="reference internal" href="#dir-metanode"><em>ディレクトリに対するメタノード</em></a> で説明した、出力ノードにディレクトリを指定した場合の例にもなっています。</p>
 <p><a class="reference internal" href="#dir-metanode"><em>ディレクトリに対するメタノード</em></a> において、コマンドの実行前に <tt class="docutils literal"><span class="pre">mkdir</span></tt> によりディレクトリを生成しておかなければならないことを述べました。
 その際は、二つのコマンドを <tt class="docutils literal"><span class="pre">;</span></tt> により繋げて実行していましたが、同じことは次のように関数ルールを用いることでも記述できます。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
-    <span class="n">rule</span><span class="o">=</span><span class="n">train</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
 
-    <span class="nd">@maflib.util.rule</span>
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
-        <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
-        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&#39;train&#39;</span><span class="p">,</span> <span class="s">&#39;-A&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span> <span class="s">&#39;-B&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
-                               <span class="s">&#39;-i input_path&#39;</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">product</span><span class="p">({</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+                                    <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}),</span>
+        <span class="n">rule</span><span class="o">=</span><span class="n">train</span><span class="p">)</span>
+
+<span class="nd">@maflib.util.rule</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&#39;train&#39;</span><span class="p">,</span> <span class="s">&#39;-A&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span> <span class="s">&#39;-B&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
+                           <span class="s">&#39;-i input_path&#39;</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
 </pre></div>
 </div>
 <p>上記の <tt class="docutils literal"><span class="pre">task.outputs[0].mkdir()</span></tt> は、出力ノードのパスの位置にディレクトリを生成します。
@@ -564,14 +619,17 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 これは、ディレクトリを指すノードに対し実行することで、指定した相対パスの位置に新たにファイルを生成します
 例えば先ほどのタスクで、出力ディレクトリにタスクの実行時間を計測したログファイルを別に出力する場面を考えます。
 その場合、 <tt class="docutils literal"><span class="pre">train</span></tt> を以下のように拡張します。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.rule</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="nd">@maflib.util.rule</span>
 <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
     <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
 
     <span class="kn">import</span> <span class="nn">time</span>
     <span class="n">begin</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
     <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&#39;train&#39;</span><span class="p">,</span> <span class="s">&#39;-A&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">],</span> <span class="s">&#39;-B&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">parameter</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">],</span>
-                             <span class="s">&#39;-i input_path&#39;</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                           <span class="s">&#39;-i input_path&#39;</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
     <span class="n">sec</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">begin</span>
     <span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">find_or_declare</span><span class="p">(</span><span class="s">&quot;time&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sec</span><span class="p">))</span>
 </pre></div>
@@ -584,7 +642,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <h3><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> ルール<a class="headerlink" href="#maflib-core-rule" title="Permalink to this headline">¶</a></h3>
 <p><tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> クラスのインスタンスをルールに指定することもできます。
 基本的には関数ルールですが、タスクを再実行するための変化検出の対象とするオブジェクトを追加することができます。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="o">...</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.core</span>
+
+<span class="n">exp</span><span class="p">(</span><span class="o">...</span><span class="p">,</span>
     <span class="n">rule</span><span class="o">=</span><span class="n">maflib</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Rule</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">my_fun_rule</span><span class="p">,</span> <span class="n">dependson</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">]))</span>
 </pre></div>
 </div>
@@ -595,7 +656,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <div class="section" id="id15">
 <h3>集約ルールの書き方<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
 <p>集約ルールを書く場合には <a class="reference internal" href="maflib.html#maflib.util.aggregator" title="maflib.util.aggregator"><tt class="xref py py-func docutils literal"><span class="pre">maflib.util.aggregator()</span></tt></a> デコレータが便利です。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.util.aggregator</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="nd">@maflib.util.aggregator</span>
 <span class="k">def</span> <span class="nf">my_aggregator</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -619,7 +683,11 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <p>例として最大値を取る <tt class="docutils literal"><span class="pre">maflib.rules.max</span></tt> の定義を以下に載せます。
 この関数は引数 <tt class="docutils literal"><span class="pre">key</span></tt> で指定したキーについて最大値を取るルールを返します。
 <tt class="docutils literal"><span class="pre">maflib.core.Rule</span></tt> による依存性追加の例にもなっています。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.core</span>
+<span class="kn">import</span> <span class="nn">maflib.util</span>
+
+<span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
     <span class="c"># ルール本体</span>
     <span class="nd">@maflib.util.aggregator</span>
     <span class="k">def</span> <span class="nf">body</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">outpath</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
@@ -640,7 +708,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <h3>プロットを行う集約ルールの書き方<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
 <p>集約ルールの中でも結果を可視化するルールを書くのに <tt class="docutils literal"><span class="pre">maflib.plot.plot_by</span></tt> デコレータを使うことができます。
 このデコレータを使うと、上記のJSON形式のデータをmatplotlibでプロットするルールを簡単に書くことができます。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.plot</span>
+
+<span class="nd">@maflib.plot.plot_by</span>
 <span class="k">def</span> <span class="nf">my_plot</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -655,7 +726,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <dd>タスクのパラメータ</dd>
 </dl>
 <p><a class="reference internal" href="maflib.html#maflib.plot.PlotData" title="maflib.plot.PlotData"><tt class="xref py py-class docutils literal"><span class="pre">maflib.plot.PlotData</span></tt></a> オブジェクトから2次元プロットを行うには <tt class="docutils literal"><span class="pre">get_data_2d</span></tt> 関数を使います。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.plot</span>
+
+<span class="nd">@maflib.plot.plot_by</span>
 <span class="k">def</span> <span class="nf">my_plot</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
     <span class="c"># キー &#39;a&#39;, &#39;b&#39; に対応するリストを取り出す</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get_data_2d</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)</span>
@@ -667,7 +741,10 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 </div>
 <p><tt class="docutils literal"><span class="pre">get_data_2d</span></tt> に <tt class="docutils literal"><span class="pre">key</span></tt> 引数を指定すると、指定したキーごとに異なるリストを作ることができます。
 これは一つのグラフに複数のプロットを書いて比較する場合に有用です。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@maflib.plot.plot_by</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.plot</span>
+
+<span class="nd">@maflib.plot.plot_by</span>
 <span class="k">def</span> <span class="nf">my_plot</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameter</span><span class="p">):</span>
     <span class="c"># キー &#39;k&#39; ごとに &#39;a&#39;, &#39;b&#39; の値のリストを取り出す。</span>
     <span class="c"># 戻り値は &#39;k&#39; の値から (x, y) への辞書になっている。</span>
@@ -706,7 +783,12 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <p>しかしながら、この関数の入力は <tt class="docutils literal"><span class="pre">waflib.Task.Task</span></tt> クラスのインスタンスであるため、wafからの呼び出しではなくこの関数を切り離して動作をテストすることが困難です。
 <a class="reference internal" href="maflib.html#maflib.test.TestTask" title="maflib.test.TestTask"><tt class="xref py py-class docutils literal"><span class="pre">maflib.test.TestTask</span></tt></a> はこの問題を緩和するためのクラスです。
 次に具体例を示します。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">unittest</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
+<span class="kn">import</span> <span class="nn">maflib.test</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
+
 <span class="k">class</span> <span class="nc">TestMyRule</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">test_multiclass_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">maflib</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">TestTask</span><span class="p">()</span>
@@ -726,8 +808,7 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <p>このようにテストを定義したとして、これをどのように実行すれば良いでしょうか。
 <a class="reference internal" href="maflib.html#maflib.test.ExpTestContext" title="maflib.test.ExpTestContext"><tt class="xref py py-class docutils literal"><span class="pre">maflib.test.ExpTestContext</span></tt></a> はテストの実行を簡単にするための機能を提供します。
 wscriptに以下を追加してください。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maflib.test</span>
-<span class="k">def</span> <span class="nf">exptest</span><span class="p">(</span><span class="n">test</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">exptest</span><span class="p">(</span><span class="n">test</span><span class="p">):</span>
     <span class="n">test</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">TestMyRule</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -766,21 +847,26 @@ OK
 <h3>依存関係の描画<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
 <p>wscriptに定義した実験手順が複雑になってくると、実験の流れが正しく定義されているのかを検証することが難しくなってきます。自分で定義した実験の正しさを検証するためのツールとして、mafでは、各実験の依存関係をグラフにして描画する機能を提供します。</p>
 <p>例として、 <a class="reference internal" href="#metanode-combination"><em>メタノードの組合せ</em></a> で定義した実験のグラフを描画してみましょう。以下のwscriptで、各ruleは単にパラメータの組み合わせを出力するだけであり、特に意味はありません。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${B} &gt; ${TGT}&quot;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">maf</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
-    <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-                <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${C} &gt; ${TGT}&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="n">conf</span><span class="p">):</span> <span class="k">pass</span>
 
-<span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
-    <span class="n">target</span><span class="o">=</span><span class="s">&#39;z&#39;</span><span class="p">,</span>
-    <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${B} ${C} &gt; ${TGT}&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;x&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${B} &gt; ${TGT}&quot;</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                    <span class="p">{</span><span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}],</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${C} &gt; ${TGT}&quot;</span><span class="p">)</span>
+
+    <span class="n">exp</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s">&#39;x y&#39;</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="s">&#39;z&#39;</span><span class="p">,</span>
+        <span class="n">rule</span><span class="o">=</span><span class="s">&quot;echo ${A} ${B} ${C} &gt; ${TGT}&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>以下のコマンドを実行することで、graph.pdfというファイルが作られます。</p>
