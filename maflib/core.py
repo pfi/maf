@@ -906,6 +906,36 @@ class ExperimentTask(waflib.Task.Task):
         self.inputs = [ExperimentNode(s) for s in self.inputs]
         self.outputs = [ExperimentNode(s) for s in self.outputs]
 
+    def runnable_status(self):
+        """Override :py:meth:`waflib.Task.Task.runnable_status` to add extra runnable
+        condition checkers.
+        
+        """
+
+        status = super(ExperimentTask, self).runnable_status()
+
+        if status != waflib.Task.SKIP_ME:
+            return status
+
+        # addtional condition checks if status is SKIP_ME
+        def node_time(n):
+            try:
+                return os.path.getmtime(n.abspath())
+            except OSError:
+                return 0
+
+        # Run if some input node is newer than some output node.
+        # This strange condition happens when a user manually delete/modify
+        # a file in build directory; waf doesn't care these changes so
+        # we trace here by comparing modification dates of files.
+        if self.inputs and self.outputs:
+            input_update_date = max([node_time(n) for n in self.inputs])
+            output_update_date = min([node_time(n) for n in self.outputs])
+
+            if input_update_date > output_update_date:
+                return waflib.Task.RUN_ME
+
+        return waflib.Task.SKIP_ME
         
     def sig_explicit_deps(self):
         """Calculates the hash value of this task.
