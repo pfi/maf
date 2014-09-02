@@ -179,7 +179,7 @@ wafファイルには実行可能フラグを立てておくと良いでしょ�
 また、ノードに対応するファイルはビルドディレクトリ（通常は <tt class="docutils literal"><span class="pre">build</span></tt> という名前を持つ）以下にあることもあれば、ソースディレクトリ（通常は <tt class="docutils literal"><span class="pre">waf</span></tt> 自身があるディレクトリ）以下にあることもあります。
 wafはノード間の依存関係を管理して、自動的にビルドに必要なタスクを生成します。
 また、各タスクごとに入力ファイルのバージョン情報やハッシュ値の変化を検出して、再ビルドの際には必要十分な部分だけを再実行します。</p>
-<a class="reference internal image-reference" href="_images/node.png"><img alt="_images/node.png" src="_images/node.png" /></a>
+<a class="reference internal image-reference" href="_images/node.png"><img alt="_images/node.png" src="_images/node.png" style="width: 302.25px; height: 48.0px;" /></a>
 </div>
 <div class="section" id="id3">
 <h3>メタノード（パラメータ付けられたノード）<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
@@ -197,7 +197,7 @@ wafはノード間の依存関係を管理して、自動的にビルドに必�
         <span class="n">rule</span><span class="o">=</span><span class="s">&#39;echo ${name} &gt; ${TGT}&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="_images/metanode_1.png"><img alt="_images/metanode_1.png" src="_images/metanode_1.png" /></a>
+<a class="reference internal image-reference" href="_images/metanode_1.png"><img alt="_images/metanode_1.png" src="_images/metanode_1.png" style="width: 386.25px; height: 209.25px;" /></a>
 <p><tt class="docutils literal"><span class="pre">parameters</span></tt> に辞書の配列を指定することで、タスクにパラメータの集合を設定することができます。
 各辞書のキーと値はともにハッシュ化可能でなければなりません。
 パラメータの内容は <tt class="docutils literal"><span class="pre">rule</span></tt> 内で参照することができます。</p>
@@ -213,7 +213,7 @@ wafはノード間の依存関係を管理して、自動的にビルドに必�
     <span class="n">rule</span><span class="o">=</span><span class="s">&#39;cp ${SRC} ${TGT}; echo Sato &gt;&gt; ${TGT}&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="_images/metanode_2.png"><img alt="_images/metanode_2.png" src="_images/metanode_2.png" /></a>
+<a class="reference internal image-reference" href="_images/metanode_2.png"><img alt="_images/metanode_2.png" src="_images/metanode_2.png" style="width: 699.75px; height: 209.25px;" /></a>
 <p>この例の場合、入力ノード <tt class="docutils literal"><span class="pre">my_out</span></tt> はメタノードなので、各パラメータごとに別々のタスクが生成されます。
 どんなパラメータがあるかはメタノード <tt class="docutils literal"><span class="pre">my_out</span></tt> に紐付けられているので、改めて記述する必要はありません。
 このとき、出力ノード <tt class="docutils literal"><span class="pre">my_name</span></tt> もメタノードとなり、 <tt class="docutils literal"><span class="pre">my_out</span></tt> に含まれる各ノードに対応するノードがこの中に生成されます。
@@ -291,13 +291,14 @@ productという名前は集合の直積を表します。</p>
         <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="_images/combination.png"><img alt="_images/combination.png" src="_images/combination.png" /></a>
+<a class="reference internal image-reference" href="_images/combination.png"><img alt="_images/combination.png" src="_images/combination.png" style="width: 579.75px; height: 402.0px;" /></a>
 <p>パラメータ <tt class="docutils literal"><span class="pre">A,</span> <span class="pre">B</span></tt> を持つメタノード <tt class="docutils literal"><span class="pre">x</span></tt> と、パラメータ <tt class="docutils literal"><span class="pre">A,</span> <span class="pre">C</span></tt> を持つメタノード <tt class="docutils literal"><span class="pre">y</span></tt> があり、それらを入力としてメタノード <tt class="docutils literal"><span class="pre">z</span></tt> を出力しています。
 この場合、 <tt class="docutils literal"><span class="pre">z</span></tt> を出力するタスクでは <tt class="docutils literal"><span class="pre">x</span></tt> と <tt class="docutils literal"><span class="pre">y</span></tt> のノードの全組合せが試されますが、そのうちパラメータ <tt class="docutils literal"><span class="pre">A</span></tt> の値が食い違っている組合せについてはタスクを実行しません。</p>
 <p>よって <tt class="docutils literal"><span class="pre">z</span></tt> は以下のパラメータに対応するノードの集合となります</p>
-<div class="highlight-python"><pre>{'A': 1, 'B': 1, 'C': -1},
-{'A': 2, 'B': 10, 'C': 0},
-{'A': 3, 'B': 1, 'C': 1}.</pre>
+<div class="highlight-python"><div class="highlight"><pre>{&#39;A&#39;: 1, &#39;B&#39;: 1, &#39;C&#39;: -1},
+{&#39;A&#39;: 2, &#39;B&#39;: 10, &#39;C&#39;: 0},
+{&#39;A&#39;: 3, &#39;B&#39;: 1, &#39;C&#39;: 1}.
+</pre></div>
 </div>
 <p><tt class="docutils literal"><span class="pre">x</span></tt> も <tt class="docutils literal"><span class="pre">y</span></tt> も3通りのパラメータを持ちますが、 <tt class="docutils literal"><span class="pre">z</span></tt> は3×3=9通りではなく、組合せが正しい3通りのみを持っていることに注目してください。</p>
 </div>
@@ -327,15 +328,16 @@ productという名前は集合の直積を表します。</p>
         <span class="n">rule</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="_images/combination_2.png"><img alt="_images/combination_2.png" src="_images/combination_2.png" /></a>
+<a class="reference internal image-reference" href="_images/combination_2.png"><img alt="_images/combination_2.png" src="_images/combination_2.png" style="width: 590.25px; height: 371.25px;" /></a>
 <p>この例ではメタノード <tt class="docutils literal"><span class="pre">x</span></tt> を入力とするタスク生成で同時に <tt class="docutils literal"><span class="pre">parameters</span></tt> が指定されています。
 このとき出力メタノード <tt class="docutils literal"><span class="pre">y</span></tt> は以下のパラメータを持つことになります:</p>
-<div class="highlight-python"><pre>{'A': 1, 'B': 1, 'C': -1},
-{'A': 1, 'B': 10, 'C': -1},
-{'A': 2, 'B': 1, 'C': 0},
-{'A': 2, 'B': 10, 'C': 0},
-{'A': 3, 'B': 1, 'C': 1},
-{'A': 3, 'B': 10, 'C': 1}.</pre>
+<div class="highlight-python"><div class="highlight"><pre>{&#39;A&#39;: 1, &#39;B&#39;: 1, &#39;C&#39;: -1},
+{&#39;A&#39;: 1, &#39;B&#39;: 10, &#39;C&#39;: -1},
+{&#39;A&#39;: 2, &#39;B&#39;: 1, &#39;C&#39;: 0},
+{&#39;A&#39;: 2, &#39;B&#39;: 10, &#39;C&#39;: 0},
+{&#39;A&#39;: 3, &#39;B&#39;: 1, &#39;C&#39;: 1},
+{&#39;A&#39;: 3, &#39;B&#39;: 10, &#39;C&#39;: 1}.
+</pre></div>
 </div>
 </div>
 <div class="section" id="id8">
@@ -344,7 +346,7 @@ productという名前は集合の直積を表します。</p>
 たとえばグラフの描画や、複数回の試行に対して平均をとる操作などがこれにあたります。
 mafでは、メタノードが持つ複数のパラメータに対するノード集合に対して一つのノードを出力するようなタスクを <strong>集約タスク</strong> と呼びます。
 集約タスクを用いれば、このような集約操作を書くことができます。</p>
-<a class="reference internal image-reference" href="_images/aggregation_image.png"><img alt="_images/aggregation_image.png" src="_images/aggregation_image.png" /></a>
+<a class="reference internal image-reference" href="_images/aggregation_image.png"><img alt="_images/aggregation_image.png" src="_images/aggregation_image.png" style="width: 434.25px; height: 299.25px;" /></a>
 <p>タスクを書く際に <tt class="docutils literal"><span class="pre">for_each</span></tt> または <tt class="docutils literal"><span class="pre">aggregate_by</span></tt> を指定した場合に、そのタスクは集約タスクとなります。
 集約する際に、どのパラメータについて集約するかをこれらのキーで選びます。
 これらにはパラメータ名のリストを指定します。
@@ -372,7 +374,7 @@ mafでは、メタノードが持つ複数のパラメータに対するノー�
     <span class="c"># そこには入力ノードすべてのファイル名がスペース区切りで列挙される。</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="_images/aggregation.png"><img alt="_images/aggregation.png" src="_images/aggregation.png" /></a>
+<a class="reference internal image-reference" href="_images/aggregation.png"><img alt="_images/aggregation.png" src="_images/aggregation.png" style="width: 705.0px; height: 533.25px;" /></a>
 <p>この例の場合、 <tt class="docutils literal"><span class="pre">for_each=['A']</span></tt> の指定により、各 <tt class="docutils literal"><span class="pre">A</span></tt> の値ごとに <tt class="docutils literal"><span class="pre">output_for_each_A</span></tt> のノードを生成するタスクが実行されます。
 すなわち、 <tt class="docutils literal"><span class="pre">A</span></tt> の値が等しくて <tt class="docutils literal"><span class="pre">B</span></tt> の値が異なる3つの入力ノードに対して1つのタスクが作られます。
 <tt class="docutils literal"><span class="pre">for_each</span></tt> を用いた指定は、残すパラメータが少ない場合に便利です。
@@ -809,7 +811,7 @@ N番目の入力ノードの絶対パスを展開したい場合いは <tt class
 <a class="reference internal" href="maflib.html#maflib.test.ExpTestContext" title="maflib.test.ExpTestContext"><tt class="xref py py-class docutils literal"><span class="pre">maflib.test.ExpTestContext</span></tt></a> はテストの実行を簡単にするための機能を提供します。
 wscriptに以下を追加してください。</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">exptest</span><span class="p">(</span><span class="n">test</span><span class="p">):</span>
-    <span class="n">test</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">TestMyRule</span><span class="p">)</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">TestMyRule</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>そして以下のコマンドを実行します。</p>
@@ -874,7 +876,7 @@ OK
 </pre></div>
 </div>
 <p>これは、以下のように実験に伴う全てのノード間の依存関係を描画したものになっています。黒丸は一つのタスクを表します。これを見ることにより、例えば最後の <tt class="docutils literal"><span class="pre">target='z'</span></tt> の実験は三つのタスクからなり、 <tt class="docutils literal"><span class="pre">x</span></tt> と <tt class="docutils literal"><span class="pre">y</span></tt> の間で <tt class="docutils literal"><span class="pre">A</span></tt> の値を共有するノードを組み合わせて実験が行われる、ということを、視覚的に確かめることができます。</p>
-<a class="reference internal image-reference" href="_images/maf_graph_example.png"><img alt="_images/maf_graph_example.png" src="_images/maf_graph_example.png" /></a>
+<a class="reference internal image-reference" href="_images/maf_graph_example.png"><img alt="_images/maf_graph_example.png" src="_images/maf_graph_example.png" style="width: 687.75px; height: 404.25px;" /></a>
 <p>現在の問題点として、一つの実験におけるパラメータの組み合わせが膨大であるとき、グラフが非常に複雑になり見づらいという点が挙げられます。例えばsamples/liblinearのwscriptに対して、グラフを描画してみてください。ノード数が膨大になり非常に見づらくなる場合、一つの解決策はパラメータの組み合わせを一時的に減らすようにwscriptを書き換えることです。例えば <tt class="docutils literal"><span class="pre">maflib.util.product</span></tt> を使っている場合、各パラメータの候補数を減らすことでグラフを見やすくすることができます。</p>
 <p><tt class="docutils literal"><span class="pre">./waf</span> <span class="pre">graph</span></tt> を実行する際、以下のような引数によりその挙動を変更することができます。</p>
 <dl class="docutils">
@@ -917,7 +919,7 @@ OK
     </div>
     <div class="footer">
         &copy; Copyright 2013, Preferred Infrastructure, Inc..
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

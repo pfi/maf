@@ -137,7 +137,7 @@ wafはPythonで書かれたビルドツールで、拡張性の高さが特徴�
 入力ファイルと出力ファイルの依存関係を記述すると、ビルドツールがこれを解析して適切な順序で出力ファイルを生成します。
 例えば Figure <a class="pageref" href="#build-flow">1</a> のように、ソースファイルから実行可能ファイルやライブラリを作ります。</p>
 <div class="figure" id="build-flow">
-<a class="reference internal image-reference" href="_images/build_flow.png"><img alt="_images/build_flow.png" src="_images/build_flow.png" /></a>
+<a class="reference internal image-reference" href="_images/build_flow.png"><img alt="_images/build_flow.png" src="_images/build_flow.png" style="width: 789.75px; height: 353.25px;" /></a>
 <p class="caption">Figure 1: ソースコードの単純なビルド例。</p>
 </div>
 <p>wafは様々な言語処理系に対応したビルドツールで、依存関係をDSLのような見た目をしたPythonコードで記述することができるのが特徴です。
@@ -152,7 +152,7 @@ wafの詳細については <a class="reference external" href="https://code.goo
 wafを用いると、Figure <a class="pageref" href="#typical-flow">2</a> のような実験も書くことができます。
 mafは、このようなwafを用いた実験をより書きやすくするためのwaf拡張です。</p>
 <div class="figure" id="typical-flow">
-<a class="reference internal image-reference" href="_images/typical_flow.png"><img alt="_images/typical_flow.png" src="_images/typical_flow.png" /></a>
+<a class="reference internal image-reference" href="_images/typical_flow.png"><img alt="_images/typical_flow.png" src="_images/typical_flow.png" style="width: 720.0px; height: 236.25px;" /></a>
 <p class="caption">Figure 2: ビルドツールを参考にした実験の流れの例。</p>
 </div>
 <p>ここからは、wafの（言語に依らない）ごく基本的な使い方は既知のものとして進めます。
@@ -171,7 +171,7 @@ Figure <a class="pageref" href="#waf-example">3</a> が対応するビルド図�
 </pre></div>
 </div>
 <div class="figure" id="waf-example">
-<a class="reference internal image-reference" href="_images/waf_example.png"><img alt="_images/waf_example.png" src="_images/waf_example.png" /></a>
+<a class="reference internal image-reference" href="_images/waf_example.png"><img alt="_images/waf_example.png" src="_images/waf_example.png" style="width: 594.0px; height: 98.25px;" /></a>
 <p class="caption">Figure 3: wafによるファイル処理の例。</p>
 </div>
 <p>実験の際には <tt class="docutils literal"><span class="pre">echo</span></tt> や <tt class="docutils literal"><span class="pre">cat</span></tt> などの部分が、一つの設定に対する実験プログラムや結果の集約処理に変わると思ってください。
@@ -185,16 +185,17 @@ Figure <a class="pageref" href="#waf-example">3</a> が対応するビルド図�
 </pre></div>
 </div>
 <p>このとき、以下のような実験 (Figure <a class="pageref" href="#waf-experiment">4</a>) を行いたいとします。</p>
-<div class="highlight-bash"><pre>$ do_experiment input.txt 1 &gt; output1.txt
+<div class="highlight-bash"><div class="highlight"><pre>$ do_experiment input.txt 1 &gt; output1.txt
 $ do_experiment input.txt 2 &gt; output2.txt
 $ do_experiment input.txt 3 &gt; output3.txt
 $ do_experiment input.txt 4 &gt; output4.txt
 $ do_experiment input.txt 5 &gt; output5.txt
 $
-$ plot these outputs</pre>
+$ plot these outputs
+</pre></div>
 </div>
 <div class="figure" id="waf-experiment">
-<a class="reference internal image-reference" href="_images/waf_experiment.png"><img alt="_images/waf_experiment.png" src="_images/waf_experiment.png" /></a>
+<a class="reference internal image-reference" href="_images/waf_experiment.png"><img alt="_images/waf_experiment.png" src="_images/waf_experiment.png" style="width: 704.25px; height: 260.25px;" /></a>
 <p class="caption">Figure 4: wafによる実験のビルド図。</p>
 </div>
 <p>最後のplotについては何か追加でスクリプトを書くものとします。</p>
@@ -253,7 +254,7 @@ wafはPythonが直接記述できるのが特徴で、このようにループ�
 パラメータの数だけ操作と出力ファイルができますが、その管理をmafが自動で行っている様子がわかります。
 ユーザーが触るのはパラメータが違うノードを束ねたもの（図において色がけした塊）だけです。</p>
 <div class="figure" id="maf-experiment">
-<a class="reference internal image-reference" href="_images/maf_experiment.png"><img alt="_images/maf_experiment.png" src="_images/maf_experiment.png" /></a>
+<a class="reference internal image-reference" href="_images/maf_experiment.png"><img alt="_images/maf_experiment.png" src="_images/maf_experiment.png" style="width: 795.75px; height: 317.25px;" /></a>
 <p class="caption">Figure 5: mafによる実験のビルド図。</p>
 </div>
 <p>重要な点は、パラメータの組合せを一箇所だけに書けるようになったことです。
@@ -291,7 +292,7 @@ mafにおける諸概念の詳細な定義や挙動、および各機能の仕�
     </div>
     <div class="footer">
         &copy; Copyright 2013, Preferred Infrastructure, Inc..
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>
