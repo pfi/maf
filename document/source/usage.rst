@@ -818,7 +818,7 @@ wscriptに以下を追加してください。
 .. code-block:: python
 
    def exptest(test):
-       test.add(TestMyRule)
+       test.add([TestMyRule])
 
 そして以下のコマンドを実行します。
 
