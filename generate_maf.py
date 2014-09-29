@@ -50,12 +50,10 @@ if __name__ == '__main__':
     finally:
         archive.close()
    
-    with open(TEMPLATE_FILE_NAME) as f:
-        # code = f.read()
-        code = bytes(f.read())
+    with open(TEMPLATE_FILE_NAME, 'rb') as f:
+        code = f.read()
 
     with open(ARCHIVE_FILE_NAME, 'rb') as f:
-        # archive = f.read()
         archive = base64.b64encode(f.read())
 
     code += b'#==>\n#'
