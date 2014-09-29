@@ -131,6 +131,7 @@ class ExperimentContext(waflib.Build.BuildContext):
         if not call_object.rel_source:
             for parameter in call_object.parameters:
                 self._generate_task(call_object, [], parameter)
+            return
 
         parameter_lists = []
 
