@@ -821,7 +821,7 @@ class ParameterIdGenerator(object):
     def _load_table(self, path):
         dicted_params = []
         try:
-            with open(path, "rb") as f:
+            with open(path, 'rb') as f:
                 dicted_params = pickle.load(f)
         except EOFError: pass
 
