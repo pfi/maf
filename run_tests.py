@@ -37,12 +37,12 @@ try:
     import waflib
 except ImportError:
     import glob
-    dirs = glob.glob('.waf-1.*')
+    dirs = glob.glob('.waf*')
     if not dirs:
         import subprocess
         with open('/dev/null') as null:
             subprocess.call(['python', 'waf'], stdout=null, stderr=null)
-        dirs = glob.glob('.waf-1.*')
+        dirs = glob.glob('.waf*')
     sys.path.append(dirs[0])
 
 if __name__ == '__main__':
