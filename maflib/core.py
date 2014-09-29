@@ -219,6 +219,8 @@ class ExperimentContext(waflib.Build.BuildContext):
                         base_target_parameter[key] = source_parameter[key]
             for parameter in call_object.parameters:
                 target_parameter = Parameter(base_target_parameter)
+                if target_parameter.conflict_with(parameter):
+                    continue
                 target_parameter.update(parameter)
                 target_to_source[target_parameter].append(source_parameter)
 
