@@ -42,6 +42,9 @@ import tarfile
 import waflib.Context
 import waflib.Logs
 
+VERSION = '0.2' # This value should be updated when releasing new version (?)
+REVISION = 'x'
+
 TAR_NAME = 'maflib.tar'
 NEW_LINE = '#XXX'.encode()
 CARRIAGE_RETURN = '#YYY'.encode()

@@ -28,6 +28,8 @@
 
 import os
 import tarfile
+import re
+import subprocess
 
 TEMPLATE_FILE_NAME = 'maf_template.py'
 TARGET_FILE_NAME = 'maf.py'
@@ -40,6 +42,19 @@ CARRIAGE_RETURN = '#YYY'.encode()
 ARCHIVE_BEGIN = '#==>\n#'.encode()
 ARCHIVE_END = '#<==\n#'.encode()
 
+def compute_maf_revision():
+    p = subprocess.Popen("git log | grep '^commit' | head -1",
+                         shell = 'True',
+                         stdout = subprocess.PIPE,
+                         stderr = subprocess.PIPE)
+    out, err = p.communicate()
+
+    if err:
+        return 'xxx'
+    if out.endswith('\n'):
+        out = out[:-1]
+    return out[7:]
+
 if __name__ == '__main__':
     try:
         archive = tarfile.open(ARCHIVE_FILE_NAME, 'w:bz2')
@@ -51,6 +66,10 @@ if __name__ == '__main__':
    
     with open(TEMPLATE_FILE_NAME) as f:
         code = f.read()
+
+    REVISION = compute_maf_revision()
+    reg = re.compile('^REVISION = (.*)', re.M)
+    code = reg.sub(r"REVISION = '%s'" % REVISION, code)
 
     with open(ARCHIVE_FILE_NAME, 'rb') as f:
         archive = f.read()

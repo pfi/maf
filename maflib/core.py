@@ -573,8 +573,12 @@ class ExpOptionsContext(waflib.Options.OptionsContext):
                       help = 'path to the output of graph [default: %s]' % default_path)
         gr.add_option('--simple_param', action = 'store_true', default = False,
                       help = 'outputs parameter ids instead of specific values')
-        
-        
+
+        # TODO: get the maf revision number here
+        self.version = 'unimplemented yet'
+        self.add_option('--mafversion', action = 'version',
+                        help = 'show the currently used maf version and exit')
+
 class CyclicDependencyException(Exception):
     """Exception raised when experiment graph has a cycle."""
     pass
