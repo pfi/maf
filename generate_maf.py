@@ -30,6 +30,10 @@ import os
 import tarfile
 import re
 import subprocess
+import tempfile
+import shutil
+
+VERSION = '0.2' # This value should be updated when releasing new version (?)
 
 TEMPLATE_FILE_NAME = 'maf_template.py'
 TARGET_FILE_NAME = 'maf.py'
@@ -43,22 +47,59 @@ ARCHIVE_BEGIN = '#==>\n#'.encode()
 ARCHIVE_END = '#<==\n#'.encode()
 
 def compute_maf_revision():
-    p = subprocess.Popen("git log | grep '^commit' | head -1",
+    p = subprocess.Popen("git rev-parse HEAD",
                          shell = 'True',
                          stdout = subprocess.PIPE,
                          stderr = subprocess.PIPE)
     out, err = p.communicate()
+    out = out.strip()
+    err = err.strip()
 
     if err:
+        print(err)
         return 'xxx'
-    if out.endswith('\n'):
-        out = out[:-1]
-    return out[7:]
+    return out
 
+def fill_version(code, version, revision):
+    patterns = []
+    patterns.append(('^MAFVERSION = (.*)', 'MAFVERSION = "%s"' % version))
+    patterns.append(('^MAFREVISION = (.*)', 'MAFREVISION = "%s"' % revision))
+
+    for (orig, rep) in patterns:
+        re_pat = re.compile(orig, re.M)
+        code = re_pat.sub(rep, code)
+
+    return code
+
+def fill_version_in_file(name, version, revision):
+    with open(name) as f:
+        txt = f.read()
+    txt = fill_version(txt, version, revision)
+    
+    with open(name, 'w') as f:
+        f.write(txt)
+
+def add_versioned_files(archive, version, revision):
+    temp_dir = tempfile.mkdtemp()
+    temp_maflib = os.path.join(temp_dir, 'maflib')
+    shutil.copytree(MAFLIB_PATH, temp_maflib)
+
+    fill_version_in_file(os.path.join(temp_maflib, 'core.py'), version, revision)
+
+    # exclude is obsolete
+    archive.add(temp_maflib, arcname=MAFLIB_PATH,
+                filter=lambda info: None if info.name.endswith('.pyc') else info)
+
+    return archive
+    
 if __name__ == '__main__':
+    
+    REVISION = compute_maf_revision()
+
     try:
         archive = tarfile.open(ARCHIVE_FILE_NAME, 'w:bz2')
-        archive.add(MAFLIB_PATH, exclude=lambda fn: fn.endswith('.pyc'))
+        archive = add_versioned_files(archive, VERSION, REVISION)
+        
     except tarfile.TarError:
         raise Exception('can not use tar.bz2 file')
     finally:
@@ -66,10 +107,8 @@ if __name__ == '__main__':
    
     with open(TEMPLATE_FILE_NAME) as f:
         code = f.read()
-
-    REVISION = compute_maf_revision()
-    reg = re.compile('^REVISION = (.*)', re.M)
-    code = reg.sub(r"REVISION = '%s'" % REVISION, code)
+        
+    code = fill_version(code, VERSION, REVISION)
 
     with open(ARCHIVE_FILE_NAME, 'rb') as f:
         archive = f.read()

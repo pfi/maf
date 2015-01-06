@@ -42,8 +42,8 @@ import tarfile
 import waflib.Context
 import waflib.Logs
 
-VERSION = '0.2' # This value should be updated when releasing new version (?)
-REVISION = 'x'
+MAFVERSION = 'x'
+MAFREVISION = 'x'
 
 TAR_NAME = 'maflib.tar'
 NEW_LINE = '#XXX'.encode()
@@ -139,3 +139,12 @@ def find_maflib():
 
 find_maflib()
 import maflib.core
+
+if MAFVERSION != maflib.core.MAFVERSION:
+    waflib.Logs.error('Maf script %r and library %r do not match (directory %r)'%
+                      (MAFVERSION, maflib.core.MAFVERSION, find_maflib()))
+    sys.exit(1)
+
+if MAFREVISION != maflib.core.MAFREVISION:
+    waflib.Logs.warn('Revision of maf script %r and library %r do not match (directory %r)'%
+                     (MAFREVISION, maflib.core.MAFREVISION, find_maflib()))

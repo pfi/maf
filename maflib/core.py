@@ -49,6 +49,8 @@ import waflib.Utils
 import waflib.Options
 from waflib.TaskGen import before_method, feature
 
+MAFVERSION = 'x'
+MAFREVISION = 'x'
 
 def options(opt):
     pass

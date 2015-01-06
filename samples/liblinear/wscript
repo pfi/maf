@@ -51,7 +51,8 @@ def build(exp):
         target='model',
         parameters=maflib.util.product({
             's': [0, 1, 2, 3, 4, 5, 6, 7],  # method
-            'C': [0.001, 0.01, 0.1, 1, 10, 100],  # regularization parameter
+            # 'C': [0.001, 0.01, 0.1, 1, 10, 100],  # regularization parameter
+            'C': [0.001, 0.01],  # regularization parameter
             'B': [1, -1]  # use bias or not
         }),
         rule='liblinear-train -s ${s} -c ${C} -B ${B} ${SRC} ${TGT} > /dev/null')
