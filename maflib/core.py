@@ -630,29 +630,87 @@ class Rule(object):
     which change is tracked on the experiment.
 
     :param fun: target function of the task.
-    :param dependson: list of variable or function, which one wants to track.
-        All these variables are later converted to string values, so if
-        one wants to pass the variable of user-defined class, that class
-        must provide meaningful `__str__` method.
+    :param dependson: list of objects which one wants to track. Typical
+        type of object is a function. For other types of variables,
+        it is recommended to use :py:class:`Dependent`. If it is
+        neither a `Dependent` object or a function, it is converted
+        to string by `__str__` method.
 
     """
 
     def __init__(self, fun, dependson=[]):
         self.fun = fun
         self.dependson = dependson
-        self.dependson.append(self.fun)
+        self.add_dependson([self.fun])
 
     def add_dependson(self, dependson):
-        self.dependson += dependson
+        def add_dependson_recur(lst):
+            for obj in lst:
+                self.dependson.append(obj)
+                if hasattr(obj, 'dependson'):
+                    add_dependson_recur(obj.dependson)
+        if len(dependson) > 0: print dependson[0].dependson
+
+        add_dependson_recur(dependson)
 
     def stred_dependson(self):
         def to_str(d):
+            if isinstance(d, Dependent):
+                return d.string_sig()
             # Callable object is converted to its source code as str.
-            if _is_callable(d):
+            elif _is_callable(d):
                 return inspect.getsource(d)
             else:
                 return str(d)
         return list(map(to_str, self.dependson))
+
+
+class Dependent(object):
+    """Abstract class for an object that can be added to dependson list.
+
+    If you want to define new type of dependent object, please define a
+    subclass of this and implement `getstring` method. See
+    :py:class:`DependentPath` for example.
+
+    This class is typically used with :py:func:`util.add_dependson`
+    decorator. See also the documentation for that usage.
+
+    """
+    
+    def string_sig(self):
+        """ A signature for calculating hash value of the current experiment.
+        
+        Please implement this method in a subclass. This method should return
+        a string that correctly reflects any modifications of the target.
+
+        :return: A signature string.
+        :rtype: ``str``
+        
+        """
+        raise NotImplementedError
+
+
+class DependentPath(Dependent):
+    """ Easy implementation managing modifications of an external file.
+
+    To reduce the calculation cost, it doesn't look into the content of the file;
+    It only checks the abstract path and the final modification time. So if you
+    only change the name of the file, the experiment would be reruned.
+    
+    """
+    
+    def __init__(self, path):
+        self.path = path
+        
+    def string_sig(self):
+        try:
+            abspath = os.path.abspath(self.path)
+            updated = str(os.path.getmtime(self.path))
+            return abspath + updated
+        except OSError:
+            # Ignore when argument path is invalid.
+            # TODO(noji): Return exception or output some warning may be more useful.
+            return ""
 
 
 class CallObject(object):

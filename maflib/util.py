@@ -84,9 +84,57 @@ def rule(callback_body):
             task.parameter.update(kargs)
             callback_body(task)
 
-        return maflib.core.Rule(impl, [callback_body, kargs])
+        return maflib.core.Rule(impl, [rule_generator, kargs])
 
+    rule_generator.dependson = [callback_body]
     return rule_generator
+
+
+def add_dependson(*args):
+    """Parameterized decorator adding new dependson objects to a rule function or
+    a Rule object.
+
+    The motivation for this decorator is to inject new dependencies into a task
+    rule. A typical usage is to add this decorator to a user defined rule
+    function:
+
+    .. code-block:: python
+
+        def post_process(result):
+            return ...
+
+        prop_path = './exp.prop'
+        
+        @maflib.util.rule
+        @maflib.util.add_dependson(maflib.core.DependentPath(prop_path), post_process)
+        def my_rule(task):
+            result = subprocess.call('java -cp ... -prop ./exp.prop')
+            task.outputs[0].write(post_process(result))
+
+        def build(exp):
+           exp(target='t', rule=my_rule)
+
+    In this example, two objects: `maflib.core.DependentPath` and `calc` are added
+    to dependson list of this rule. :py:class:`maflib.core.DependentPath` is a
+    helper class to represent an dependency to an external file. The assumption
+    here is that `exp.prop` is some property file of some java program to be run.
+    The experiment is reruned when this property file is modified. A function
+    `post_process` is also added to the list, so the modification of this method
+    is also detected.
+
+    It is recommended to use `maflib.core.Dependent` to customize the behavior of
+    how to detect the change of an object. `maflib.core.DependentPath` is an example,
+    which defines how to detect the change of an external file.
+
+    """
+    def deco(callback_body):
+        if not hasattr(callback_body, 'dependson'):
+            callback_body.dependson = []
+        callback_body.dependson += list(args)
+        
+        return callback_body
+
+    return deco
 
 
 def aggregator(callback_body):
