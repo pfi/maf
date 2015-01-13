@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: ISO8859-1
 #
 # Copyright (c) 2013, Preferred Infrastructure, Inc.
 # All rights reserved.
@@ -30,23 +29,21 @@
 maf - a waf extension for automation of parameterized computational experiments
 """
 
-# NOTE: coding ISO8859-1 is necessary for attaching maflib at the end of this
-# file.
-
 import os
 import os.path
 import shutil
 import subprocess
 import sys
 import tarfile
+import base64
 import waflib.Context
 import waflib.Logs
 
 TAR_NAME = 'maflib.tar'
-NEW_LINE = '#XXX'.encode()
-CARRIAGE_RETURN = '#YYY'.encode()
-ARCHIVE_BEGIN = '#==>\n'.encode()
-ARCHIVE_END = '#<==\n'.encode()
+NEW_LINE = b'#XXX'
+CARRIAGE_RETURN = b'#YYY'
+ARCHIVE_BEGIN = b'#==>\n'
+ARCHIVE_END = b'#<==\n'
 
 class _Cleaner:
     def __init__(self, directory):
@@ -84,8 +81,8 @@ def _read_archive(filename):
                     raise Exception('corrupt archive')
                 break
 
-    return content[1:-1].replace(NEW_LINE, '\n'.encode()).replace(
-        CARRIAGE_RETURN, '\r'.encode())
+    return content[1:-1].replace(NEW_LINE, b'\n').replace(
+        CARRIAGE_RETURN, b'\r')
 
 def unpack_maflib(directory):
     with _Cleaner(directory) as c:
@@ -96,7 +93,7 @@ def unpack_maflib(directory):
 
         bz2_name = TAR_NAME + '.bz2'
         with open(bz2_name, 'wb') as f:
-            f.write(content)
+            f.write(base64.b64decode(content))
 
         try:
             t = tarfile.open(bz2_name)

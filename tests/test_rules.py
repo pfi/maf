@@ -40,10 +40,10 @@ class TestAggregationTask(unittest.TestCase):
 
 
 class TestMulticlassEvaluation(unittest.TestCase):
-    def label(self, (p, c)): return {"p":p, "c":c}
+    def label(self, data): return {"p":data[0], "c":data[1]}
     def test_multilabel_evaluation(self):
         task = TestTask()
-        task.set_input_by_json(0, map(self.label, [(1,1),(1,2),(2,2),(2,2)]))
+        task.set_input_by_json(0, list(map(self.label, [(1,1),(1,2),(2,2),(2,2)])))
 
         rules.calculate_stats_multiclass_classification(task)
         result = task.json_output(0)

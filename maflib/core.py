@@ -602,7 +602,7 @@ class Parameter(dict):
     """
     def __hash__(self):
         # TODO(beam2d): Should we cache this value?
-        return hash(frozenset(self.iteritems()))
+        return hash(frozenset(self.items()))
 
     def conflict_with(self, parameter):
         """Checks whether the parameter conflicts with given other parameter.
@@ -652,7 +652,7 @@ class Rule(object):
                 return inspect.getsource(d)
             else:
                 return str(d)
-        return map(to_str, self.dependson)
+        return list(map(to_str, self.dependson))
 
 
 class CallObject(object):
@@ -810,7 +810,7 @@ class ParameterIdGenerator(object):
 
         if len(self._table) == 0: return
 
-        with _create_file(self.path) as f:
+        with _create_file(self.path, 'wb') as f:
             # We only save a modified `self._parameters`, which is obtained by converting
             # each element of `self._parameters` into a dictionary object.
             # This is for deserializing parameter->id mappings outside without
@@ -827,7 +827,7 @@ class ParameterIdGenerator(object):
     def _load_table(self, path):
         dicted_params = []
         try:
-            with open(path) as f:
+            with open(path, 'rb') as f:
                 dicted_params = pickle.load(f)
         except EOFError: pass
 
@@ -906,8 +906,8 @@ class ExperimentTask(waflib.Task.Task):
         corresponding input node."""
 
         if not hasattr(self, 'dep_vars'): self.dep_vars = []
-        self.dep_vars += self.parameter.keys()
-        self.dep_vars += filter(lambda k: k.startswith("dependson"), env.keys())
+        self.dep_vars += sorted(self.parameter.keys())
+        self.dep_vars += sorted(filter(lambda k: k.startswith("dependson"), env.keys()))
 
         self.inputs = [ExperimentNode(s) for s in self.inputs]
         self.outputs = [ExperimentNode(s) for s in self.outputs]
@@ -1096,7 +1096,7 @@ def register_experiment_task_with_rule(self):
     self.bld.cache_rule_attr = {(self.name, self.rule):cls}
 
 
-def _create_file(path):
+def _create_file(path, mode='w'):
     """Opens file in write mode. It also creates intermediate directories if
     necessary.
 
@@ -1105,7 +1105,7 @@ def _create_file(path):
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    return open(path, 'w')
+    return open(path, mode)
 
 
 def _let_element_to_be_list(d, key):

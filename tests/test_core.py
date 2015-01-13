@@ -97,6 +97,7 @@ class Setting(object):
         return (isinstance(other, self.__class__)
             and self.__dict__ == other.__dict__)
     def __ne__(self, other): return not self.__eq__(other)
+    def __hash__(self): return hash((self.a, self.b, self.c))
 
     
 class TestParameterIdGenerator(unittest.TestCase):
@@ -122,7 +123,7 @@ class TestParameterIdGenerator(unittest.TestCase):
             id_generator.get_id(Parameter({"setting": Setting(0,1,2)}))
             id_generator.save()
         
-            table = pickle.load(open(pickle_path))
+            table = pickle.load(open(pickle_path, 'rb'))
         
             self.assertEqual(1, len(table))
             self.assertEqual({"setting":Setting(0,1,2)}, table[0])
