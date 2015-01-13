@@ -157,7 +157,7 @@ def check_mafversion():
                           (MAFVERSION, maflib.core.MAFVERSION, find_maflib()))
         sys.exit(1)
 
-    if MAFREVISION != version_from_maflib:
+    if MAFREVISION != revision_from_maflib:
         waflib.Logs.warn('Revision of maf script %r and library %r do not match (directory %r)'%
                          (MAFREVISION, maflib.core.MAFREVISION, find_maflib()))
 
