@@ -42,8 +42,10 @@ import tarfile
 import waflib.Context
 import waflib.Logs
 
-MAFVERSION = 'x'
-MAFREVISION = 'x'
+EMPTY_VERSION = 'x'
+
+MAFVERSION = EMPTY_VERSION
+MAFREVISION = EMPTY_VERSION
 
 TAR_NAME = 'maflib.tar'
 NEW_LINE = '#XXX'.encode()
@@ -137,14 +139,29 @@ def find_maflib():
         unpack_maflib(path)
     return path
 
+def check_mafversion():
+    # Avoid verison check if the wscript is in the maf project root repository,
+    # i.e., during developing maflib. In this case, `maflib` is loaded not from
+    # the auto generated .waf-* directory but from the project root directory.
+    # The version number is only filled in auto generated maflib, and it is
+    # complicated to track version numbers during development, so we skip
+    # version checks during development, which is judged by loaded version
+    # number from maflib is not filled.
+    version_from_maflib = maflib.core.MAFVERSION
+    revision_from_maflib = maflib.core.MAFREVISION
+    if version_from_maflib == EMPTY_VERSION or revision_from_maflib == EMPTY_VERSION:
+        return
+    
+    if MAFVERSION != version_from_maflib:
+        waflib.Logs.error('Maf script %r and library %r do not match (directory %r)'%
+                          (MAFVERSION, maflib.core.MAFVERSION, find_maflib()))
+        sys.exit(1)
+
+    if MAFREVISION != version_from_maflib:
+        waflib.Logs.warn('Revision of maf script %r and library %r do not match (directory %r)'%
+                         (MAFREVISION, maflib.core.MAFREVISION, find_maflib()))
+
 find_maflib()
 import maflib.core
 
-if MAFVERSION != maflib.core.MAFVERSION:
-    waflib.Logs.error('Maf script %r and library %r do not match (directory %r)'%
-                      (MAFVERSION, maflib.core.MAFVERSION, find_maflib()))
-    sys.exit(1)
-
-if MAFREVISION != maflib.core.MAFREVISION:
-    waflib.Logs.warn('Revision of maf script %r and library %r do not match (directory %r)'%
-                     (MAFREVISION, maflib.core.MAFREVISION, find_maflib()))
+check_mafversion()
