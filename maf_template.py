@@ -147,8 +147,13 @@ def check_mafversion():
     # complicated to track version numbers during development, so we skip
     # version checks during development, which is judged by loaded version
     # number from maflib is not filled.
-    version_from_maflib = maflib.core.MAFVERSION
-    revision_from_maflib = maflib.core.MAFREVISION
+
+    try:
+        version_from_maflib = maflib.core.MAFVERSION
+        revision_from_maflib = maflib.core.MAFREVISION
+    except AttributeError:
+        return # arrive here only with older version
+        
     if version_from_maflib == EMPTY_VERSION or revision_from_maflib == EMPTY_VERSION:
         return
     
