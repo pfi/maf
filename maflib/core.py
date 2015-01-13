@@ -649,7 +649,6 @@ class Rule(object):
                 self.dependson.append(obj)
                 if hasattr(obj, 'dependson'):
                     add_dependson_recur(obj.dependson)
-        if len(dependson) > 0: print dependson[0].dependson
 
         add_dependson_recur(dependson)
 
