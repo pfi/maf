@@ -47,7 +47,7 @@ except ImportError:
 import waflib.Build
 import waflib.Utils
 import waflib.Options
-from waflib.TaskGen import before_method, feature
+from waflib.TaskGen import before_method, after_method, feature
 
 MAFVERSION = 'x'
 MAFREVISION = 'x'
@@ -734,6 +734,8 @@ class CallObject(object):
         for key in ['source', 'target', 'features']:
             _let_element_to_be_list(self.__dict__, key)
 
+        self.__dict__['directory_target'] = map(lambda x: x[:-1], self.__dict__['target'])
+
         for key in ['for_each', 'aggregate_by']:
             if hasattr(self, key):
                 _let_element_to_be_list(self.__dict__, key)
@@ -744,6 +746,12 @@ class CallObject(object):
             """List of parameters indicated by the taskgen call."""
         else:
             self.parameters = [Parameter(p) for p in self.parameters]
+
+        # preprocess to handle directory outputs
+        directory_target = list(filter(lambda x: x[-1] == '/', self.__dict__['target']))
+        if directory_target:
+            self.__dict__['features'].append('create_target_directory')
+            self.__dict__['directory_target'] = list(map(lambda x: x[:-1], directory_target))
 
         # Some tests do not support the argument 'wscript'
         if 'wscript' in kw:
@@ -1102,6 +1110,23 @@ class OldExperimentContext(ExperimentContext):
     fun = 'experiment'
     variant = 'experiment'
 
+@feature('create_target_directory')
+@after_method('process_rule')
+def create_target_directory(self):
+    """Create directory of target node if the output is directory.
+
+    The flag feature of this method (create_target_directory)
+    is set at constructor of CallObject.
+    
+    """
+    
+    def meta_sig(target_node):
+        name = target_node.name
+        return name[name.find('-')+1:]
+
+    for target_node in self.target:
+        if meta_sig(target_node) in self.directory_target:
+            target_node.mkdir()
 
 @feature('experiment')
 @before_method('process_rule')
