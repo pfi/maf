@@ -10,6 +10,13 @@ maf
 https://github.com/pfi/maf で開発されています。
 
 .. toctree::
+   :maxdepth: 2
+
+   tutorial/index
+
+古いドキュメント
+
+.. toctree::
    :maxdepth: 3
 
    introduction
