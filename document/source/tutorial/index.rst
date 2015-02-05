@@ -8,3 +8,4 @@ maf の使い方をひと通り学びたい人は、このチュートリアル�
    :maxdepth: 1
 
    maf_basic
+   parameter
