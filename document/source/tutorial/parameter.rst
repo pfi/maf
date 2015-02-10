@@ -142,9 +142,9 @@ wscript は Python スクリプトなので、たとえばループを回せば�
                target=result,
                rule='liblinear-predict ${SRC} /dev/null > ${TGT}')
 
-もとの wscript からこのように変更したあとで再実験すると、すべての実験はやり直しです。
-本当は、 ``B=1`` の場合の実験はやり直さなくてもよかったはずです。
-また、名前付けはオプションが増えれば増えるほどややこしくなっていきます。
+wscript が単なる Python スクリプトであるおかげで、このように複雑な処理を書くことができます。
+しかし、一方でパラメータが増えるごとにノード名をいちいちつけ直さないといけません。
+パラメータがさらに増えると、この作業はただ面倒なだけでなく、バグの原因にもなります。
 
 パラメータづけられたタスクとメタノード
 --------------------------------------
@@ -225,4 +225,143 @@ wscript は Python スクリプトなので、たとえばループを回せば�
 IDテーブルには、番号とそれに対応するパラメータ（辞書）が書かれています。
 番号は、メタノード内の各ノード名の先頭についている整数に対応しています。
 
-TODO
+メタノードを入力とするタスク
+----------------------------
+
+これで、パラメータごとに異なる学習結果（モデル）を得ることができました。
+次にやるのは、これらを ``liblinear-predict`` コマンドをつかって評価することでした。
+
+メタノードを入力としていつもどおりにタスクを書くことで、すべてのパラメータについて同じルールを適用することができます。
+
+.. code-block:: python
+
+   exp(source=['news20.t.scale', 'model'],
+       target='result',
+       rule='liblinear-predict ${SRC} /dev/null > ${TGT}')
+
+これを実行して、生成されたファイルの全体を見てみましょう。
+
+.. code-block:: sh
+
+   $ ./waf
+   Waf: Entering directory `/Users/beam2d/github/pfi/maf/exp/build'
+   [11/16] 1-result: news20.t.scale build/model/1-model -> build/result/1-result
+   [12/16] 2-result: news20.t.scale build/model/2-model -> build/result/2-result
+   [12/16] 5-result: news20.t.scale build/model/5-model -> build/result/5-result
+   [13/16] 4-result: news20.t.scale build/model/4-model -> build/result/4-result
+   [13/16] 3-result: news20.t.scale build/model/3-model -> build/result/3-result
+   [14/16] 6-result: news20.t.scale build/model/6-model -> build/result/6-result
+   [15/16] 7-result: news20.t.scale build/model/7-model -> build/result/7-result
+   [16/16] 0-result: news20.t.scale build/model/0-model -> build/result/0-result
+   Waf: Leaving directory `/Users/beam2d/github/pfi/maf/exp/build'
+   'build' finished successfully (2.707s)
+
+   $ tree build
+   build
+   ├── c4che
+   │   ├── _cache.py
+   │   └── build.config.py
+   ├── config.log
+   ├── model
+   │   ├── 0-model
+   │   ├── 1-model
+   │   ├── 2-model
+   │   ├── 3-model
+   │   ├── 4-model
+   │   ├── 5-model
+   │   ├── 6-model
+   │   └── 7-model
+   └── result
+       ├── 0-result
+       ├── 1-result
+       ├── 2-result
+       ├── 3-result
+       ├── 4-result
+       ├── 5-result
+       ├── 6-result
+       └── 7-result
+
+このように、メタノード ``model`` を入力に指定すると、その中の具体的なノードごとにタスクがつくられて、出力 ``result`` も同じようにパラメータづけられたメタノードとなります。
+
+パラメータの組み合わせを生成する
+--------------------------------
+
+さて、もとの実験では ``-s`` 以外にも ``-C`` や ``-b`` などのオプションがありました。
+ここでは ``-C`` に指定する値として ``0.001`` ``0.01`` ``0.1`` ``1`` ``10`` ``100`` を考えて、 ``-b`` に指定する値として ``1`` ``-1`` を考えます。
+これらのすべての組み合わせで実験したいですが、これを愚直に書き下すのは骨が折れますし、あとから変更しづらくなります。
+
+このようにパラメータのすべての組み合わせを試して、性能を比べることはグリッドサーチなどと呼ばれます。
+グリッドサーチはよく用いられるため、maf にはパラメータのすべての組み合わせを生成するための便利関数 :py:func:`maflib.util.product` が用意されています。
+
+:py:func:`maflib.util.product`
+    :引数: ``param``
+
+    リストを値とする辞書 ``param`` を受け取って、各キー・値のすべての組み合わせからなる辞書のリストを返す。
+
+この関数は、たとえば次のように動作します。
+
+.. code-block:: python
+
+   maflib.util.product({ 'p': [1, 2, 3], 'q': [10, 20] })
+   => [ {'p': 1, 'q': 10},
+        {'p': 1, 'q': 20},
+        {'p': 2, 'q': 10},
+        {'p': 2, 'q': 20},
+        {'p': 3, 'q': 10},
+        {'p': 3, 'q': 20} ]
+
+これをつかって、今回の実験のパラメータを生成しましょう。
+
+.. code-block:: python
+
+   exp(source='news20.scale',
+       target='model',
+       parameters=maflib.util.product({
+           's': [0, 1, 2, 3, 4, 5, 6, 7],
+           'C': [0.001, 0.01, 0.1, 1, 10, 100],
+           'B': [1, -1]
+       }),
+       rule='liblinear-train -s ${s} -c ${C} -B ${B} ${SRC} ${TGT} > /dev/null')
+
+このように書けば、全部で 96 通りのパラメータで学習が行われます。
+さらに、 ``result`` タスク の方は変更しなくても、勝手に 96 通りの結果が生成されます。
+
+さて、ついでに同じように使われる便利関数として :py:func:`maflib.util.sample` も紹介しておきます。
+
+:py:func:`maflib.util.sample`
+    :引数: ``num_samples``, ``param_distribution``
+
+    分布を表す値をとる辞書 ``param_distribution`` を受け取って、 ``num_samples`` 個の辞書からなるリストを返す。
+    返される各辞書 ``d`` は ``param_distribution`` と同じキー ``k`` をもち、 ``d[k]`` は ``param_distribution[k]`` が指定する分布からのランダムサンプルとなる。
+
+    分布の指定方法として、以下の 3 種類が利用可能である。
+
+    - 数値の組 ``(a, b)`` --- この場合、区間 ``[a, b)`` 上の一様分布からサンプリングされる（連続一様分布）。
+    - 値のリスト --- この場合、リスト中の値の中から一様ランダムにサンプリングされる（離散一様分布）。
+    - 関数 ``f``  --- ``f()`` が返す値をつかう（ユーザーが実装した任意の分布）。
+
+:py:func:`maflib.util.sample` をつかうことで、ランダムなパラメータによる実験ができます。
+パラメータが多くて product をつかうと実験に時間がかかりすぎる場合の選択肢になります。
+
+注意点として、乱数のシードに気をつけましょう。
+maf では乱数生成に NumPy をつかっていて、 ``maflib.util`` モジュール内で決まったシードを設定しています。
+ですので、実験スクリプトが変わらなければ、必ず同じパラメータを生成します。
+一方、 :py:func:`maflib.util.sample` を複数回呼び出す場合、その順序が変わると生成される値も変わるので、注意が必要です。
+
+まとめ
+------
+
+本章では maf の機能のうち、以下の項目を紹介しました。
+
+- パラメータづけられたタスク
+- メタノード
+- メタノードを入力とするタスク
+- ユーティリティ関数をつかったパラメータ生成
+
+  - :py:func:`maflib.util.product` 関数
+  - :py:func:`maflib.util.sample` 関数
+
+パラメータは maf のもっとも重要な機能のひとつで、maf とはパラメータ機能がついた waf であると言っても過言ではありません。
+本章では、そのつかいかたの半分を学びました。
+もう半分は、まず複数のメタノードを組み合わせることと、そしていろんなパラメータの実験結果を集約することです。
+これらを次の 2 章でみていきましょう。
